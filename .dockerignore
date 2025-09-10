@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Development files
+.env
+.env.example
+.env.local
+.env.testing
+
+# Node modules (will be installed fresh)
+node_modules
+npm-debug.log*
+
+# Storage and cache
+storage/app/*
+!storage/app/.gitignore
+!storage/app/public/foca-icon.png
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+
+# Bootstrap cache
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+tests
+phpunit.xml
+
+# Documentation
+README.md
+*.md
+
+# Sail
+vendor/laravel/sail
