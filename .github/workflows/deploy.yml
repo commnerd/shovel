@@ -75,7 +75,6 @@ jobs:
           docker run -d \
             --name foca-app \
             --restart unless-stopped \
-            -p 80:80 \
             ${{ env.DOCKER_IMAGE }}:latest
 
           # Clean up old images
