@@ -2,10 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\WaitlistController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return Inertia::render('Landing');
+})->name('landing');
+
+Route::get('/home', function () {
+    return redirect('/');
 })->name('home');
+
+Route::post('/waitlist', [WaitlistController::class, 'store'])->name('waitlist.store');
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
