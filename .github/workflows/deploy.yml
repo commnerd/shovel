@@ -65,7 +65,7 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           # Pull the latest image
-          docker pull ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.tags }}
+          docker pull ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.labels }}
 
           # Stop and remove existing container if it exists
           docker stop foca-app 2>/dev/null || true
@@ -75,7 +75,7 @@ jobs:
           docker run -d \
             --name foca-app \
             --restart unless-stopped \
-            ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.tags }}
+            ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.labels }}
 
           # Clean up old images
           docker image prune -f
