@@ -59,13 +59,15 @@ ssh username@your-server-ip
 ### Automatic Deployment
 The workflow triggers on:
 - **Push to main branch**: Every push to main automatically deploys
+- **Push to deployment branch**: Every push to deployment branch automatically deploys
 - **Manual trigger**: You can manually trigger deployment from GitHub Actions tab
 
 ### Deployment Process
 1. **Build**: Creates Docker image with multi-architecture support (AMD64/ARM64)
-2. **Push**: Uploads image to `commnerd/foca` on Docker Hub
-3. **Deploy**: SSH into your server and:
-   - Pulls the latest image
+2. **Tag**: Tags image with branch name (e.g., `commnerd/foca:main`, `commnerd/foca:deployment`)
+3. **Push**: Uploads image to `commnerd/foca` on Docker Hub
+4. **Deploy**: SSH into your server and:
+   - Pulls the image with branch name tag
    - Stops the old container
    - Starts the new container
    - Cleans up old images
@@ -75,18 +77,31 @@ The deployed container runs with:
 - **Name**: `foca-app`
 - **Port**: Maps host port 80 to container port 80
 - **Restart Policy**: `unless-stopped` (auto-restarts on server reboot)
-- **Image**: `commnerd/foca:latest`
+- **Image**: `commnerd/foca:<branch-name>` (e.g., `commnerd/foca:main`)
 
 ## Manual Deployment
 
 If you need to deploy manually:
 
 ```bash
-# On your server
-docker pull commnerd/foca:latest
+# On your server (replace <branch-name> with your branch)
+docker pull commnerd/foca:<branch-name>
 docker stop foca-app 2>/dev/null || true
 docker rm foca-app 2>/dev/null || true
-docker run -d --name foca-app --restart unless-stopped -p 80:80 commnerd/foca:latest
+docker run -d --name foca-app --restart unless-stopped -p 80:80 commnerd/foca:<branch-name>
+```
+
+### Local Testing
+
+Test the deployment process locally:
+
+```bash
+# Test with latest tag
+./deploy-local.sh
+
+# Test with specific branch name
+./deploy-local.sh main
+./deploy-local.sh deployment
 ```
 
 ## Monitoring

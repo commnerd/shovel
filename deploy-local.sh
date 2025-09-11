@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 DOCKER_IMAGE="commnerd/foca"
-DOCKER_TAG="latest"
+DOCKER_TAG="${1:-latest}"  # Use first argument as tag, default to 'latest'
 CONTAINER_NAME="foca-app"
 
 echo "🚀 Starting local deployment process..."
@@ -19,7 +19,7 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Build the Docker image
-echo "📦 Building Docker image..."
+echo "📦 Building Docker image with tag: $DOCKER_TAG"
 docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
 
 # Test the image locally
@@ -58,4 +58,9 @@ echo "To push to Docker Hub and deploy to your server:"
 echo "1. docker login"
 echo "2. docker push $DOCKER_IMAGE:$DOCKER_TAG"
 echo "3. Push your code to GitHub to trigger automatic deployment"
+echo ""
+echo "Usage examples:"
+echo "  ./deploy-local.sh              # Uses 'latest' tag"
+echo "  ./deploy-local.sh main         # Uses 'main' tag"
+echo "  ./deploy-local.sh deployment   # Uses 'deployment' tag"
 
