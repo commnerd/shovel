@@ -1,56 +1,48 @@
-# Git
+# Ignore .env files
+.env
+.env.*
+!.env.example
+
+# Ignore development files
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Ignore version control
 .git
 .gitignore
 
-# Docker
-Dockerfile
-.dockerignore
-docker-compose.yml
-
-# Development files
-.env
-.env.example
-.env.local
-.env.testing
-
-# Node modules (will be installed fresh)
-node_modules
-npm-debug.log*
-
-# Storage and cache
-storage/app/*
-!storage/app/.gitignore
-!storage/app/public/foca-icon.png
-storage/framework/cache/*
-!storage/framework/cache/.gitignore
-storage/framework/sessions/*
-!storage/framework/sessions/.gitignore
-storage/framework/views/*
-!storage/framework/views/.gitignore
-storage/logs/*
-!storage/logs/.gitignore
-
-# Bootstrap cache
-bootstrap/cache/*
-!bootstrap/cache/.gitignore
-
-# IDE files
+# Ignore IDE files
 .vscode
 .idea
 *.swp
 *.swo
 
-# OS files
+# Ignore OS files
 .DS_Store
 Thumbs.db
 
-# Test files
-tests
-phpunit.xml
+# Ignore build artifacts
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
 
-# Documentation
+# Ignore test files
+/tests
+/phpunit.xml
+/.phpunit.result.cache
+
+# Ignore documentation
 README.md
+DEPLOYMENT.md
 *.md
 
-# Sail
-vendor/laravel/sail
+# Ignore Docker files
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Ignore deployment files
+deploy*.sh
+.github

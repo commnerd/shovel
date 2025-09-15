@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: foca-nginx
+    ports:
+      - "80:80"
+      - "443:443"  # Uncomment if you add HTTPS
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./static/michaeljmiller.net:/var/www/michaeljmiller.net:ro  # Static files for michaeljmiller.net
+      # Add SSL certificate volumes if using HTTPS:
+      # - /path/to/ssl/certs:/etc/nginx/ssl:ro
+    depends_on:
+      - foca-app
+    restart: unless-stopped
+    networks:
+      - foca-network
+
+  foca-app:
+    image: commnerd/foca:latest  # This will be updated by your deployment script
+    container_name: foca-app
+    expose:
+      - "80"  # Adjust this port if your app runs on a different port
+    restart: unless-stopped
+    networks:
+      - foca-network
+    # Environment variables are set in Dockerfile, but can be overridden here if needed
+    environment:
+      - APP_URL=https://getfoca.com  # Override the default localhost URL
+    # volumes:
+    #   - ./storage:/var/www/html/storage
+
+networks:
+  foca-network:
+    driver: bridge

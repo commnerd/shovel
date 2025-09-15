@@ -49,20 +49,21 @@ RUN echo '<VirtualHost *:80>\n\
 # Set up SQLite database
 RUN touch /var/www/html/database/database.sqlite
 
-# Configure Laravel for SQLite
-RUN echo 'DB_CONNECTION=sqlite\n\
-DB_DATABASE=/var/www/html/database/database.sqlite\n\
-APP_ENV=production\n\
-APP_DEBUG=false\n\
-APP_KEY=\n\
-APP_URL=http://localhost\n\
-LOG_CHANNEL=stack\n\
-LOG_LEVEL=debug\n\
-MAIL_MAILER=log\n\
-CACHE_DRIVER=file\n\
-QUEUE_CONNECTION=sync\n\
-SESSION_DRIVER=file\n\
-SESSION_LIFETIME=120' > .env
+# Set environment variables directly (no .env file needed)
+ENV APP_NAME="Foca"
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV APP_URL=http://localhost
+ENV APP_KEY=""
+ENV LOG_CHANNEL=stack
+ENV LOG_LEVEL=debug
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=/var/www/html/database/database.sqlite
+ENV MAIL_MAILER=log
+ENV CACHE_DRIVER=file
+ENV QUEUE_CONNECTION=sync
+ENV SESSION_DRIVER=file
+ENV SESSION_LIFETIME=120
 
 # Generate application key
 RUN php artisan key:generate

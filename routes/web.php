@@ -9,7 +9,7 @@ Route::get('/', function () {
 })->name('landing');
 
 Route::get('/home', function () {
-    return redirect('/');
+    return Inertia::render('Landing');
 })->name('home');
 
 Route::post('/waitlist', [WaitlistController::class, 'store'])->name('waitlist.store');
