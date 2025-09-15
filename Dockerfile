@@ -54,7 +54,6 @@ ENV APP_NAME="Foca"
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV APP_URL=http://localhost
-ENV APP_KEY=""
 ENV LOG_CHANNEL=stack
 ENV LOG_LEVEL=debug
 ENV DB_CONNECTION=sqlite
@@ -65,8 +64,25 @@ ENV QUEUE_CONNECTION=sync
 ENV SESSION_DRIVER=file
 ENV SESSION_LIFETIME=120
 
-# Generate application key
-RUN php artisan key:generate
+# Generate application key first
+RUN php artisan key:generate --show > app_key.txt
+
+# Create a minimal .env file for Laravel commands
+RUN echo "APP_NAME=Foca" > .env && \
+    echo "APP_ENV=production" >> .env && \
+    echo "APP_DEBUG=false" >> .env && \
+    echo "APP_URL=http://localhost" >> .env && \
+    echo "APP_KEY=$(cat app_key.txt)" >> .env && \
+    echo "LOG_CHANNEL=stack" >> .env && \
+    echo "LOG_LEVEL=debug" >> .env && \
+    echo "DB_CONNECTION=sqlite" >> .env && \
+    echo "DB_DATABASE=/var/www/html/database/database.sqlite" >> .env && \
+    echo "MAIL_MAILER=log" >> .env && \
+    echo "CACHE_DRIVER=file" >> .env && \
+    echo "QUEUE_CONNECTION=sync" >> .env && \
+    echo "SESSION_DRIVER=file" >> .env && \
+    echo "SESSION_LIFETIME=120" >> .env && \
+    rm app_key.txt
 
 # Run migrations
 RUN php artisan migrate --force
