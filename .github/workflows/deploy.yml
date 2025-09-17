@@ -80,6 +80,7 @@ jobs:
 
           # Run the new container
           docker run -d \
+            --network web \
             --name foca-app \
             --restart unless-stopped \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
