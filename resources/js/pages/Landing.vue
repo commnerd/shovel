@@ -22,8 +22,8 @@
           <Badge>New • AI Project Focus Coach and Planner</Badge>
           <h1 class="mt-4 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">Seal your focus.</h1>
           <p class="mt-4 text-base leading-6 text-slate-600 sm:text-lg sm:leading-7">
-            Foca turns a single goal into a plan you can ship. Generate milestones, size work, and re-order priorities
-            using Pareto (80/20), cost/value, and your real delivery trends.
+            Foca turns a single goal into a plan you can ship. Leverage the power of AI to create milestones, size work,
+            and re-order priorities using Pareto (80/20), cost/value, and ship your product.
           </p>
           <div class="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
             <a href="#waitlist" class="rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white hover:bg-cyan-500 text-center">Get early access</a>
