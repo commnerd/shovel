@@ -41,6 +41,7 @@ interface AICommunication {
 
 interface Props {
     projectData: {
+        title?: string;
         description: string;
         due_date?: string;
     };
@@ -71,6 +72,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const form = useForm({
+    title: props.projectData.title || '',
     description: props.projectData.description,
     due_date: props.projectData.due_date || '',
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
@@ -151,6 +153,7 @@ const regenerateTasks = () => {
     router.visit('/dashboard/projects/create/tasks', {
         method: 'post',
         data: {
+            title: form.title,
             description: form.description,
             due_date: form.due_date,
             regenerate: true,
@@ -165,6 +168,7 @@ const goBackToEdit = () => {
     router.visit('/dashboard/projects/create', {
         method: 'get',
         data: {
+            title: form.title,
             description: form.description,
             due_date: form.due_date,
         }
@@ -195,8 +199,11 @@ const createProject = () => {
                         <Sparkles class="h-6 w-6 text-blue-600" />
                         AI Generated Tasks
                     </Heading>
+                    <div v-if="projectData.title" class="mt-2">
+                        <h2 class="text-xl font-semibold text-gray-900">{{ projectData.title }}</h2>
+                    </div>
                     <p class="text-gray-600 mt-2">
-                        Review and customize the suggested tasks for:
+                        <span v-if="!projectData.title">Review and customize the suggested tasks for: </span>
                         <span class="font-medium text-gray-900">{{ projectData.description }}</span>
                     </p>
                     <p class="text-sm text-gray-500 mt-1">
@@ -221,7 +228,7 @@ const createProject = () => {
 
             <!-- AI Communication -->
             <div v-if="aiUsed && aiCommunication && (aiCommunication.summary || aiCommunication.notes?.length || aiCommunication.problems?.length || aiCommunication.suggestions?.length)" class="space-y-4">
-                
+
                 <!-- AI Summary -->
                 <Card v-if="aiCommunication.summary" class="border-blue-200 bg-blue-50">
                     <CardHeader class="pb-3">

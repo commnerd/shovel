@@ -13,6 +13,7 @@ import type { BreadcrumbItem } from '@/types';
 
 interface Project {
     id: number;
+    title?: string;
     description: string;
     due_date?: string;
     status: string;
@@ -32,12 +33,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard/projects',
     },
     {
-        title: `Edit Project #${props.project.id}`,
+        title: `Edit ${props.project.title || 'Untitled Project'}`,
         href: `/dashboard/projects/${props.project.id}/edit`,
     },
 ];
 
 const form = useForm({
+    title: props.project.title || '',
     description: props.project.description,
     due_date: props.project.due_date || '',
     status: props.project.status,
@@ -91,7 +93,7 @@ const deleteProject = () => {
 </script>
 
 <template>
-    <Head :title="`Edit Project #${project.id}`" />
+    <Head :title="`Edit ${project.title || 'Untitled Project'}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
@@ -105,7 +107,7 @@ const deleteProject = () => {
                         </Link>
                     </Button>
                     <div>
-                        <Heading>Edit Project #{{ project.id }}</Heading>
+                        <Heading>Edit {{ project.title || 'Untitled Project' }}</Heading>
                         <p class="text-sm text-gray-600 mt-1">
                             Update your project details and settings
                         </p>
@@ -127,6 +129,22 @@ const deleteProject = () => {
 
                         <form @submit.prevent="submit">
                             <CardContent class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="title">Project Title</Label>
+                                    <Input
+                                        id="title"
+                                        v-model="form.title"
+                                        type="text"
+                                        placeholder="e.g., Task Management System"
+                                        :disabled="form.processing"
+                                        class="w-full"
+                                    />
+                                    <InputError :message="form.errors.title" />
+                                    <p class="text-xs text-gray-500">
+                                        A descriptive name for your project
+                                    </p>
+                                </div>
+
                                 <div class="space-y-2">
                                     <Label for="description">Project Description</Label>
                                     <textarea

@@ -23,6 +23,7 @@ class ProjectsController extends Controller
                     return [
                         'id' => $project->id,
                         'user_id' => $project->user_id, // Include for tests
+                        'title' => $project->title,
                         'description' => $project->description,
                         'due_date' => $project->due_date?->format('Y-m-d'),
                         'status' => $project->status,
@@ -67,6 +68,7 @@ class ProjectsController extends Controller
         return Inertia::render('Projects/Edit', [
             'project' => [
                 'id' => $project->id,
+                'title' => $project->title,
                 'description' => $project->description,
                 'due_date' => $project->due_date?->format('Y-m-d'),
                 'status' => $project->status,
@@ -85,12 +87,14 @@ class ProjectsController extends Controller
         }
 
         $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'status' => 'sometimes|in:active,completed,archived',
         ]);
 
         $project->update([
+            'title' => $validated['title'],
             'description' => $validated['description'],
             'due_date' => $validated['due_date'] ?? null,
             'status' => $validated['status'] ?? $project->status,
@@ -151,6 +155,7 @@ class ProjectsController extends Controller
     public function createTasksPage(Request $request)
     {
         $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'regenerate' => 'nullable|boolean',
@@ -159,12 +164,14 @@ class ProjectsController extends Controller
         $aiUsed = false;
         $suggestedTasks = [];
         $aiCommunication = null;
+        $suggestedTitle = $validated['title'] ?? null;
 
         try {
             \Log::info('Generating AI task suggestions for task page', ['description' => $validated['description']]);
 
             // Define the expected task schema
             $taskSchema = [
+                'project_title' => 'string',
                 'tasks' => [
                     [
                         'title' => 'string',
@@ -195,12 +202,18 @@ class ProjectsController extends Controller
                     ];
                 })->toArray();
 
+                // Get AI-generated title if user didn't provide one
+                if (empty($suggestedTitle) && $aiResponse->getProjectTitle()) {
+                    $suggestedTitle = $aiResponse->getProjectTitle();
+                }
+
                 // Get AI communication
                 $aiCommunication = $aiResponse->getCommunication();
 
                 \Log::info('AI task generation successful', [
                     'task_count' => count($suggestedTasks),
-                    'has_notes' => $aiResponse->hasNotes()
+                    'has_notes' => $aiResponse->hasNotes(),
+                    'generated_title' => $suggestedTitle
                 ]);
             } else {
                 throw new \Exception($aiResponse->getError() ?? 'AI task generation failed');
@@ -251,6 +264,7 @@ class ProjectsController extends Controller
 
         return Inertia::render('Projects/CreateTasks', [
             'projectData' => [
+                'title' => $suggestedTitle,
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'],
             ],
@@ -266,6 +280,7 @@ class ProjectsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'tasks' => 'nullable|array',
@@ -279,9 +294,31 @@ class ProjectsController extends Controller
         try {
             \DB::beginTransaction();
 
+            // Generate title via AI if not provided
+            $projectTitle = $validated['title'];
+            if (empty($projectTitle)) {
+                try {
+                    $aiResponse = AI::generateTasks($validated['description'], []);
+                    if ($aiResponse->isSuccessful() && $aiResponse->getProjectTitle()) {
+                        $projectTitle = $aiResponse->getProjectTitle();
+                        \Log::info('AI generated project title', ['title' => $projectTitle]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to generate AI title, using fallback', ['error' => $e->getMessage()]);
+                }
+
+                // Generate simple fallback title if AI didn't provide one
+                if (empty($projectTitle)) {
+                    $words = str_word_count($validated['description'], 1);
+                    $projectTitle = implode(' ', array_slice($words, 0, 3)) . ' Project';
+                    \Log::info('Using fallback project title', ['title' => $projectTitle]);
+                }
+            }
+
             // Create the project in the database
             $project = Project::create([
                 'user_id' => auth()->id(),
+                'title' => $projectTitle,
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
                 'status' => 'active',

@@ -10,6 +10,7 @@ import type { BreadcrumbItem } from '@/types';
 
 interface Project {
     id: number;
+    title?: string;
     description: string;
     due_date?: string;
     tasks: Task[];
@@ -84,7 +85,8 @@ const getStatusIcon = (status: string) => {
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <Folder class="h-5 w-5 text-green-600" />
-                                Project #{{ newProject.id }}
+                                <span>{{ newProject.title || 'Untitled Project' }}</span>
+                                <span v-if="!newProject.title" class="text-xs text-gray-400 font-normal">#{{ newProject.id }}</span>
                             </CardTitle>
                             <CardDescription>{{ newProject.description }}</CardDescription>
                             <div v-if="newProject.due_date" class="flex items-center gap-2 text-sm text-gray-600 mt-2">
@@ -127,7 +129,8 @@ const getStatusIcon = (status: string) => {
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <Folder class="h-5 w-5" />
-                                Project #{{ project.id }}
+                                <span>{{ project.title || 'Untitled Project' }}</span>
+                                <span v-if="!project.title" class="text-xs text-gray-400 font-normal">#{{ project.id }}</span>
                             </CardTitle>
                             <CardDescription>{{ project.description }}</CardDescription>
                         </CardHeader>

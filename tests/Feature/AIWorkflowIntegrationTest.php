@@ -72,6 +72,7 @@ class AIWorkflowIntegrationTest extends TestCase
         // Step 2: User creates the project with tasks
         $projectResponse = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
+                'title' => 'E-Commerce Platform',
                 'description' => 'Build a comprehensive e-commerce platform',
                 'due_date' => '2026-06-30',
                 'tasks' => [
@@ -110,7 +111,7 @@ class AIWorkflowIntegrationTest extends TestCase
     {
         // Mock AI failure
         $failedResponse = AITaskResponse::failed('API connection failed');
-        
+
         $this->mock(AIManager::class, function ($mock) use ($failedResponse) {
             $mock->shouldReceive('generateTasks')
                 ->andReturn($failedResponse);
@@ -134,6 +135,7 @@ class AIWorkflowIntegrationTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
+                'title' => 'Simple Project',
                 'description' => 'Simple project with no tasks',
                 'due_date' => '2025-12-31',
                 'tasks' => [],

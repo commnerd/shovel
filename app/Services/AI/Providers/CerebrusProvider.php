@@ -84,6 +84,7 @@ class CerebrusProvider implements AIProviderInterface
             // Return fallback response
             return AITaskResponse::success(
                 tasks: $this->createFallbackTasks($projectDescription),
+                projectTitle: $this->generateFallbackTitle($projectDescription),
                 notes: ['AI service unavailable, using fallback tasks'],
                 problems: ['Could not connect to AI service: ' . $e->getMessage()],
                 rawResponse: null
@@ -290,8 +291,9 @@ class CerebrusProvider implements AIProviderInterface
                 throw new \InvalidArgumentException('Response content is not valid JSON: ' . json_last_error_msg());
             }
 
-            // Extract tasks and communication
+            // Extract tasks, title, and communication
             $tasks = $data['tasks'] ?? [];
+            $projectTitle = $data['project_title'] ?? null;
             $summary = $data['summary'] ?? null;
             $notes = $data['notes'] ?? [];
             $problems = $data['problems'] ?? [];
@@ -315,6 +317,7 @@ class CerebrusProvider implements AIProviderInterface
 
             return AITaskResponse::success(
                 tasks: $validatedTasks,
+                projectTitle: $projectTitle,
                 notes: $notes,
                 summary: $summary,
                 problems: $problems,
@@ -330,6 +333,7 @@ class CerebrusProvider implements AIProviderInterface
 
             return AITaskResponse::success(
                 tasks: $this->createFallbackTasks($projectDescription),
+                projectTitle: $this->generateFallbackTitle($projectDescription),
                 notes: ['AI response was not in expected JSON format'],
                 problems: [
                     'Could not parse AI response: ' . $e->getMessage(),
@@ -371,6 +375,27 @@ class CerebrusProvider implements AIProviderInterface
         }
 
         return $validatedTasks;
+    }
+
+    /**
+     * Generate a fallback title based on project description.
+     */
+    protected function generateFallbackTitle(string $projectDescription): string
+    {
+        // Extract key words from description and create a simple title
+        $words = str_word_count($projectDescription, 1);
+        $keywords = array_slice($words, 0, 4); // Take first 4 words
+
+        // Clean and capitalize
+        $title = implode(' ', array_map('ucfirst', array_map('strtolower', $keywords)));
+
+        // Add "Project" if it doesn't seem to be included
+        if (!str_contains(strtolower($title), 'project') && !str_contains(strtolower($title), 'app') && !str_contains(strtolower($title), 'system')) {
+            $title .= ' Project';
+        }
+
+        // Limit length
+        return substr($title, 0, 50);
     }
 
     /**

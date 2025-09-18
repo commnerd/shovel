@@ -54,7 +54,7 @@ class AITaskGenerationTest extends TestCase
                 'priority' => 'medium',
                 'status' => 'pending',
             ],
-        ]);
+        ], 'Task Management System');
 
         $aiManager->shouldReceive('generateTasks')
             ->with('Build a task management app with Vue.js and Laravel', [])
@@ -68,6 +68,7 @@ class AITaskGenerationTest extends TestCase
         $this->assertInstanceOf(\App\Services\AI\Contracts\AITaskResponse::class, $response);
         $this->assertTrue($response->isSuccessful());
         $this->assertCount(3, $response->getTasks());
+        $this->assertEquals('Task Management System', $response->getProjectTitle());
         $this->assertEquals('Setup Development Environment', $response->getTasks()[0]['title']);
         $this->assertEquals('high', $response->getTasks()[0]['priority']);
         $this->assertEquals('pending', $response->getTasks()[0]['status']);

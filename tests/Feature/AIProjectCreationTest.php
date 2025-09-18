@@ -116,6 +116,7 @@ class AIProjectCreationTest extends TestCase
     public function test_user_can_create_project_with_ai_generated_tasks()
     {
         $projectData = [
+            'title' => 'Mobile App Project',
             'description' => 'Build a mobile application',
             'due_date' => '2025-12-31',
             'tasks' => [
@@ -195,6 +196,7 @@ class AIProjectCreationTest extends TestCase
     public function test_user_can_create_project_without_tasks()
     {
         $projectData = [
+            'title' => 'Simple Project',
             'description' => 'Simple project without tasks',
             'due_date' => '2025-12-31',
             'tasks' => [],
@@ -221,6 +223,7 @@ class AIProjectCreationTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
+                'title' => 'Test Project',
                 'description' => '', // Empty description
                 'due_date' => '2025-12-31',
                 'tasks' => [],
@@ -231,6 +234,7 @@ class AIProjectCreationTest extends TestCase
         // Test invalid due date
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
+                'title' => 'Test Project',
                 'description' => 'Valid project description',
                 'due_date' => '2020-01-01', // Past date
                 'tasks' => [],
@@ -291,6 +295,7 @@ class AIProjectCreationTest extends TestCase
     public function test_project_creation_requires_authentication()
     {
         $response = $this->post('/dashboard/projects', [
+            'title' => 'Test Project',
             'description' => 'Test project',
             'tasks' => [],
         ]);

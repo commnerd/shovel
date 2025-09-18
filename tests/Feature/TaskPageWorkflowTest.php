@@ -162,6 +162,7 @@ class TaskPageWorkflowTest extends TestCase
     public function test_project_creation_from_task_page_works()
     {
         $projectData = [
+            'title' => 'Task Page Project',
             'description' => 'Test project from task page',
             'due_date' => '2025-12-31',
             'tasks' => [

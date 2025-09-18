@@ -6,6 +6,7 @@ class AITaskResponse
 {
     public function __construct(
         public readonly array $tasks,
+        public readonly ?string $projectTitle = null,
         public readonly array $notes = [],
         public readonly ?string $summary = null,
         public readonly array $problems = [],
@@ -21,6 +22,14 @@ class AITaskResponse
     public function getTasks(): array
     {
         return $this->tasks;
+    }
+
+    /**
+     * Get the generated project title.
+     */
+    public function getProjectTitle(): ?string
+    {
+        return $this->projectTitle;
     }
 
     /**
@@ -115,6 +124,7 @@ class AITaskResponse
     {
         return [
             'success' => $this->success,
+            'project_title' => $this->projectTitle,
             'tasks' => $this->tasks,
             'task_count' => $this->getTaskCount(),
             'communication' => $this->getCommunication(),
@@ -129,6 +139,7 @@ class AITaskResponse
      */
     public static function success(
         array $tasks,
+        ?string $projectTitle = null,
         array|string $notes = [],
         ?string $summary = null,
         array|string $problems = [],
@@ -142,6 +153,7 @@ class AITaskResponse
 
         return new self(
             tasks: $tasks,
+            projectTitle: $projectTitle,
             notes: $notesArray,
             summary: $summary,
             problems: $problemsArray,
@@ -158,6 +170,7 @@ class AITaskResponse
     {
         return new self(
             tasks: [],
+            projectTitle: null,
             rawResponse: $rawResponse,
             success: false,
             error: $error

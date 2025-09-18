@@ -58,6 +58,7 @@ class TasksController extends Controller
         return Inertia::render('Projects/Tasks/Index', [
             'project' => [
                 'id' => $project->id,
+                'title' => $project->title,
                 'description' => $project->description,
                 'due_date' => $project->due_date?->format('Y-m-d'),
                 'status' => $project->status,
@@ -93,6 +94,7 @@ class TasksController extends Controller
         return Inertia::render('Projects/Tasks/Create', [
             'project' => [
                 'id' => $project->id,
+                'title' => $project->title,
                 'description' => $project->description,
             ],
             'parentTasks' => $parentTasks,
@@ -170,6 +172,7 @@ class TasksController extends Controller
         return Inertia::render('Projects/Tasks/Edit', [
             'project' => [
                 'id' => $project->id,
+                'title' => $project->title,
                 'description' => $project->description,
             ],
             'task' => [

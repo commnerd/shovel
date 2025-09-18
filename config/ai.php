@@ -121,12 +121,13 @@ return [
     'prompts' => [
 
         'task_generation' => [
-            'system' => 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions and create comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.',
-            'user' => 'Based on this project description: "{description}", create a detailed task breakdown. Include main tasks and subtasks where appropriate. Consider setup, development, testing, and deployment phases.
+            'system' => 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions, create compelling project titles, and generate comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.',
+            'user' => 'Based on this project description: "{description}", create a compelling project title and detailed task breakdown. Include main tasks and subtasks where appropriate. Consider setup, development, testing, and deployment phases.
 
 CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
 
 {
+  "project_title": "E-Commerce Platform Development",
   "tasks": [
     {
       "title": "Setup Development Environment",
@@ -150,6 +151,7 @@ CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
 }
 
 Rules:
+- project_title should be concise, professional, and capture the essence of the project (3-8 words)
 - priority must be exactly "high", "medium", or "low"
 - status must be exactly "pending", "in_progress", or "completed"
 - Include 3-8 tasks maximum

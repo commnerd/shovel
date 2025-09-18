@@ -25,6 +25,7 @@ export interface TaskSuggestion {
 }
 
 const form = useForm({
+    title: '',
     description: '',
     due_date: '',
 });
@@ -40,6 +41,7 @@ const generateTasks = () => {
     router.visit('/dashboard/projects/create/tasks', {
         method: 'post',
         data: {
+            title: form.title,
             description: form.description,
             due_date: form.due_date,
         },
@@ -75,6 +77,23 @@ const handleKeydown = (event: KeyboardEvent) => {
 
         <form @submit.prevent="generateTasks">
             <CardContent class="space-y-4">
+                <div class="space-y-2">
+                    <Label for="title">Project Title (Optional)</Label>
+                    <Input
+                        id="title"
+                        v-model="form.title"
+                        type="text"
+                        placeholder="e.g., Task Management System"
+                        :disabled="form.processing || isGeneratingTasks"
+                        class="w-full"
+                        data-testid="project-title"
+                    />
+                    <InputError :message="form.errors.title" />
+                    <p class="text-xs text-gray-500">
+                        Leave empty to let AI generate a title for you
+                    </p>
+                </div>
+
                 <div class="space-y-2">
                     <Label for="description">Project Description</Label>
                     <textarea

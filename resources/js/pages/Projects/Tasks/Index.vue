@@ -101,14 +101,14 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard/projects',
     },
     {
-        title: `Project #${project.value.id}`,
+        title: project.value.title || 'Untitled Project',
         href: `/dashboard/projects/${project.value.id}/tasks`,
     },
 ];
 </script>
 
 <template>
-    <Head :title="`Tasks - Project #${project.id}`" />
+    <Head :title="`Tasks - ${project.title || 'Untitled Project'}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">

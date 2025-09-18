@@ -36,7 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard/projects',
     },
     {
-        title: `Project #${props.project.id}`,
+        title: props.project.title || 'Untitled Project',
         href: `/dashboard/projects/${props.project.id}/tasks`,
     },
     {
