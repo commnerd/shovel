@@ -84,6 +84,7 @@ jobs:
             --name foca-app \
             --restart unless-stopped \
             --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
+            --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
 
           # Wait for container to be ready
