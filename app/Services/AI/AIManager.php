@@ -70,11 +70,11 @@ class AIManager extends Manager
     /**
      * Generate tasks using the specified or default provider.
      */
-    public function generateTasks(string $projectDescription, array $options = []): array
+    public function generateTasks(string $projectDescription, array $schema = [], array $options = []): \App\Services\AI\Contracts\AITaskResponse
     {
         $provider = $options['provider'] ?? null;
 
-        return $this->provider($provider)->generateTasks($projectDescription, $options);
+        return $this->provider($provider)->generateTasks($projectDescription, $schema, $options);
     }
 
     /**

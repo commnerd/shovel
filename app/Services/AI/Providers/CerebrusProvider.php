@@ -4,6 +4,7 @@ namespace App\Services\AI\Providers;
 
 use App\Services\AI\Contracts\AIProviderInterface;
 use App\Services\AI\Contracts\AIResponse;
+use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -53,24 +54,40 @@ class CerebrusProvider implements AIProviderInterface
     }
 
     /**
-     * Generate tasks based on a project description.
+     * Generate tasks based on a project description with schema validation.
      */
-    public function generateTasks(string $projectDescription, array $options = []): array
+    public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse
     {
         $prompts = config('ai.prompts.task_generation');
 
+        // Build enhanced prompt with schema
+        $systemPrompt = $prompts['system'] . "\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
+        $userPrompt = str_replace('{description}', $projectDescription, $prompts['user']);
+
         $messages = [
-            ['role' => 'system', 'content' => $prompts['system']],
-            ['role' => 'user', 'content' => str_replace('{description}', $projectDescription, $prompts['user'])],
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt],
         ];
 
-        $response = $this->chat($messages, $options);
-
         try {
-            return $response->parseJson();
-        } catch (\InvalidArgumentException $e) {
-            // If JSON parsing fails, return a fallback structure
-            return $this->createFallbackTasks($projectDescription);
+            // Add JSON-specific options for better structured output
+            $jsonOptions = array_merge($options, [
+                'temperature' => 0.3, // Lower temperature for more consistent JSON
+                'max_tokens' => min($options['max_tokens'] ?? 2000, 2000), // Reasonable limit for JSON
+            ]);
+
+            $response = $this->chat($messages, $jsonOptions);
+            return $this->parseTaskResponse($response, $projectDescription);
+        } catch (\Exception $e) {
+            $this->logError('generateTasks', $e->getMessage());
+
+            // Return fallback response
+            return AITaskResponse::success(
+                tasks: $this->createFallbackTasks($projectDescription),
+                notes: ['AI service unavailable, using fallback tasks'],
+                problems: ['Could not connect to AI service: ' . $e->getMessage()],
+                rawResponse: null
+            );
         }
     }
 
@@ -204,6 +221,156 @@ class CerebrusProvider implements AIProviderInterface
             'operation' => $operation,
             'error' => $error,
         ]);
+    }
+
+    /**
+     * Clean AI response content to extract JSON from potential markdown or formatting.
+     */
+    protected function cleanResponseContent(string $content): string
+    {
+        // Remove markdown code blocks if present
+        $content = preg_replace('/```json\s*\n?/', '', $content);
+        $content = preg_replace('/```\s*$/', '', $content);
+
+        // Remove any leading/trailing whitespace
+        $content = trim($content);
+
+        // If content starts with explanatory text before JSON, try to extract just the JSON
+        if (!str_starts_with($content, '{')) {
+            // Look for the first { and take everything from there
+            $jsonStart = strpos($content, '{');
+            if ($jsonStart !== false) {
+                $content = substr($content, $jsonStart);
+            }
+        }
+
+        // If content ends with explanatory text after JSON, try to extract just the JSON
+        if (!str_ends_with(rtrim($content), '}')) {
+            // Look for the last } and take everything up to there
+            $jsonEnd = strrpos($content, '}');
+            if ($jsonEnd !== false) {
+                $content = substr($content, 0, $jsonEnd + 1);
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * Build system prompt with schema information.
+     */
+    protected function buildSystemPromptWithSchema(string $basePrompt, array $schema): string
+    {
+        $enhancedPrompt = $basePrompt;
+
+        if (!empty($schema)) {
+            $enhancedPrompt .= "\n\nYou must respond with a valid JSON object that includes:";
+            $enhancedPrompt .= "\n- 'tasks': An array of task objects following the provided schema";
+            $enhancedPrompt .= "\n- 'summary': A brief summary of your analysis and approach";
+            $enhancedPrompt .= "\n- 'notes': Any important observations or clarifications";
+            $enhancedPrompt .= "\n- 'problems': Any issues or concerns you identify with the project description";
+            $enhancedPrompt .= "\n- 'suggestions': Recommendations for improving the project or task breakdown";
+            $enhancedPrompt .= "\n\nBe thorough in your analysis and provide valuable insights in the communication fields.";
+        }
+
+        return $enhancedPrompt;
+    }
+
+    /**
+     * Parse AI response into structured task response.
+     */
+    protected function parseTaskResponse(AIResponse $response, string $projectDescription): AITaskResponse
+    {
+        try {
+            // Clean the response content first
+            $content = $this->cleanResponseContent($response->getContent());
+
+            $data = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \InvalidArgumentException('Response content is not valid JSON: ' . json_last_error_msg());
+            }
+
+            // Extract tasks and communication
+            $tasks = $data['tasks'] ?? [];
+            $summary = $data['summary'] ?? null;
+            $notes = $data['notes'] ?? [];
+            $problems = $data['problems'] ?? [];
+            $suggestions = $data['suggestions'] ?? [];
+
+            // Ensure notes is an array
+            if (is_string($notes)) {
+                $notes = [$notes];
+            }
+
+            // Ensure problems and suggestions are arrays
+            if (is_string($problems)) {
+                $problems = [$problems];
+            }
+            if (is_string($suggestions)) {
+                $suggestions = [$suggestions];
+            }
+
+            // Validate tasks structure
+            $validatedTasks = $this->validateTasks($tasks);
+
+            return AITaskResponse::success(
+                tasks: $validatedTasks,
+                notes: $notes,
+                summary: $summary,
+                problems: $problems,
+                suggestions: $suggestions,
+                rawResponse: $response
+            );
+
+        } catch (\InvalidArgumentException $e) {
+            // If JSON parsing fails, log the actual response for debugging
+            $content = $response->getContent();
+
+            $this->logError('parseTaskResponse', 'JSON parsing failed. Response content: ' . substr($content, 0, 500) . '...');
+
+            return AITaskResponse::success(
+                tasks: $this->createFallbackTasks($projectDescription),
+                notes: ['AI response was not in expected JSON format'],
+                problems: [
+                    'Could not parse AI response: ' . $e->getMessage(),
+                    'AI returned: ' . substr($content, 0, 200) . '...'
+                ],
+                suggestions: [
+                    'The AI model may need clearer instructions about JSON format',
+                    'Consider using a different model or adjusting the prompt'
+                ],
+                rawResponse: $response
+            );
+        }
+    }
+
+    /**
+     * Validate and clean task structure.
+     */
+    protected function validateTasks(array $tasks): array
+    {
+        $validatedTasks = [];
+
+        foreach ($tasks as $task) {
+            if (is_array($task) && isset($task['title'])) {
+                $priority = $task['priority'] ?? 'medium';
+                $status = $task['status'] ?? 'pending';
+
+                $validatedTasks[] = [
+                    'title' => $task['title'] ?? 'Untitled Task',
+                    'description' => $task['description'] ?? '',
+                    'priority' => in_array($priority, ['low', 'medium', 'high'])
+                        ? $priority
+                        : 'medium',
+                    'status' => in_array($status, ['pending', 'in_progress', 'completed'])
+                        ? $status
+                        : 'pending',
+                    'subtasks' => $task['subtasks'] ?? []
+                ];
+            }
+        }
+
+        return $validatedTasks;
     }
 
     /**

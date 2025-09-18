@@ -39,22 +39,24 @@ class TaskPageWorkflowTest extends TestCase
     {
         // Mock AI service
         $mockAI = Mockery::mock(AIManager::class);
+        $mockTaskResponse = \App\Services\AI\Contracts\AITaskResponse::success([
+            [
+                'title' => 'Setup Development Environment',
+                'description' => 'Configure development tools',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+            [
+                'title' => 'Design Database Schema',
+                'description' => 'Create database structure',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+        ]);
+
         $mockAI->shouldReceive('generateTasks')
-            ->with('Build a web application')
-            ->andReturn([
-                [
-                    'title' => 'Setup Development Environment',
-                    'description' => 'Configure development tools',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-                [
-                    'title' => 'Design Database Schema',
-                    'description' => 'Create database structure',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-            ]);
+            ->with('Build a web application', Mockery::type('array'))
+            ->andReturn($mockTaskResponse);
 
         $this->app->instance(AIManager::class, $mockAI);
 
@@ -126,17 +128,19 @@ class TaskPageWorkflowTest extends TestCase
     public function test_task_page_handles_regeneration()
     {
         $mockAI = Mockery::mock(AIManager::class);
+        $mockTaskResponse = \App\Services\AI\Contracts\AITaskResponse::success([
+            [
+                'title' => 'Mobile App Setup',
+                'description' => 'Initialize mobile development environment',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+        ]);
+
         $mockAI->shouldReceive('generateTasks')
             ->times(1)
-            ->with('Build a mobile app')
-            ->andReturn([
-                [
-                    'title' => 'Mobile App Setup',
-                    'description' => 'Initialize mobile development environment',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-            ]);
+            ->with('Build a mobile app', Mockery::type('array'))
+            ->andReturn($mockTaskResponse);
 
         $this->app->instance(AIManager::class, $mockAI);
 
@@ -194,15 +198,18 @@ class TaskPageWorkflowTest extends TestCase
     public function test_task_page_preserves_project_data()
     {
         $mockAI = Mockery::mock(AIManager::class);
+        $mockTaskResponse = \App\Services\AI\Contracts\AITaskResponse::success([
+            [
+                'title' => 'Generated Task',
+                'description' => 'AI generated task',
+                'priority' => 'medium',
+                'status' => 'pending',
+            ],
+        ]);
+
         $mockAI->shouldReceive('generateTasks')
-            ->andReturn([
-                [
-                    'title' => 'Generated Task',
-                    'description' => 'AI generated task',
-                    'priority' => 'medium',
-                    'status' => 'pending',
-                ],
-            ]);
+            ->with('Complex project with detailed requirements', Mockery::type('array'))
+            ->andReturn($mockTaskResponse);
 
         $this->app->instance(AIManager::class, $mockAI);
 

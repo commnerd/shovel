@@ -67,13 +67,36 @@ class BuildProcessTest extends TestCase
             $this->markTestSkipped('Node.js not available for TypeScript testing');
         }
 
-        // Run TypeScript check (skip if tsc is not available)
+        // Run TypeScript check
         $result = Process::timeout(60)->run('yarn run tsc --noEmit');
 
-        // TypeScript check may fail if tsc is not properly configured, so we'll be more lenient
-        if ($result->exitCode() !== 0) {
-            $this->markTestSkipped('TypeScript compilation check failed, but build succeeded: ' . $result->errorOutput());
-        }
+        // Assert that TypeScript compilation succeeds
+        $this->assertEquals(0, $result->exitCode(),
+            'TypeScript compilation should succeed. Error output: ' . $result->errorOutput());
+
+        // Assert that there's no error output
+        $this->assertEmpty($result->errorOutput(),
+            'TypeScript compilation should not produce errors');
+
+        // Assert that the command completed successfully
+        $this->assertTrue($result->successful(),
+            'TypeScript check command should complete successfully');
+
+        // Verify that Vue SFC type declarations exist
+        $this->assertFileExists(base_path('resources/js/types/vue-shims.d.ts'),
+            'Vue SFC type declarations should exist');
+
+        // Verify that tsconfig.json exists and contains expected content
+        $this->assertFileExists(base_path('tsconfig.json'),
+            'TypeScript configuration file should exist');
+
+        $tsConfigContent = File::get(base_path('tsconfig.json'));
+        $this->assertStringContainsString('compilerOptions', $tsConfigContent,
+            'tsconfig.json should have compilerOptions');
+        $this->assertStringContainsString('include', $tsConfigContent,
+            'tsconfig.json should specify included files');
+        $this->assertStringContainsString('resources/js', $tsConfigContent,
+            'tsconfig.json should include resources/js directory');
     }
 
     /**
@@ -87,10 +110,10 @@ class BuildProcessTest extends TestCase
 
         // Test that specific Vue components we created exist and are valid
         $componentPaths = [
-            'resources/js/components/TaskConfirmationDialog.vue',
             'resources/js/components/ui/badge/Badge.vue',
             'resources/js/components/ui/scroll-area/ScrollArea.vue',
             'resources/js/pages/Projects/CreateProjectForm.vue',
+            'resources/js/pages/Projects/CreateTasks.vue',
         ];
 
         foreach ($componentPaths as $componentPath) {
@@ -188,15 +211,15 @@ class BuildProcessTest extends TestCase
 
         // Check that AI-related components exist and have proper structure
         $aiComponents = [
-            'resources/js/components/TaskConfirmationDialog.vue' => [
+            'resources/js/pages/Projects/CreateTasks.vue' => [
                 'TaskSuggestion',
-                'editableTasks',
-                'emit(\'confirm\''
+                'AICommunication',
+                'aiCommunication'
             ],
             'resources/js/pages/Projects/CreateProjectForm.vue' => [
                 'const generateTasks',
-                'TaskConfirmationDialog',
-                'axios.post'
+                'router.visit',
+                '/dashboard/projects/create/tasks'
             ]
         ];
 

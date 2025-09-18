@@ -35,39 +35,42 @@ class AITaskGenerationTest extends TestCase
     {
         // Mock the AI manager
         $aiManager = Mockery::mock(AIManager::class);
+        $mockResponse = \App\Services\AI\Contracts\AITaskResponse::success([
+            [
+                'title' => 'Setup Development Environment',
+                'description' => 'Configure development tools and dependencies',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+            [
+                'title' => 'Design Database Schema',
+                'description' => 'Create database tables and relationships',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+            [
+                'title' => 'Implement Authentication',
+                'description' => 'Add user registration and login functionality',
+                'priority' => 'medium',
+                'status' => 'pending',
+            ],
+        ]);
+
         $aiManager->shouldReceive('generateTasks')
             ->with('Build a task management app with Vue.js and Laravel', [])
             ->once()
-            ->andReturn([
-                [
-                    'title' => 'Setup Development Environment',
-                    'description' => 'Configure development tools and dependencies',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-                [
-                    'title' => 'Design Database Schema',
-                    'description' => 'Create database tables and relationships',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-                [
-                    'title' => 'Implement Authentication',
-                    'description' => 'Add user registration and login functionality',
-                    'priority' => 'medium',
-                    'status' => 'pending',
-                ],
-            ]);
+            ->andReturn($mockResponse);
 
         $this->app->instance(AIManager::class, $aiManager);
 
-        $tasks = $aiManager->generateTasks('Build a task management app with Vue.js and Laravel', []);
+        $response = $aiManager->generateTasks('Build a task management app with Vue.js and Laravel', []);
 
-        $this->assertIsArray($tasks);
-        $this->assertCount(3, $tasks);
-        $this->assertEquals('Setup Development Environment', $tasks[0]['title']);
-        $this->assertEquals('high', $tasks[0]['priority']);
-        $this->assertEquals('pending', $tasks[0]['status']);
+        $this->assertInstanceOf(\App\Services\AI\Contracts\AITaskResponse::class, $response);
+        $this->assertTrue($response->isSuccessful());
+        $this->assertCount(3, $response->getTasks());
+        $this->assertEquals('Setup Development Environment', $response->getTasks()[0]['title']);
+        $this->assertEquals('high', $response->getTasks()[0]['priority']);
+        $this->assertEquals('pending', $response->getTasks()[0]['status']);
     }
 
     public function test_cerebrus_provider_can_create_fallback_tasks()

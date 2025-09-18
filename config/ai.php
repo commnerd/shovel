@@ -31,8 +31,8 @@ return [
         'cerebrus' => [
             'driver' => 'cerebrus',
             'api_key' => env('CEREBRUS_API_KEY'),
-            'base_url' => env('CEREBRUS_BASE_URL', 'https://api.cerebrus.ai'),
-            'model' => env('CEREBRUS_DEFAULT_MODEL', 'gpt-4'),
+            'base_url' => env('CEREBRUS_BASE_URL', 'https://api.cerebras.ai/v1'),
+            'model' => env('CEREBRUS_DEFAULT_MODEL', 'llama-4-scout-17b-16e-instruct'),
             'timeout' => env('CEREBRUS_TIMEOUT', 30),
             'max_tokens' => env('CEREBRUS_MAX_TOKENS', 4000),
             'temperature' => env('CEREBRUS_TEMPERATURE', 0.7),
@@ -121,8 +121,40 @@ return [
     'prompts' => [
 
         'task_generation' => [
-            'system' => 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions and create comprehensive, actionable task lists.',
-            'user' => 'Based on this project description: "{description}", create a detailed task breakdown. Include main tasks and subtasks where appropriate. Consider setup, development, testing, and deployment phases. Return the response as a JSON array of tasks with the following structure: [{"title": "Task Title", "description": "Detailed description", "priority": "high|medium|low", "status": "pending", "subtasks": []}]',
+            'system' => 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions and create comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.',
+            'user' => 'Based on this project description: "{description}", create a detailed task breakdown. Include main tasks and subtasks where appropriate. Consider setup, development, testing, and deployment phases.
+
+CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
+
+{
+  "tasks": [
+    {
+      "title": "Setup Development Environment",
+      "description": "Install and configure development tools, dependencies, and local environment",
+      "priority": "high",
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "title": "Design Database Schema",
+      "description": "Create database tables, relationships, and migrations",
+      "priority": "high",
+      "status": "pending",
+      "subtasks": []
+    }
+  ],
+  "summary": "This project requires careful planning with focus on scalable architecture",
+  "notes": ["Consider using modern frameworks", "Plan for mobile responsiveness"],
+  "problems": ["Timeline might be tight", "Requirements need clarification"],
+  "suggestions": ["Break into smaller milestones", "Add buffer time for testing"]
+}
+
+Rules:
+- priority must be exactly "high", "medium", or "low"
+- status must be exactly "pending", "in_progress", or "completed"
+- Include 3-8 tasks maximum
+- Provide helpful summary, notes, problems, and suggestions
+- Respond with ONLY the JSON object - no other text',
         ],
 
         'project_analysis' => [

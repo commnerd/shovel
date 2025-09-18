@@ -14,13 +14,14 @@ interface AIProviderInterface
     public function chat(array $messages, array $options = []): AIResponse;
 
     /**
-     * Generate tasks based on a project description.
+     * Generate tasks based on a project description with schema validation.
      *
      * @param string $projectDescription
+     * @param array $schema The expected JSON schema for the response
      * @param array $options
-     * @return array
+     * @return AITaskResponse
      */
-    public function generateTasks(string $projectDescription, array $options = []): array;
+    public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse;
 
     /**
      * Analyze a project and provide insights.

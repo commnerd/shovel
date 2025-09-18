@@ -110,7 +110,7 @@ class AIWorkflowIntegrationTest extends TestCase
     {
         // Mock AI failure
         $failedResponse = AITaskResponse::failed('API connection failed');
-        
+
         $this->mock(AIManager::class, function ($mock) use ($failedResponse) {
             $mock->shouldReceive('generateTasks')
                 ->andReturn($failedResponse);

@@ -40,63 +40,52 @@ class AIProjectCreationTest extends TestCase
     {
         // Mock AI service to return predictable tasks
         $mockAI = Mockery::mock(AIManager::class);
+        $mockTaskResponse = \App\Services\AI\Contracts\AITaskResponse::success([
+            [
+                'title' => 'Setup Development Environment',
+                'description' => 'Configure development tools and dependencies',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+            [
+                'title' => 'Design Database Schema',
+                'description' => 'Create database tables and relationships',
+                'priority' => 'high',
+                'status' => 'pending',
+            ],
+            [
+                'title' => 'Implement Authentication',
+                'description' => 'Add user registration and login functionality',
+                'priority' => 'medium',
+                'status' => 'pending',
+            ],
+        ]);
+
         $mockAI->shouldReceive('generateTasks')
-            ->with('Build a task management app with Vue.js and Laravel')
-            ->andReturn([
-                [
-                    'title' => 'Setup Development Environment',
-                    'description' => 'Configure development tools and dependencies',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-                [
-                    'title' => 'Design Database Schema',
-                    'description' => 'Create database tables and relationships',
-                    'priority' => 'high',
-                    'status' => 'pending',
-                ],
-                [
-                    'title' => 'Implement Authentication',
-                    'description' => 'Add user registration and login functionality',
-                    'priority' => 'medium',
-                    'status' => 'pending',
-                ],
-            ]);
+            ->with('Build a task management app with Vue.js and Laravel', Mockery::type('array'))
+            ->andReturn($mockTaskResponse);
 
         $this->app->instance(AIManager::class, $mockAI);
 
         $response = $this->actingAs($this->user)
-            ->postJson('/dashboard/projects/generate-tasks', [
+            ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a task management app with Vue.js and Laravel',
                 'due_date' => '2025-12-31',
             ]);
 
         $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'project_data' => [
-                    'description' => 'Build a task management app with Vue.js and Laravel',
-                    'due_date' => '2025-12-31',
-                ],
-            ])
-            ->assertJsonStructure([
-                'success',
-                'suggested_tasks' => [
-                    '*' => [
-                        'title',
-                        'description',
-                        'priority',
-                        'status',
-                        'sort_order',
-                    ]
-                ],
-                'project_data',
-            ]);
-
-        $responseData = $response->json();
-        $this->assertCount(3, $responseData['suggested_tasks']);
-        $this->assertEquals('Setup Development Environment', $responseData['suggested_tasks'][0]['title']);
-        $this->assertEquals('high', $responseData['suggested_tasks'][0]['priority']);
+            ->assertInertia(fn ($page) => $page
+                ->component('Projects/CreateTasks')
+                ->has('projectData')
+                ->has('suggestedTasks')
+                ->where('projectData.description', 'Build a task management app with Vue.js and Laravel')
+                ->where('projectData.due_date', '2025-12-31')
+                ->where('aiUsed', true)
+                ->whereType('suggestedTasks', 'array')
+                ->has('suggestedTasks', 3)
+                ->where('suggestedTasks.0.title', 'Setup Development Environment')
+                ->where('suggestedTasks.0.priority', 'high')
+            );
     }
 
     public function test_task_generation_handles_ai_failure_gracefully()
@@ -109,25 +98,19 @@ class AIProjectCreationTest extends TestCase
         $this->app->instance(AIManager::class, $mockAI);
 
         $response = $this->actingAs($this->user)
-            ->postJson('/dashboard/projects/generate-tasks', [
+            ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
             ]);
 
         $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-            ]);
-
-        // Should return fallback tasks
-        $responseData = $response->json();
-        $this->assertArrayHasKey('suggested_tasks', $responseData);
-        $this->assertGreaterThan(0, count($responseData['suggested_tasks']));
-
-        // Check fallback task structure
-        $fallbackTask = $responseData['suggested_tasks'][0];
-        $this->assertEquals('Project Setup & Planning', $fallbackTask['title']);
-        $this->assertStringContainsString('Build a web application', $fallbackTask['description']);
+            ->assertInertia(fn ($page) => $page
+                ->component('Projects/CreateTasks')
+                ->has('suggestedTasks')
+                ->where('aiUsed', false) // Should be false when AI fails
+                ->whereType('suggestedTasks', 'array')
+                ->where('suggestedTasks.0.title', 'Project Setup & Planning')
+            );
     }
 
     public function test_user_can_create_project_with_ai_generated_tasks()
@@ -298,11 +281,11 @@ class AIProjectCreationTest extends TestCase
 
     public function test_task_generation_requires_authentication()
     {
-        $response = $this->postJson('/dashboard/projects/generate-tasks', [
+        $response = $this->post('/dashboard/projects/create/tasks', [
             'description' => 'Test project',
         ]);
 
-        $response->assertStatus(401); // Unauthorized
+        $response->assertStatus(302); // Redirect to login
     }
 
     public function test_project_creation_requires_authentication()
@@ -318,22 +301,22 @@ class AIProjectCreationTest extends TestCase
     public function test_task_generation_validates_input()
     {
         $response = $this->actingAs($this->user)
-            ->postJson('/dashboard/projects/generate-tasks', [
+            ->post('/dashboard/projects/create/tasks', [
                 'description' => '', // Empty description
             ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['description']);
+        $response->assertStatus(302) // Redirect back with errors
+            ->assertSessionHasErrors(['description']);
 
         // Test with very long description
         $longDescription = str_repeat('a', 1001);
         $response = $this->actingAs($this->user)
-            ->postJson('/dashboard/projects/generate-tasks', [
+            ->post('/dashboard/projects/create/tasks', [
                 'description' => $longDescription,
             ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['description']);
+        $response->assertStatus(302) // Redirect back with errors
+            ->assertSessionHasErrors(['description']);
     }
 
     public function test_database_transaction_rollback_on_task_creation_failure()

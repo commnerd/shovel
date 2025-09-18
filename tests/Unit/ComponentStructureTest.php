@@ -176,39 +176,39 @@ class ComponentStructureTest extends TestCase
     }
 
     /**
-     * Test that TaskConfirmationDialog component has proper TypeScript structure.
+     * Test that CreateTasks page has proper TypeScript structure.
      */
-    public function test_task_confirmation_dialog_typescript_structure()
+    public function test_create_tasks_page_typescript_structure()
     {
-        $dialogPath = base_path('resources/js/components/TaskConfirmationDialog.vue');
-        $this->assertFileExists($dialogPath, 'TaskConfirmationDialog component should exist');
+        $createTasksPath = base_path('resources/js/pages/Projects/CreateTasks.vue');
+        $this->assertFileExists($createTasksPath, 'CreateTasks page should exist');
 
-        $content = File::get($dialogPath);
+        $content = File::get($createTasksPath);
 
         // Test TypeScript interface definitions
         $this->assertStringContainsString(
-            'export interface TaskSuggestion',
+            'interface TaskSuggestion',
             $content,
-            'TaskConfirmationDialog should export TaskSuggestion interface'
+            'CreateTasks should have TaskSuggestion interface'
+        );
+
+        $this->assertStringContainsString(
+            'interface AICommunication',
+            $content,
+            'CreateTasks should have AICommunication interface'
         );
 
         $this->assertStringContainsString(
             'interface Props',
             $content,
-            'TaskConfirmationDialog should have Props interface'
+            'CreateTasks should have Props interface'
         );
 
         // Test that it uses proper Vue 3 Composition API
         $this->assertStringContainsString(
-            'const emit = defineEmits<{',
+            'const props = defineProps<Props>()',
             $content,
-            'TaskConfirmationDialog should use defineEmits with TypeScript'
-        );
-
-        $this->assertStringContainsString(
-            'const props = withDefaults(defineProps<Props>(),',
-            $content,
-            'TaskConfirmationDialog should use defineProps with TypeScript'
+            'CreateTasks should use defineProps with TypeScript'
         );
     }
 
@@ -230,35 +230,29 @@ class ComponentStructureTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'import TaskConfirmationDialog',
+            'router.visit',
             $content,
-            'CreateProjectForm should import TaskConfirmationDialog'
+            'CreateProjectForm should use router.visit to navigate to task page'
         );
 
         // Test AI-related functions
         $this->assertStringContainsString(
-            'const generateTasks = async () =>',
+            'const generateTasks = () =>',
             $content,
             'CreateProjectForm should have generateTasks function'
         );
 
         $this->assertStringContainsString(
-            'axios.post(\'/dashboard/projects/generate-tasks\'',
+            '/dashboard/projects/create/tasks',
             $content,
-            'CreateProjectForm should make API call to generate tasks'
+            'CreateProjectForm should redirect to task creation page'
         );
 
-        // Test task handling functions
+        // Test form handling
         $this->assertStringContainsString(
-            'const handleTaskConfirm =',
+            'useForm',
             $content,
-            'CreateProjectForm should have handleTaskConfirm function'
-        );
-
-        $this->assertStringContainsString(
-            'const handleTaskCancel =',
-            $content,
-            'CreateProjectForm should have handleTaskCancel function'
+            'CreateProjectForm should use Inertia useForm'
         );
     }
 
@@ -293,7 +287,7 @@ class ComponentStructureTest extends TestCase
         $vueComponents = [
             'resources/js/components/ui/badge/Badge.vue',
             'resources/js/components/ui/scroll-area/ScrollArea.vue',
-            'resources/js/components/TaskConfirmationDialog.vue',
+            'resources/js/pages/Projects/CreateTasks.vue',
         ];
 
         foreach ($vueComponents as $componentPath) {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\AI;
+use App\Services\AI\Facades\AI;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -158,25 +158,53 @@ class ProjectsController extends Controller
 
         $aiUsed = false;
         $suggestedTasks = [];
+        $aiCommunication = null;
 
         try {
             \Log::info('Generating AI task suggestions for task page', ['description' => $validated['description']]);
 
-            $aiTasks = AI::generateTasks($validated['description']);
-            $aiUsed = true;
+            // Define the expected task schema
+            $taskSchema = [
+                'tasks' => [
+                    [
+                        'title' => 'string',
+                        'description' => 'string',
+                        'priority' => 'high|medium|low',
+                        'status' => 'pending|in_progress|completed',
+                        'subtasks' => []
+                    ]
+                ],
+                'summary' => 'string (optional)',
+                'notes' => ['array of strings (optional)'],
+                'problems' => ['array of strings (optional)'],
+                'suggestions' => ['array of strings (optional)']
+            ];
 
-            // Transform AI tasks to match our expected format
-            $suggestedTasks = collect($aiTasks)->map(function ($task, $index) {
-                return [
-                    'title' => $task['title'] ?? 'Generated Task',
-                    'description' => $task['description'] ?? '',
-                    'status' => $task['status'] ?? 'pending',
-                    'priority' => $task['priority'] ?? 'medium',
-                    'sort_order' => $index + 1,
-                ];
-            })->toArray();
+            $aiResponse = AI::generateTasks($validated['description'], $taskSchema);
+            $aiUsed = $aiResponse->isSuccessful();
 
-            \Log::info('AI task generation successful', ['task_count' => count($suggestedTasks)]);
+            if ($aiResponse->isSuccessful()) {
+                // Transform AI tasks to match our expected format
+                $suggestedTasks = collect($aiResponse->getTasks())->map(function ($task, $index) {
+                    return [
+                        'title' => $task['title'] ?? 'Generated Task',
+                        'description' => $task['description'] ?? '',
+                        'status' => $task['status'] ?? 'pending',
+                        'priority' => $task['priority'] ?? 'medium',
+                        'sort_order' => $index + 1,
+                    ];
+                })->toArray();
+
+                // Get AI communication
+                $aiCommunication = $aiResponse->getCommunication();
+
+                \Log::info('AI task generation successful', [
+                    'task_count' => count($suggestedTasks),
+                    'has_notes' => $aiResponse->hasNotes()
+                ]);
+            } else {
+                throw new \Exception($aiResponse->getError() ?? 'AI task generation failed');
+            }
 
         } catch (\Exception $e) {
             \Log::error('AI task generation failed: ' . $e->getMessage());
@@ -228,6 +256,7 @@ class ProjectsController extends Controller
             ],
             'suggestedTasks' => $suggestedTasks,
             'aiUsed' => $aiUsed,
+            'aiCommunication' => $aiCommunication,
         ]);
     }
 

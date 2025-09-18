@@ -16,7 +16,11 @@ import {
     Trash2,
     Plus,
     Save,
-    RotateCcw
+    RotateCcw,
+    MessageSquare,
+    Lightbulb,
+    AlertTriangle,
+    Info
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
@@ -28,6 +32,13 @@ export interface TaskSuggestion {
     sort_order: number;
 }
 
+interface AICommunication {
+    summary?: string | null;
+    notes?: string[];
+    problems?: string[];
+    suggestions?: string[];
+}
+
 interface Props {
     projectData: {
         description: string;
@@ -35,6 +46,7 @@ interface Props {
     };
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
+    aiCommunication?: AICommunication | null;
 }
 
 const props = defineProps<Props>();
@@ -205,6 +217,77 @@ const createProject = () => {
                         {{ isRegenerating ? 'Regenerating...' : 'Regenerate Tasks' }}
                     </Button>
                 </div>
+            </div>
+
+            <!-- AI Communication -->
+            <div v-if="aiUsed && aiCommunication && (aiCommunication.summary || aiCommunication.notes?.length || aiCommunication.problems?.length || aiCommunication.suggestions?.length)" class="space-y-4">
+                
+                <!-- AI Summary -->
+                <Card v-if="aiCommunication.summary" class="border-blue-200 bg-blue-50">
+                    <CardHeader class="pb-3">
+                        <CardTitle class="flex items-center gap-2 text-blue-800">
+                            <Info class="h-5 w-5" />
+                            AI Analysis Summary
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-blue-700">{{ aiCommunication.summary }}</p>
+                    </CardContent>
+                </Card>
+
+                <!-- AI Notes -->
+                <Card v-if="aiCommunication.notes?.length" class="border-gray-200 bg-gray-50">
+                    <CardHeader class="pb-3">
+                        <CardTitle class="flex items-center gap-2 text-gray-800">
+                            <MessageSquare class="h-5 w-5" />
+                            AI Notes
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul class="space-y-2">
+                            <li v-for="note in aiCommunication.notes" :key="note" class="flex items-start gap-2 text-gray-700">
+                                <div class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 flex-shrink-0"></div>
+                                <span>{{ note }}</span>
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
+
+                <!-- AI Problems -->
+                <Card v-if="aiCommunication.problems?.length" class="border-orange-200 bg-orange-50">
+                    <CardHeader class="pb-3">
+                        <CardTitle class="flex items-center gap-2 text-orange-800">
+                            <AlertTriangle class="h-5 w-5" />
+                            Issues Identified
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul class="space-y-2">
+                            <li v-for="problem in aiCommunication.problems" :key="problem" class="flex items-start gap-2 text-orange-700">
+                                <AlertTriangle class="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <span>{{ problem }}</span>
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
+
+                <!-- AI Suggestions -->
+                <Card v-if="aiCommunication.suggestions?.length" class="border-green-200 bg-green-50">
+                    <CardHeader class="pb-3">
+                        <CardTitle class="flex items-center gap-2 text-green-800">
+                            <Lightbulb class="h-5 w-5" />
+                            AI Suggestions
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul class="space-y-2">
+                            <li v-for="suggestion in aiCommunication.suggestions" :key="suggestion" class="flex items-start gap-2 text-green-700">
+                                <Lightbulb class="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <span>{{ suggestion }}</span>
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
             </div>
 
             <!-- Task List -->
