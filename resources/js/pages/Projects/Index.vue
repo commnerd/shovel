@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Folder, Clock, CheckCircle, Calendar } from 'lucide-vue-next';
-import CreateProjectForm from './CreateProjectForm.vue';
+import { Plus, Folder, Clock, CheckCircle, Calendar, Edit, Eye } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface Project {
@@ -30,9 +29,6 @@ const projects = computed(() => page.props.projects as Project[]);
 const newProject = computed(() => page.props.flash?.project as Project | undefined);
 
 const hasProjects = computed(() => projects.value.length > 0 || newProject.value);
-
-// State for showing create form
-const showCreateForm = ref(false);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -71,9 +67,11 @@ const getStatusIcon = (status: string) => {
             <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <Heading>Projects</Heading>
-                <Button v-if="hasProjects" class="flex items-center gap-2" @click="showCreateForm = true">
-                    <Plus class="h-4 w-4" />
-                    New Project
+                <Button v-if="hasProjects" class="flex items-center gap-2" as-child>
+                    <Link href="/dashboard/projects/create">
+                        <Plus class="h-4 w-4" />
+                        New Project
+                    </Link>
                 </Button>
             </div>
 
@@ -124,8 +122,7 @@ const getStatusIcon = (status: string) => {
                     <Card
                         v-for="project in projects"
                         :key="project.id"
-                        class="hover:shadow-md transition-shadow cursor-pointer"
-                        @click="$inertia.visit(`/dashboard/projects/${project.id}/tasks`)"
+                        class="hover:shadow-md transition-shadow"
                     >
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
@@ -135,44 +132,37 @@ const getStatusIcon = (status: string) => {
                             <CardDescription>{{ project.description }}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div class="space-y-2">
-                                <div class="text-sm text-gray-500">
-                                    {{ project.tasks.length }} tasks
+                            <div class="space-y-3">
+                                <div class="space-y-2">
+                                    <div class="text-sm text-gray-500">
+                                        {{ project.tasks.length }} tasks
+                                    </div>
+                                    <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-600">
+                                        <Calendar class="h-4 w-4" />
+                                        Due: {{ new Date(project.due_date).toLocaleDateString() }}
+                                    </div>
                                 </div>
-                                <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-600">
-                                    <Calendar class="h-4 w-4" />
-                                    Due: {{ new Date(project.due_date).toLocaleDateString() }}
+
+                                <!-- Action buttons -->
+                                <div class="flex gap-2 pt-2">
+                                    <Button size="sm" variant="outline" as-child class="flex-1">
+                                        <Link :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                                            <Eye class="h-4 w-4" />
+                                            View Tasks
+                                        </Link>
+                                    </Button>
+                                    <Button size="sm" variant="ghost" as-child>
+                                        <Link :href="`/dashboard/projects/${project.id}/edit`" class="flex items-center gap-2">
+                                            <Edit class="h-4 w-4" />
+                                            Edit
+                                        </Link>
+                                    </Button>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                <!-- Show create form when button is clicked -->
-                <div v-if="showCreateForm" class="mt-8">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold">Create New Project</h3>
-                        <Button variant="ghost" size="sm" @click="showCreateForm = false">
-                            Cancel
-                        </Button>
-                    </div>
-                    <CreateProjectForm @success="showCreateForm = false" />
-                </div>
-            </div>
-
-            <!-- Show create form if no projects -->
-            <div v-else class="flex items-center justify-center min-h-[400px]">
-                <div class="text-center max-w-md mx-auto">
-                    <div class="mb-6">
-                        <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <Folder class="h-8 w-8 text-gray-400" />
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
-                        <p class="text-gray-500 mb-6">Create your first project to get started with AI-powered task planning.</p>
-                    </div>
-
-                    <CreateProjectForm />
-                </div>
             </div>
             </div>
         </div>

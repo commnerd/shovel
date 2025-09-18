@@ -6,7 +6,7 @@ import Heading from '@/components/Heading.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Filter, CheckCircle, Clock, Circle, Calendar, Users, Layers } from 'lucide-vue-next';
+import { ArrowLeft, Filter, CheckCircle, Clock, Circle, Calendar, Users, Layers, Plus, Edit, Trash2 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface Task {
@@ -83,6 +83,14 @@ const changeFilter = (filter: string) => {
 // Mock some tasks if none exist
 const hasTasks = computed(() => tasks.value.length > 0);
 
+const deleteTask = (taskId: number) => {
+    if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+        router.delete(`/dashboard/projects/${project.value.id}/tasks/${taskId}`, {
+            preserveScroll: true,
+        });
+    }
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -124,6 +132,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </div>
                     </div>
                 </div>
+                <Button class="flex items-center gap-2" as-child>
+                    <Link :href="`/dashboard/projects/${project.id}/tasks/create`">
+                        <Plus class="h-4 w-4" />
+                        New Task
+                    </Link>
+                </Button>
             </div>
 
             <!-- Filter tabs -->
@@ -185,22 +199,42 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent v-if="task.has_children || task.parent_id || task.depth > 0" class="pt-0">
-                        <div class="flex items-center gap-4 text-xs text-gray-500">
-                            <div v-if="task.has_children" class="flex items-center gap-1">
-                                <Users class="h-3 w-3" />
-                                Has subtasks
+                    <CardContent class="pt-0">
+                        <div class="space-y-3">
+                            <div v-if="task.has_children || task.parent_id || task.depth > 0" class="flex items-center gap-4 text-xs text-gray-500">
+                                <div v-if="task.has_children" class="flex items-center gap-1">
+                                    <Users class="h-3 w-3" />
+                                    Has subtasks
+                                </div>
+                                <div v-if="task.parent_id" class="flex items-center gap-1">
+                                    <ArrowLeft class="h-3 w-3" />
+                                    Subtask
+                                </div>
+                                <div v-if="task.depth > 0" class="flex items-center gap-1">
+                                    <Layers class="h-3 w-3" />
+                                    Depth: {{ task.depth }}
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span>{{ task.is_top_level ? 'Top-level' : task.is_leaf ? 'Leaf' : 'Branch' }}</span>
+                                </div>
                             </div>
-                            <div v-if="task.parent_id" class="flex items-center gap-1">
-                                <ArrowLeft class="h-3 w-3" />
-                                Subtask
-                            </div>
-                            <div v-if="task.depth > 0" class="flex items-center gap-1">
-                                <Layers class="h-3 w-3" />
-                                Depth: {{ task.depth }}
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <span>{{ task.is_top_level ? 'Top-level' : task.is_leaf ? 'Leaf' : 'Branch' }}</span>
+
+                            <!-- Action buttons -->
+                            <div class="flex gap-2 pt-2">
+                                <Button size="sm" variant="outline" as-child class="flex-1">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" class="flex items-center gap-2">
+                                        <Edit class="h-4 w-4" />
+                                        Edit
+                                    </Link>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    @click="deleteTask(task.id)"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
                     </CardContent>
@@ -227,8 +261,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <Button @click="changeFilter('all')" variant="outline" class="w-full">
                             View All Tasks
                         </Button>
-                        <Button variant="default" class="w-full">
-                            Create First Task
+                        <Button variant="default" class="w-full" as-child>
+                            <Link :href="`/dashboard/projects/${project.id}/tasks/create`">
+                                Create First Task
+                            </Link>
                         </Button>
                     </div>
                 </div>

@@ -92,9 +92,5 @@ jobs:
           # Run database migrations
           docker exec foca-app php artisan migrate --force
 
-          # Clean up old images
-          docker image prune -f
-
-          # Show running containers
-          docker ps
-
+          # Clean up old garbage
+          docker system prune --all --force
