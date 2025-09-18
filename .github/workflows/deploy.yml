@@ -83,7 +83,14 @@ jobs:
             --network web \
             --name foca-app \
             --restart unless-stopped \
+            --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
+
+          # Wait for container to be ready
+          sleep 10
+
+          # Run database migrations
+          docker exec foca-app php artisan migrate --force
 
           # Clean up old images
           docker image prune -f
