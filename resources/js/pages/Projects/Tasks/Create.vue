@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
-import { ArrowLeft, Plus, Send } from 'lucide-vue-next';
+import { ArrowLeft, Plus, Send, Sparkles, Loader } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface Project {
@@ -24,6 +24,7 @@ interface ParentTask {
 const props = defineProps<{
     project: Project;
     parentTasks: ParentTask[];
+    parentTask?: ParentTask; // Pre-selected parent task for subtask creation
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -40,7 +41,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: `/dashboard/projects/${props.project.id}/tasks`,
     },
     {
-        title: 'Create Task',
+        title: props.parentTask ? `Create Subtask for "${props.parentTask.title}"` : 'Create Task',
         href: `/dashboard/projects/${props.project.id}/tasks/create`,
     },
 ];
@@ -48,12 +49,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 const form = useForm({
     title: '',
     description: '',
-    parent_id: '',
+    parent_id: props.parentTask?.id?.toString() || '',
     priority: 'medium',
     status: 'pending',
+    due_date: '',
 });
 
 const isSubmitting = ref(false);
+const isGeneratingBreakdown = ref(false);
+const suggestedSubtasks = ref<any[]>([]);
+const aiNotes = ref<string[]>([]);
+const showBreakdownResults = ref(false);
 
 const submit = () => {
     if (form.processing) return;
@@ -68,6 +74,91 @@ const submit = () => {
             form.reset();
         },
     });
+};
+
+const generateAIBreakdown = async () => {
+    if (!form.title.trim()) {
+        alert('Please enter a task title before generating AI breakdown.');
+        return;
+    }
+
+    isGeneratingBreakdown.value = true;
+    suggestedSubtasks.value = [];
+    aiNotes.value = [];
+    showBreakdownResults.value = false;
+
+    try {
+        const response = await fetch(`/dashboard/projects/${props.project.id}/tasks/breakdown`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify({
+                title: form.title,
+                description: form.description,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            suggestedSubtasks.value = data.subtasks || [];
+            aiNotes.value = data.notes || [];
+            showBreakdownResults.value = true;
+        } else {
+            alert(data.error || 'Failed to generate task breakdown. Please try again.');
+        }
+    } catch (error) {
+        console.error('AI breakdown error:', error);
+        alert('Failed to generate task breakdown. Please check your connection and try again.');
+    } finally {
+        isGeneratingBreakdown.value = false;
+    }
+};
+
+const createTaskWithSubtasks = async () => {
+    if (form.processing || isSubmitting.value) return;
+
+    isSubmitting.value = true;
+
+    try {
+        // Create the main task with the subtasks array
+        const response = await fetch(`/dashboard/projects/${props.project.id}/tasks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify({
+                title: form.title,
+                description: form.description,
+                parent_id: form.parent_id || null,
+                priority: form.priority,
+                status: form.status,
+                due_date: form.due_date || null,
+                subtasks: suggestedSubtasks.value,
+            }),
+        });
+
+        if (response.ok) {
+            // Redirect to tasks index
+            window.location.href = `/dashboard/projects/${props.project.id}/tasks`;
+        } else {
+            alert('Failed to create task with subtasks. Please try again.');
+        }
+    } catch (error) {
+        console.error('Task creation error:', error);
+        alert('Failed to create task. Please try again.');
+    } finally {
+        isSubmitting.value = false;
+    }
+};
+
+const clearBreakdown = () => {
+    suggestedSubtasks.value = [];
+    aiNotes.value = [];
+    showBreakdownResults.value = false;
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -141,6 +232,17 @@ const handleKeydown = (event: KeyboardEvent) => {
                                     <InputError :message="form.errors.description" />
                                 </div>
 
+                                <div class="space-y-2">
+                                    <Label for="due_date">Due Date (Optional)</Label>
+                                    <Input
+                                        id="due_date"
+                                        v-model="form.due_date"
+                                        type="date"
+                                        :disabled="form.processing"
+                                    />
+                                    <InputError :message="form.errors.due_date" />
+                                </div>
+
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-2">
                                         <Label for="priority">Priority</Label>
@@ -173,23 +275,128 @@ const handleKeydown = (event: KeyboardEvent) => {
                                     </div>
                                 </div>
 
-                                <div v-if="parentTasks.length > 0" class="space-y-2">
-                                    <Label for="parent_id">Parent Task (Optional)</Label>
+                                <!-- Parent Task Selection -->
+                                <div v-if="parentTask || parentTasks.length > 0" class="space-y-2">
+                                    <Label for="parent_id">Parent Task</Label>
+                                    <div v-if="parentTask" class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <p class="text-sm font-medium text-blue-900">Creating subtask for:</p>
+                                        <p class="text-sm text-blue-700">{{ parentTask.title }}</p>
+                                    </div>
                                     <select
+                                        v-else
                                         id="parent_id"
                                         v-model="form.parent_id"
                                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="form.processing"
                                     >
                                         <option value="">None (Top-level task)</option>
-                                        <option v-for="parentTask in parentTasks" :key="parentTask.id" :value="parentTask.id">
-                                            {{ parentTask.title }}
+                                        <option v-for="parentTaskOption in parentTasks" :key="parentTaskOption.id" :value="parentTaskOption.id">
+                                            {{ parentTaskOption.title }}
                                         </option>
                                     </select>
                                     <InputError :message="form.errors.parent_id" />
                                     <p class="text-xs text-gray-500">
-                                        Select a parent task to create a subtask
+                                        {{ parentTask ? 'This will be created as a subtask' : 'Select a parent task to create a subtask' }}
                                     </p>
+                                </div>
+
+                                <!-- AI Task Breakdown -->
+                                <div class="space-y-4 pt-4 border-t">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-900">AI Task Breakdown</h4>
+                                            <p class="text-xs text-gray-500">Let AI break this task into smaller subtasks</p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            @click="generateAIBreakdown"
+                                            :disabled="!form.title.trim() || isGeneratingBreakdown"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <Loader v-if="isGeneratingBreakdown" class="h-4 w-4 animate-spin" />
+                                            <Sparkles v-else class="h-4 w-4" />
+                                            {{ isGeneratingBreakdown ? 'Generating...' : 'Generate Subtasks' }}
+                                        </Button>
+                                    </div>
+
+                                    <!-- AI Breakdown Results -->
+                                    <div v-if="showBreakdownResults" class="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <h5 class="text-sm font-medium text-blue-900">AI Suggested Subtasks</h5>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                @click="clearBreakdown"
+                                                class="text-blue-600 hover:text-blue-700"
+                                            >
+                                                Clear
+                                            </Button>
+                                        </div>
+
+                                        <!-- AI Notes -->
+                                        <div v-if="aiNotes.length > 0" class="space-y-2">
+                                            <h6 class="text-xs font-medium text-blue-800">AI Analysis:</h6>
+                                            <ul class="text-xs text-blue-700 space-y-1">
+                                                <li v-for="note in aiNotes" :key="note" class="flex items-start gap-2">
+                                                    <span class="text-blue-400">•</span>
+                                                    <span>{{ note }}</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- Suggested Subtasks -->
+                                        <div v-if="suggestedSubtasks.length > 0" class="space-y-3">
+                                            <h6 class="text-xs font-medium text-blue-800">Suggested Subtasks ({{ suggestedSubtasks.length }}):</h6>
+                                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                                                <div
+                                                    v-for="(subtask, index) in suggestedSubtasks"
+                                                    :key="index"
+                                                    class="p-3 bg-white border border-blue-100 rounded-md hover:border-blue-200 transition-colors"
+                                                >
+                                                    <div class="flex items-start justify-between gap-3">
+                                                        <div class="flex-1 min-w-0">
+                                                            <h6 class="text-sm font-medium text-gray-900 truncate">{{ subtask.title }}</h6>
+                                                            <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ subtask.description }}</p>
+                                                            <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-gray-100">
+                                                                    {{ subtask.priority }}
+                                                                </span>
+                                                                <span v-if="subtask.due_date">Due: {{ subtask.due_date }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex gap-2 pt-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    @click="createTaskWithSubtasks"
+                                                    :disabled="isSubmitting"
+                                                    class="flex-1"
+                                                >
+                                                    Create Task with Subtasks
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    @click="generateAIBreakdown"
+                                                    :disabled="isGeneratingBreakdown"
+                                                >
+                                                    Regenerate
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div v-else class="text-center py-4">
+                                            <p class="text-sm text-blue-600">No subtasks generated. Try regenerating or create the task manually.</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="text-xs text-gray-500 pt-2">

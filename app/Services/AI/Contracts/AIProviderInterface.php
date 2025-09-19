@@ -24,6 +24,17 @@ interface AIProviderInterface
     public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse;
 
     /**
+     * Break down a task into subtasks with project context.
+     *
+     * @param string $taskTitle
+     * @param string $taskDescription
+     * @param array $context Project and task context information
+     * @param array $options
+     * @return AITaskResponse
+     */
+    public function breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = []): AITaskResponse;
+
+    /**
      * Analyze a project and provide insights.
      *
      * @param string $projectDescription

@@ -105,6 +105,14 @@ return [
             'prompt_template' => 'task_suggestions',
         ],
 
+        'task_breakdown' => [
+            'enabled' => env('AI_TASK_BREAKDOWN_ENABLED', true),
+            'provider' => env('AI_TASK_BREAKDOWN_PROVIDER', 'cerebrus'),
+            'model_override' => env('AI_TASK_BREAKDOWN_MODEL'),
+            'prompt_template' => 'task_breakdown',
+            'max_subtasks' => env('AI_TASK_BREAKDOWN_MAX_SUBTASKS', 7),
+        ],
+
     ],
 
     /*
@@ -167,6 +175,11 @@ Rules:
         'task_suggestions' => [
             'system' => 'You are an AI assistant that helps improve task management by suggesting optimizations and next steps.',
             'user' => 'Given these existing tasks: {tasks}, suggest improvements, identify missing tasks, or recommend task prioritization changes. Focus on actionable suggestions.',
+        ],
+
+        'task_breakdown' => [
+            'system' => 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions. Focus on creating specific, measurable, and achievable subtasks that logically flow from the main task.',
+            'user' => 'Please break down the following task into smaller, actionable subtasks. Consider the project context and existing tasks to ensure the breakdown is relevant and practical.',
         ],
 
     ],

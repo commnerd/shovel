@@ -49,9 +49,17 @@ Route::get('/dashboard/projects/{project}/tasks/create', [App\Http\Controllers\T
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.create');
 
+Route::get('/dashboard/projects/{project}/tasks/{task}/subtasks/create', [App\Http\Controllers\TasksController::class, 'createSubtask'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.subtasks.create');
+
 Route::post('/dashboard/projects/{project}/tasks', [App\Http\Controllers\TasksController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.store');
+
+Route::post('/dashboard/projects/{project}/tasks/breakdown', [App\Http\Controllers\TasksController::class, 'generateTaskBreakdown'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.breakdown');
 
 Route::get('/dashboard/projects/{project}/tasks/{task}/edit', [App\Http\Controllers\TasksController::class, 'edit'])
     ->middleware(['auth', 'verified'])

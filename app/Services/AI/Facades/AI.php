@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static AIProviderInterface provider(string $name = null)
  * @method static AIResponse chat(array $messages, array $options = [])
  * @method static AITaskResponse generateTasks(string $projectDescription, array $schema = [], array $options = [])
+ * @method static AITaskResponse breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = [])
  * @method static string analyzeProject(string $projectDescription, array $existingTasks = [], array $options = [])
  * @method static array suggestTaskImprovements(array $tasks, array $options = [])
  * @method static bool hasConfiguredProvider()

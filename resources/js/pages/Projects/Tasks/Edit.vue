@@ -23,6 +23,7 @@ interface Task {
     parent_id?: number;
     priority: string;
     status: string;
+    due_date?: string;
 }
 
 interface ParentTask {
@@ -61,6 +62,7 @@ const form = useForm({
     parent_id: props.task.parent_id?.toString() || '',
     priority: props.task.priority,
     status: props.task.status,
+    due_date: props.task.due_date || '',
 });
 
 const isSubmitting = ref(false);
@@ -146,6 +148,17 @@ const handleKeydown = (event: KeyboardEvent) => {
                                         @keydown="handleKeydown"
                                     ></textarea>
                                     <InputError :message="form.errors.description" />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="due_date">Due Date (Optional)</Label>
+                                    <Input
+                                        id="due_date"
+                                        v-model="form.due_date"
+                                        type="date"
+                                        :disabled="form.processing"
+                                    />
+                                    <InputError :message="form.errors.due_date" />
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-4">

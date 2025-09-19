@@ -17,13 +17,14 @@ class ProjectsController extends Controller
         try {
             // Get user's group IDs
             $userGroupIds = auth()->user()->groups()->pluck('groups.id');
-            
+
             // Get projects from user's groups or created by the user
             $projects = \App\Models\Project::where(function ($query) use ($userGroupIds) {
                 $query->where('user_id', auth()->id())
                       ->orWhereIn('group_id', $userGroupIds);
             })
                 ->with(['group', 'user'])
+                ->withCount('tasks')
                 ->latest()
                 ->get()
                 ->map(function ($project) {
@@ -37,7 +38,7 @@ class ProjectsController extends Controller
                         'due_date' => $project->due_date?->format('Y-m-d'),
                         'status' => $project->status,
                         'created_at' => $project->created_at->toISOString(),
-                        'tasks' => [], // Mock empty tasks for now
+                        'tasks_count' => $project->tasks_count,
                     ];
                 });
 
@@ -416,25 +417,25 @@ class ProjectsController extends Controller
     private function canAccessProject(Project $project): bool
     {
         $user = auth()->user();
-        
+
         // User can access project if:
         // 1. They own the project
         // 2. They belong to the same group as the project
         // 3. They are admin and in the same organization
-        
+
         if ($project->user_id === $user->id) {
             return true;
         }
-        
+
         if ($project->group && $user->belongsToGroup($project->group_id)) {
             return true;
         }
-        
+
         // Admin can access all projects in their organization
         if ($user->isAdmin() && $project->group && $project->group->organization_id === $user->organization_id) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -444,20 +445,20 @@ class ProjectsController extends Controller
     private function canModifyProject(Project $project): bool
     {
         $user = auth()->user();
-        
+
         // User can modify project if:
         // 1. They own the project
         // 2. They are admin in the same organization
-        
+
         if ($project->user_id === $user->id) {
             return true;
         }
-        
+
         // Admin can modify all projects in their organization
         if ($user->isAdmin() && $project->group && $project->group->organization_id === $user->organization_id) {
             return true;
         }
-        
+
         return false;
     }
 }

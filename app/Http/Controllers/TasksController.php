@@ -47,6 +47,7 @@ class TasksController extends Controller
                 'status' => $task->status,
                 'priority' => $task->priority,
                 'parent_id' => $task->parent_id,
+                'due_date' => $task->due_date?->format('Y-m-d'),
                 'has_children' => $task->children->count() > 0,
                 'depth' => $task->getDepth(),
                 'is_top_level' => $task->isTopLevel(),
@@ -117,28 +118,66 @@ class TasksController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
             'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,completed',
+            'due_date' => 'nullable|date|after_or_equal:today',
+            'subtasks' => 'nullable|array',
+            'subtasks.*.title' => 'required|string|max:255',
+            'subtasks.*.description' => 'nullable|string|max:1000',
+            'subtasks.*.priority' => 'required|in:low,medium,high',
+            'subtasks.*.status' => 'required|in:pending,in_progress,completed',
+            'subtasks.*.due_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         // If parent_id is provided, ensure it belongs to the same project
-        if ($validated['parent_id']) {
+        if (!empty($validated['parent_id'])) {
             $parentTask = Task::find($validated['parent_id']);
             if (!$parentTask || $parentTask->project_id !== $project->id) {
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
             }
         }
 
+        // Determine sort order based on parent
+        $sortOrder = !empty($validated['parent_id'])
+            ? Task::find($validated['parent_id'])->getNextChildSortOrder()
+            : $project->tasks()->whereNull('parent_id')->max('sort_order') + 1;
+
         $task = Task::create([
             'project_id' => $project->id,
             'title' => $validated['title'],
-            'description' => $validated['description'],
-            'parent_id' => $validated['parent_id'],
+            'description' => $validated['description'] ?? null,
+            'parent_id' => $validated['parent_id'] ?? null,
             'priority' => $validated['priority'],
             'status' => $validated['status'],
-            'sort_order' => $project->tasks()->max('sort_order') + 1,
+            'due_date' => $validated['due_date'] ?? null,
+            'sort_order' => $sortOrder,
         ]);
 
+        // Update hierarchy path and depth
+        $task->updateHierarchyPath();
+
+        // Create subtasks if provided
+        if (!empty($validated['subtasks'])) {
+            foreach ($validated['subtasks'] as $index => $subtaskData) {
+                $subtask = Task::create([
+                    'project_id' => $project->id,
+                    'parent_id' => $task->id,
+                    'title' => $subtaskData['title'],
+                    'description' => $subtaskData['description'] ?? null,
+                    'priority' => $subtaskData['priority'],
+                    'status' => $subtaskData['status'],
+                    'due_date' => $subtaskData['due_date'] ?? null,
+                    'sort_order' => $index + 1,
+                ]);
+
+                $subtask->updateHierarchyPath();
+            }
+        }
+
+        $message = !empty($validated['subtasks'])
+            ? "Task created successfully with " . count($validated['subtasks']) . " subtasks!"
+            : "Task created successfully!";
+
         return redirect()->route('projects.tasks.index', $project)->with([
-            'message' => 'Task created successfully!',
+            'message' => $message,
         ]);
     }
 
@@ -182,6 +221,7 @@ class TasksController extends Controller
                 'parent_id' => $task->parent_id,
                 'priority' => $task->priority,
                 'status' => $task->status,
+                'due_date' => $task->due_date?->format('Y-m-d'),
             ],
             'parentTasks' => $parentTasks,
         ]);
@@ -208,23 +248,37 @@ class TasksController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
             'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,completed',
+            'due_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         // If parent_id is provided, ensure it belongs to the same project and isn't self
-        if ($validated['parent_id']) {
+        if (!empty($validated['parent_id'])) {
             $parentTask = Task::find($validated['parent_id']);
             if (!$parentTask || $parentTask->project_id !== $project->id || $parentTask->id === $task->id) {
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
+            }
+
+            // Check for circular references - prevent setting a descendant as parent
+            $current = $parentTask;
+            while ($current && $current->parent_id) {
+                if ($current->parent_id === $task->id) {
+                    return back()->withErrors(['parent_id' => 'Cannot create circular reference.']);
+                }
+                $current = $current->parent;
             }
         }
 
         $task->update([
             'title' => $validated['title'],
-            'description' => $validated['description'],
-            'parent_id' => $validated['parent_id'],
+            'description' => $validated['description'] ?? null,
+            'parent_id' => $validated['parent_id'] ?? null,
             'priority' => $validated['priority'],
             'status' => $validated['status'],
+            'due_date' => $validated['due_date'] ?? null,
         ]);
+
+        // Update hierarchy path and depth if parent changed
+        $task->updateHierarchyPath();
 
         return redirect()->route('projects.tasks.index', $project)->with([
             'message' => 'Task updated successfully!',
@@ -251,5 +305,112 @@ class TasksController extends Controller
         return redirect()->route('projects.tasks.index', $project)->with([
             'message' => 'Task deleted successfully!',
         ]);
+    }
+
+    /**
+     * Show the form for creating a subtask of the specified task.
+     */
+    public function createSubtask(Project $project, Task $task)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        // Ensure the parent task belongs to the project
+        if ($task->project_id !== $project->id) {
+            abort(404, 'Task not found in this project.');
+        }
+
+        return Inertia::render('Projects/Tasks/Create', [
+            'project' => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'description' => $project->description,
+            ],
+            'parentTask' => [
+                'id' => $task->id,
+                'title' => $task->title,
+            ],
+            'parentTasks' => [], // Empty since parent is pre-selected
+        ]);
+    }
+
+    /**
+     * Generate AI-powered task breakdown suggestions.
+     */
+    public function generateTaskBreakdown(Request $request, Project $project)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            // Gather project context
+            $existingTasks = $project->tasks()->get()->map(function ($task) {
+                return [
+                    'title' => $task->title,
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'is_leaf' => $task->isLeaf(),
+                    'has_children' => $task->children->count() > 0,
+                ];
+            })->toArray();
+
+            // Calculate task statistics
+            $taskStats = [
+                'total' => $project->tasks()->count(),
+                'completed' => $project->tasks()->where('status', 'completed')->count(),
+                'in_progress' => $project->tasks()->where('status', 'in_progress')->count(),
+                'pending' => $project->tasks()->where('status', 'pending')->count(),
+                'leaf_tasks' => $project->tasks()->leaf()->count(),
+                'parent_tasks' => $project->tasks()->withChildren()->count(),
+            ];
+
+            $context = [
+                'project' => [
+                    'title' => $project->title,
+                    'description' => $project->description,
+                    'due_date' => $project->due_date?->format('Y-m-d'),
+                    'status' => $project->status,
+                ],
+                'existing_tasks' => $existingTasks,
+                'task_stats' => $taskStats,
+            ];
+
+            $aiResponse = \App\Services\AI\Facades\AI::breakdownTask(
+                $validated['title'],
+                $validated['description'] ?? '',
+                $context
+            );
+
+            return response()->json([
+                'success' => $aiResponse->isSuccessful(),
+                'subtasks' => $aiResponse->getTasks(),
+                'notes' => $aiResponse->getNotes(),
+                'ai_used' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Task breakdown failed', [
+                'error' => $e->getMessage(),
+                'project_id' => $project->id,
+                'task_title' => $validated['title'],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to generate task breakdown. Please try again.',
+                'subtasks' => [],
+                'notes' => ['AI service temporarily unavailable'],
+                'ai_used' => false,
+            ], 500);
+        }
     }
 }

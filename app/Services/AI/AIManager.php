@@ -78,6 +78,16 @@ class AIManager extends Manager
     }
 
     /**
+     * Break down a task into subtasks using the specified or default provider.
+     */
+    public function breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = []): \App\Services\AI\Contracts\AITaskResponse
+    {
+        $provider = $options['provider'] ?? null;
+
+        return $this->provider($provider)->breakdownTask($taskTitle, $taskDescription, $context, $options);
+    }
+
+    /**
      * Analyze a project using the specified or default provider.
      */
     public function analyzeProject(string $projectDescription, array $existingTasks = [], array $options = []): string

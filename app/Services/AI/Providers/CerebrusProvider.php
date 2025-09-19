@@ -399,6 +399,161 @@ class CerebrusProvider implements AIProviderInterface
     }
 
     /**
+     * Break down a task into subtasks with project context.
+     */
+    public function breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = []): AITaskResponse
+    {
+        try {
+            $systemPrompt = $this->buildTaskBreakdownSystemPrompt();
+            $userPrompt = $this->buildTaskBreakdownUserPrompt($taskTitle, $taskDescription, $context);
+
+            $messages = [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ];
+
+            $response = $this->chat($messages, array_merge([
+                'temperature' => 0.7,
+                'max_tokens' => 2000,
+            ], $options));
+
+            if (!$response->isSuccessful()) {
+                $this->logError('task_breakdown', $response->getErrorMessage() ?? 'Unknown error');
+                return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+            }
+
+            $content = $this->cleanResponseContent($response->getContent());
+            $this->logSuccess('task_breakdown', $content, $taskTitle);
+
+            $parsedResponse = $this->parseTaskResponse($content);
+
+            return $parsedResponse ?: $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+
+        } catch (\Exception $e) {
+            $this->logError('task_breakdown', $e->getMessage());
+            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+        }
+    }
+
+    /**
+     * Build system prompt for task breakdown.
+     */
+    protected function buildTaskBreakdownSystemPrompt(): string
+    {
+        return config('ai.prompts.task_breakdown.system',
+            'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.'
+        );
+    }
+
+    /**
+     * Build user prompt for task breakdown with context.
+     */
+    protected function buildTaskBreakdownUserPrompt(string $taskTitle, string $taskDescription, array $context): string
+    {
+        $basePrompt = config('ai.prompts.task_breakdown.user',
+            'Please break down the following task into smaller, actionable subtasks:'
+        );
+
+        $prompt = $basePrompt . "\n\n";
+        $prompt .= "**Task to Break Down:**\n";
+        $prompt .= "Title: {$taskTitle}\n";
+        $prompt .= "Description: {$taskDescription}\n\n";
+
+        // Add project context
+        if (!empty($context['project'])) {
+            $project = $context['project'];
+            $prompt .= "**Project Context:**\n";
+            $prompt .= "Project: {$project['title']}\n";
+            $prompt .= "Description: {$project['description']}\n";
+            if (!empty($project['due_date'])) {
+                $prompt .= "Due Date: {$project['due_date']}\n";
+            }
+            $prompt .= "\n";
+        }
+
+        // Add existing tasks context
+        if (!empty($context['existing_tasks'])) {
+            $prompt .= "**Existing Project Tasks:**\n";
+            foreach ($context['existing_tasks'] as $task) {
+                $prompt .= "- {$task['title']} ({$task['status']})\n";
+            }
+            $prompt .= "\n";
+        }
+
+        // Add task completion statistics
+        if (!empty($context['task_stats'])) {
+            $stats = $context['task_stats'];
+            $prompt .= "**Project Progress:**\n";
+            $prompt .= "Total Tasks: {$stats['total']}\n";
+            $prompt .= "Completed: {$stats['completed']}\n";
+            $prompt .= "In Progress: {$stats['in_progress']}\n";
+            $prompt .= "Pending: {$stats['pending']}\n\n";
+        }
+
+        $prompt .= "**Requirements:**\n";
+        $prompt .= "1. Break down the task into 3-7 practical subtasks\n";
+        $prompt .= "2. Each subtask should be specific and actionable\n";
+        $prompt .= "3. Consider the project context and existing tasks\n";
+        $prompt .= "4. Assign appropriate priority (high/medium/low) and status (pending)\n";
+        $prompt .= "5. Include estimated due dates relative to the project timeline\n\n";
+
+        $prompt .= "**Response Format:**\n";
+        $prompt .= "Return ONLY a valid JSON object with this exact structure:\n";
+        $prompt .= "{\n";
+        $prompt .= '  "tasks": [' . "\n";
+        $prompt .= '    {' . "\n";
+        $prompt .= '      "title": "Specific subtask title",' . "\n";
+        $prompt .= '      "description": "Detailed description of what needs to be done",' . "\n";
+        $prompt .= '      "priority": "high|medium|low",' . "\n";
+        $prompt .= '      "status": "pending",' . "\n";
+        $prompt .= '      "due_date": "YYYY-MM-DD"' . "\n";
+        $prompt .= '    }' . "\n";
+        $prompt .= '  ],' . "\n";
+        $prompt .= '  "notes": ["Analysis note 1", "Analysis note 2"]' . "\n";
+        $prompt .= "}\n\n";
+
+        $prompt .= "Do not include any explanatory text outside the JSON object.";
+
+        return $prompt;
+    }
+
+    /**
+     * Create fallback task breakdown when AI fails.
+     */
+    protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription): AITaskResponse
+    {
+        $fallbackTasks = [
+            [
+                'title' => 'Research & Planning',
+                'description' => "Research requirements and plan approach for: {$taskTitle}",
+                'priority' => 'high',
+                'status' => 'pending',
+                'due_date' => now()->addDays(2)->format('Y-m-d'),
+            ],
+            [
+                'title' => 'Implementation',
+                'description' => "Implement the main functionality for: {$taskTitle}",
+                'priority' => 'high',
+                'status' => 'pending',
+                'due_date' => now()->addDays(5)->format('Y-m-d'),
+            ],
+            [
+                'title' => 'Testing & Validation',
+                'description' => "Test and validate the implementation",
+                'priority' => 'medium',
+                'status' => 'pending',
+                'due_date' => now()->addDays(7)->format('Y-m-d'),
+            ],
+        ];
+
+        return AITaskResponse::success(
+            $fallbackTasks,
+            null,
+            ['AI task breakdown failed, using fallback subtasks']
+        );
+    }
+
+    /**
      * Create fallback tasks when AI parsing fails.
      */
     public function createFallbackTasks(string $projectDescription): array

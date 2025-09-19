@@ -13,7 +13,7 @@ interface Project {
     title?: string;
     description: string;
     due_date?: string;
-    tasks: Task[];
+    tasks_count: number;
     created_at: string;
 }
 
@@ -138,7 +138,7 @@ const getStatusIcon = (status: string) => {
                             <div class="space-y-3">
                                 <div class="space-y-2">
                                     <div class="text-sm text-gray-500">
-                                        {{ project.tasks.length }} tasks
+                                        {{ project.tasks_count }} tasks
                                     </div>
                                     <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-600">
                                         <Calendar class="h-4 w-4" />
