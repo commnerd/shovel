@@ -19,7 +19,21 @@ class ProjectTitleFeatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
+        
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        $this->user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
+        ]);
+        
+        // Add user to default group
+        $this->user->groups()->attach($group->id, ['joined_at' => now()]);
     }
 
     public function test_create_project_form_includes_title_field()
@@ -188,11 +202,14 @@ class ProjectTitleFeatureTest extends TestCase
 
         $this->app->instance('ai', $mockAIManager);
 
+        $defaultGroup = $this->user->getDefaultGroup();
+        
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
                 'description' => 'Build a task management system',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [
                     [
                         'title' => 'Setup Environment',
@@ -262,11 +279,14 @@ class ProjectTitleFeatureTest extends TestCase
 
         $this->app->instance('ai', $mockAIManager);
 
+        $defaultGroup = $this->user->getDefaultGroup();
+        
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
                 'description' => 'Build mobile app for iOS',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => []
             ]);
 

@@ -2,13 +2,17 @@
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, FolderOpen, Tag } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, LayoutGrid, FolderOpen, Tag, Shield, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import packageJson from '../../../package.json';
+import { computed } from 'vue';
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
 
 const mainNavItems: NavItem[] = [
     {
@@ -20,6 +24,14 @@ const mainNavItems: NavItem[] = [
         title: 'Projects',
         href: '/dashboard/projects',
         icon: FolderOpen,
+    },
+];
+
+const adminNavItems: NavItem[] = [
+    {
+        title: 'User Management',
+        href: '/admin/users',
+        icon: Users,
     },
 ];
 
@@ -48,6 +60,17 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            
+            <!-- Admin Section -->
+            <SidebarGroup v-if="user?.is_admin">
+                <SidebarGroupLabel class="flex items-center gap-2">
+                    <Shield class="h-4 w-4" />
+                    Administration
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <NavMain :items="adminNavItems" />
+                </SidebarGroupContent>
+            </SidebarGroup>
         </SidebarContent>
 
         <SidebarFooter>

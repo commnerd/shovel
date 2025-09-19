@@ -11,13 +11,6 @@ Route::get('/', function () {
     return Inertia::render('Landing');
 })->name('landing');
 
-Route::get('/home', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return Inertia::render('Landing');
-})->name('home');
-
 Route::post('/waitlist', [WaitlistController::class, 'store'])->name('waitlist.store');
 
 Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
@@ -75,6 +68,27 @@ Route::delete('/dashboard/projects/{project}/tasks/{task}', [App\Http\Controller
 Route::delete('/dashboard/projects/{project}', [App\Http\Controllers\ProjectsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('projects.destroy');
+
+// Admin routes
+Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->group(function () {
+    Route::get('/users', [App\Http\Controllers\Admin\UserManagementController::class, 'index'])
+        ->name('admin.users.index');
+
+    Route::post('/users/{user}/approve', [App\Http\Controllers\Admin\UserManagementController::class, 'approve'])
+        ->name('admin.users.approve');
+
+    Route::post('/users/{user}/assign-role', [App\Http\Controllers\Admin\UserManagementController::class, 'assignRole'])
+        ->name('admin.users.assign-role');
+
+    Route::delete('/users/{user}/remove-role', [App\Http\Controllers\Admin\UserManagementController::class, 'removeRole'])
+        ->name('admin.users.remove-role');
+
+    Route::post('/users/{user}/add-to-group', [App\Http\Controllers\Admin\UserManagementController::class, 'addToGroup'])
+        ->name('admin.users.add-to-group');
+
+    Route::delete('/users/{user}/remove-from-group', [App\Http\Controllers\Admin\UserManagementController::class, 'removeFromGroup'])
+        ->name('admin.users.remove-from-group');
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

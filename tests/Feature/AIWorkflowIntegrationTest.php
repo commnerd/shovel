@@ -18,9 +18,22 @@ class AIWorkflowIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
         $this->user = User::factory()->create([
             'email_verified_at' => now(),
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
         ]);
+
+        // Add user to default group
+        $this->user->groups()->attach($group->id, ['joined_at' => now()]);
     }
 
     public function test_complete_ai_powered_project_creation_workflow()
@@ -70,11 +83,14 @@ class AIWorkflowIntegrationTest extends TestCase
             );
 
         // Step 2: User creates the project with tasks
+        $defaultGroup = $this->user->getDefaultGroup();
+
         $projectResponse = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => 'E-Commerce Platform',
                 'description' => 'Build a comprehensive e-commerce platform',
                 'due_date' => '2026-06-30',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [
                     [
                         'title' => 'Project Setup & Environment Configuration',
@@ -133,11 +149,14 @@ class AIWorkflowIntegrationTest extends TestCase
 
     public function test_workflow_with_empty_task_list()
     {
+        $defaultGroup = $this->user->getDefaultGroup();
+
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => 'Simple Project',
                 'description' => 'Simple project with no tasks',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [],
             ]);
 

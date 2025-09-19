@@ -20,7 +20,20 @@ class AIProjectCreationTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        $this->user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
+        ]);
+
+        // Add user to default group
+        $this->user->groups()->attach($group->id, ['joined_at' => now()]);
 
         // Mock AI configuration
         config([
@@ -115,10 +128,13 @@ class AIProjectCreationTest extends TestCase
 
     public function test_user_can_create_project_with_ai_generated_tasks()
     {
+        $defaultGroup = $this->user->getDefaultGroup();
+
         $projectData = [
             'title' => 'Mobile App Project',
             'description' => 'Build a mobile application',
             'due_date' => '2025-12-31',
+            'group_id' => $defaultGroup->id,
             'tasks' => [
                 [
                     'title' => 'Project Setup',
@@ -195,10 +211,13 @@ class AIProjectCreationTest extends TestCase
 
     public function test_user_can_create_project_without_tasks()
     {
+        $defaultGroup = $this->user->getDefaultGroup();
+
         $projectData = [
             'title' => 'Simple Project',
             'description' => 'Simple project without tasks',
             'due_date' => '2025-12-31',
+            'group_id' => $defaultGroup->id,
             'tasks' => [],
         ];
 

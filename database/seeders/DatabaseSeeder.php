@@ -13,11 +13,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // First create organizations and groups
+        $this->call(OrganizationSeeder::class);
 
-        User::factory()->create([
+        // Get the default organization and group
+        $defaultOrg = \App\Models\Organization::where('is_default', true)->first();
+        $defaultGroup = $defaultOrg->defaultGroup();
+
+        // Create test user and assign to default organization and group
+        $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'organization_id' => $defaultOrg->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
         ]);
+
+        // Add user to the default group
+        $user->groups()->attach($defaultGroup->id, ['joined_at' => now()]);
     }
 }

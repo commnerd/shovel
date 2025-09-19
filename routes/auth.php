@@ -8,14 +8,18 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\OrganizationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
+    // Only allow registration when not in production
+    if (!app()->environment('production')) {
+        Route::get('register', [RegisteredUserController::class, 'create'])
+            ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store'])
-        ->name('register.store');
+        Route::post('register', [RegisteredUserController::class, 'store'])
+            ->name('register.store');
+    }
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -34,6 +38,21 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // Organization creation routes (only when registration is enabled)
+    if (!app()->environment('production')) {
+        Route::get('organization/create', [OrganizationController::class, 'create'])
+            ->name('organization.create');
+
+        Route::post('organization/create', [OrganizationController::class, 'store'])
+            ->name('organization.store');
+
+        Route::get('registration/confirm-organization', [OrganizationController::class, 'confirmRegistration'])
+            ->name('registration.confirm-organization');
+
+        Route::post('registration/confirm-organization', [OrganizationController::class, 'confirmStore'])
+            ->name('registration.confirm-organization.store');
+    }
 });
 
 Route::middleware('auth')->group(function () {

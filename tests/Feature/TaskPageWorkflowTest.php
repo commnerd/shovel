@@ -19,7 +19,20 @@ class TaskPageWorkflowTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        $this->user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
+        ]);
+
+        // Add user to default group
+        $this->user->groups()->attach($group->id, ['joined_at' => now()]);
 
         // Mock AI configuration
         config([
@@ -161,10 +174,13 @@ class TaskPageWorkflowTest extends TestCase
 
     public function test_project_creation_from_task_page_works()
     {
+        $defaultGroup = $this->user->getDefaultGroup();
+
         $projectData = [
             'title' => 'Task Page Project',
             'description' => 'Test project from task page',
             'due_date' => '2025-12-31',
+            'group_id' => $defaultGroup->id,
             'tasks' => [
                 [
                     'title' => 'Task 1',

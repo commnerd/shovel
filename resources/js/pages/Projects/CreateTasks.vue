@@ -39,15 +39,26 @@ interface AICommunication {
     suggestions?: string[];
 }
 
+interface Group {
+    id: number;
+    name: string;
+    description?: string;
+    is_default: boolean;
+    organization_name: string;
+}
+
 interface Props {
     projectData: {
         title?: string;
         description: string;
         due_date?: string;
+        group_id?: number;
     };
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
     aiCommunication?: AICommunication | null;
+    userGroups: Group[];
+    defaultGroupId?: number;
 }
 
 const props = defineProps<Props>();
@@ -75,6 +86,7 @@ const form = useForm({
     title: props.projectData.title || '',
     description: props.projectData.description,
     due_date: props.projectData.due_date || '',
+    group_id: props.projectData.group_id || props.defaultGroupId,
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
 });
 
@@ -156,6 +168,7 @@ const regenerateTasks = () => {
             title: form.title,
             description: form.description,
             due_date: form.due_date,
+            group_id: form.group_id,
             regenerate: true,
         },
         onFinish: () => {
@@ -171,6 +184,7 @@ const goBackToEdit = () => {
             title: form.title,
             description: form.description,
             due_date: form.due_date,
+            group_id: form.group_id,
         }
     });
 };

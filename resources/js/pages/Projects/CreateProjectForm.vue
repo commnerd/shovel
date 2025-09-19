@@ -3,6 +3,21 @@ import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import axios from 'axios';
 
+interface Group {
+    id: number;
+    name: string;
+    description?: string;
+    is_default: boolean;
+    organization_name: string;
+}
+
+interface Props {
+    userGroups: Group[];
+    defaultGroupId?: number;
+}
+
+const props = defineProps<Props>();
+
 // Define emits
 const emit = defineEmits<{
     success: []
@@ -13,7 +28,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
-import { Sparkles, Send, Calendar, Wand2 } from 'lucide-vue-next';
+import { Sparkles, Send, Calendar, Wand2, Users } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 
 export interface TaskSuggestion {
@@ -28,6 +43,7 @@ const form = useForm({
     title: '',
     description: '',
     due_date: '',
+    group_id: props.defaultGroupId || null,
 });
 
 const isGeneratingTasks = ref(false);
@@ -44,6 +60,7 @@ const generateTasks = () => {
             title: form.title,
             description: form.description,
             due_date: form.due_date,
+            group_id: form.group_id,
         },
         onFinish: () => {
             isGeneratingTasks.value = false;
@@ -124,6 +141,29 @@ const handleKeydown = (event: KeyboardEvent) => {
                     <InputError :message="form.errors.due_date" />
                     <p class="text-xs text-gray-500">
                         Leave empty if no specific deadline
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="group_id" class="flex items-center gap-2">
+                        <Users class="h-4 w-4" />
+                        Assign to Group
+                    </Label>
+                    <select
+                        id="group_id"
+                        v-model="form.group_id"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="form.processing || isGeneratingTasks"
+                    >
+                        <option v-for="group in userGroups" :key="group.id" :value="group.id">
+                            {{ group.name }} 
+                            <span v-if="group.organization_name !== 'None'"> ({{ group.organization_name }})</span>
+                            <span v-if="group.is_default"> - Default</span>
+                        </option>
+                    </select>
+                    <InputError :message="form.errors.group_id" />
+                    <p class="text-xs text-gray-500">
+                        Choose which group this project belongs to
                     </p>
                 </div>
 

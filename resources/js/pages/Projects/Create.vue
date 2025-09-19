@@ -7,6 +7,21 @@ import { ArrowLeft } from 'lucide-vue-next';
 import CreateProjectForm from './CreateProjectForm.vue';
 import type { BreadcrumbItem } from '@/types';
 
+interface Group {
+    id: number;
+    name: string;
+    description?: string;
+    is_default: boolean;
+    organization_name: string;
+}
+
+interface Props {
+    userGroups: Group[];
+    defaultGroupId?: number;
+}
+
+const props = defineProps<Props>();
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -47,7 +62,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                 <!-- Create form -->
                 <div class="max-w-2xl">
-                    <CreateProjectForm />
+                    <CreateProjectForm 
+                        :user-groups="userGroups" 
+                        :default-group-id="defaultGroupId" 
+                    />
                 </div>
             </div>
         </div>

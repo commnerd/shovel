@@ -18,6 +18,8 @@ class ProjectFactory extends Factory
     {
         return [
             'user_id' => \App\Models\User::factory(),
+            'group_id' => \App\Models\Group::factory(),
+            'title' => $this->faker->optional(0.8)->sentence(3),
             'description' => $this->faker->paragraph(3),
             'due_date' => $this->faker->optional(0.7)->dateTimeBetween('now', '+3 months'),
             'status' => $this->faker->randomElement(['active', 'completed', 'archived']),

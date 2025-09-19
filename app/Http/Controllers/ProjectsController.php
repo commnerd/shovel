@@ -15,14 +15,23 @@ class ProjectsController extends Controller
     public function index()
     {
         try {
-            $projects = auth()->user()
-                ->projects()
+            // Get user's group IDs
+            $userGroupIds = auth()->user()->groups()->pluck('groups.id');
+            
+            // Get projects from user's groups or created by the user
+            $projects = \App\Models\Project::where(function ($query) use ($userGroupIds) {
+                $query->where('user_id', auth()->id())
+                      ->orWhereIn('group_id', $userGroupIds);
+            })
+                ->with(['group', 'user'])
                 ->latest()
                 ->get()
                 ->map(function ($project) {
                     return [
                         'id' => $project->id,
                         'user_id' => $project->user_id, // Include for tests
+                        'group_id' => $project->group_id,
+                        'group_name' => $project->group?->name,
                         'title' => $project->title,
                         'description' => $project->description,
                         'due_date' => $project->due_date?->format('Y-m-d'),
@@ -52,7 +61,23 @@ class ProjectsController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Projects/Create');
+        // Get user's available groups (within their organization)
+        $userGroups = auth()->user()->getOrganizationGroups()->map(function ($group) {
+            return [
+                'id' => $group->id,
+                'name' => $group->name,
+                'description' => $group->description,
+                'is_default' => $group->is_default,
+                'organization_name' => $group->organization->name,
+            ];
+        });
+
+        $defaultGroup = $userGroups->where('is_default', true)->first();
+
+        return Inertia::render('Projects/Create', [
+            'userGroups' => $userGroups,
+            'defaultGroupId' => $defaultGroup['id'] ?? null,
+        ]);
     }
 
     /**
@@ -60,9 +85,9 @@ class ProjectsController extends Controller
      */
     public function edit(Project $project)
     {
-        // Ensure the project belongs to the authenticated user
-        if ($project->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to this project.');
+        // Check if user can access this project
+        if (!$this->canAccessProject($project)) {
+            abort(403, 'You do not have permission to access this project.');
         }
 
         return Inertia::render('Projects/Edit', [
@@ -81,9 +106,9 @@ class ProjectsController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        // Ensure the project belongs to the authenticated user
-        if ($project->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to this project.');
+        // Check if user can modify this project
+        if (!$this->canModifyProject($project)) {
+            abort(403, 'You do not have permission to modify this project.');
         }
 
         $validated = $request->validate([
@@ -112,10 +137,10 @@ class ProjectsController extends Controller
     {
         \Log::info("Delete request received for project {$project->id} by user " . auth()->id());
 
-        // Ensure the project belongs to the authenticated user
-        if ($project->user_id !== auth()->id()) {
+        // Check if user can modify this project
+        if (!$this->canModifyProject($project)) {
             \Log::warning("Unauthorized delete attempt for project {$project->id} by user " . auth()->id());
-            abort(403, 'Unauthorized access to this project.');
+            abort(403, 'You do not have permission to delete this project.');
         }
 
         try {
@@ -158,6 +183,7 @@ class ProjectsController extends Controller
             'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
+            'group_id' => 'nullable|exists:groups,id',
             'regenerate' => 'nullable|boolean',
         ]);
 
@@ -262,15 +288,31 @@ class ProjectsController extends Controller
             ];
         }
 
+        // Get user's available groups for the form
+        $userGroups = auth()->user()->getOrganizationGroups()->map(function ($group) {
+            return [
+                'id' => $group->id,
+                'name' => $group->name,
+                'description' => $group->description,
+                'is_default' => $group->is_default,
+                'organization_name' => $group->organization->name,
+            ];
+        });
+
+        $defaultGroup = $userGroups->where('is_default', true)->first();
+
         return Inertia::render('Projects/CreateTasks', [
             'projectData' => [
                 'title' => $suggestedTitle,
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'],
+                'group_id' => $validated['group_id'] ?? ($defaultGroup['id'] ?? null),
             ],
             'suggestedTasks' => $suggestedTasks,
             'aiUsed' => $aiUsed,
             'aiCommunication' => $aiCommunication,
+            'userGroups' => $userGroups,
+            'defaultGroupId' => $defaultGroup['id'] ?? null,
         ]);
     }
 
@@ -283,6 +325,7 @@ class ProjectsController extends Controller
             'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
+            'group_id' => 'nullable|exists:groups,id',
             'tasks' => 'nullable|array',
             'tasks.*.title' => 'required|string|max:255',
             'tasks.*.description' => 'nullable|string|max:1000',
@@ -315,9 +358,23 @@ class ProjectsController extends Controller
                 }
             }
 
+            // Determine group assignment
+            $groupId = $validated['group_id'];
+            if (!$groupId) {
+                // Default to user's default group
+                $defaultGroup = auth()->user()->getDefaultGroup();
+                $groupId = $defaultGroup?->id;
+            }
+
+            // Verify user has access to the selected group
+            if ($groupId && !auth()->user()->belongsToGroup($groupId)) {
+                throw new \Exception('You do not have access to the selected group.');
+            }
+
             // Create the project in the database
             $project = Project::create([
                 'user_id' => auth()->id(),
+                'group_id' => $groupId,
                 'title' => $projectTitle,
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
@@ -351,5 +408,56 @@ class ProjectsController extends Controller
 
             return back()->withErrors(['error' => 'Failed to create project. Please try again.']);
         }
+    }
+
+    /**
+     * Check if the authenticated user can access the given project.
+     */
+    private function canAccessProject(Project $project): bool
+    {
+        $user = auth()->user();
+        
+        // User can access project if:
+        // 1. They own the project
+        // 2. They belong to the same group as the project
+        // 3. They are admin and in the same organization
+        
+        if ($project->user_id === $user->id) {
+            return true;
+        }
+        
+        if ($project->group && $user->belongsToGroup($project->group_id)) {
+            return true;
+        }
+        
+        // Admin can access all projects in their organization
+        if ($user->isAdmin() && $project->group && $project->group->organization_id === $user->organization_id) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if the authenticated user can modify the given project.
+     */
+    private function canModifyProject(Project $project): bool
+    {
+        $user = auth()->user();
+        
+        // User can modify project if:
+        // 1. They own the project
+        // 2. They are admin in the same organization
+        
+        if ($project->user_id === $user->id) {
+            return true;
+        }
+        
+        // Admin can modify all projects in their organization
+        if ($user->isAdmin() && $project->group && $project->group->organization_id === $user->organization_id) {
+            return true;
+        }
+        
+        return false;
     }
 }

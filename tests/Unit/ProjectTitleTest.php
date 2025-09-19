@@ -19,8 +19,21 @@ class ProjectTitleTest extends TestCase
     {
         parent::setUp();
 
-        // Create a test user
-        $this->user = User::factory()->create();
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        // Create a test user with proper organization and group setup
+        $this->user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+            'approved_at' => now(),
+        ]);
+        
+        // Add user to default group
+        $this->user->groups()->attach($group->id, ['joined_at' => now()]);
     }
 
     public function test_project_can_be_created_with_title()
@@ -80,11 +93,14 @@ class ProjectTitleTest extends TestCase
 
         $this->app->instance('ai', $mockAIManager);
 
+        $defaultGroup = $this->user->getDefaultGroup();
+        
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [],
             ]);
 
@@ -104,11 +120,14 @@ class ProjectTitleTest extends TestCase
 
         $this->app->instance('ai', $mockAIManager);
 
+        $defaultGroup = $this->user->getDefaultGroup();
+        
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
                 'description' => 'Build a task management system for teams',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [],
             ]);
 
@@ -125,11 +144,14 @@ class ProjectTitleTest extends TestCase
         // When title is provided, AI should not be called at all
         // No need to mock since it shouldn't be used
 
+        $defaultGroup = $this->user->getDefaultGroup();
+        
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => 'My Custom Title',
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
+                'group_id' => $defaultGroup->id,
                 'tasks' => [],
             ]);
 

@@ -16,6 +16,7 @@ class Project extends Model
      */
     protected $fillable = [
         'user_id',
+        'group_id',
         'title',
         'description',
         'due_date',
@@ -35,6 +36,14 @@ class Project extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the group that owns the project.
+     */
+    public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 
     /**
