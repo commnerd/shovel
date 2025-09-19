@@ -33,11 +33,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Generate wayfinder files (actions, routes, etc.)
-RUN php artisan wayfinder:generate
-
-# Install npm dependencies and build assets
-RUN npm install && npm run build
+# Install npm dependencies (but don't build yet)
+RUN npm install
 
 # Configure Apache
 RUN a2enmod rewrite
@@ -92,6 +89,12 @@ RUN php artisan migrate --force
 
 # Create storage link for public files
 RUN php artisan storage:link
+
+# Generate wayfinder files (actions, routes, etc.) after Laravel is set up
+RUN php artisan wayfinder:generate
+
+# Now build the frontend assets with the generated files
+RUN npm run build
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
