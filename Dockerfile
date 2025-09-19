@@ -33,6 +33,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
+# Generate wayfinder files (actions, routes, etc.)
+RUN php artisan wayfinder:generate
+
 # Install npm dependencies and build assets
 RUN npm install && npm run build
 
