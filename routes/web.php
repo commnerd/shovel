@@ -17,6 +17,58 @@ Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// System Settings routes
+Route::get('/settings/system', [App\Http\Controllers\Settings\SettingsController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.system.index');
+
+Route::post('/settings/ai', [App\Http\Controllers\Settings\SettingsController::class, 'updateAI'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.ai.update');
+
+Route::post('/settings/ai/test', [App\Http\Controllers\Settings\SettingsController::class, 'testAI'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.ai.test');
+
+Route::post('/settings/ai/default', [App\Http\Controllers\Settings\SettingsController::class, 'updateDefaultAI'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.ai.default');
+
+// Super Admin Return Route (outside middleware to allow impersonated users to return)
+Route::post('/super-admin/return-to-super-admin', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'returnToSuperAdmin'])
+    ->middleware(['auth', 'verified'])
+    ->name('super-admin.return');
+
+// Admin Return Route (outside middleware to allow impersonated users to return)
+Route::post('/admin/return-to-admin', [App\Http\Controllers\Admin\UserManagementController::class, 'returnToAdmin'])
+    ->middleware(['auth', 'verified'])
+    ->name('admin.return');
+
+// Super Admin routes
+Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserIsSuperAdmin::class])->prefix('super-admin')->group(function () {
+    Route::get('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'index'])->name('super-admin.index');
+    Route::get('/users', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'users'])->name('super-admin.users');
+    Route::get('/organizations', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'organizations'])->name('super-admin.organizations');
+
+    // User search endpoint
+    Route::get('/users/search', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'searchUsers'])->name('super-admin.users.search');
+
+    Route::post('/users/{user}/login-as', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'loginAsUser'])->name('super-admin.login-as');
+
+    Route::post('/users/{user}/assign-super-admin', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'assignSuperAdmin'])->name('super-admin.assign');
+    Route::post('/users/{user}/remove-super-admin', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'removeSuperAdmin'])->name('super-admin.remove');
+});
+
+// Organization Admin routes
+Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->group(function () {
+    Route::get('/users', [App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users');
+
+    // User search endpoint
+    Route::get('/users/search', [App\Http\Controllers\Admin\UserManagementController::class, 'searchUsers'])->name('admin.users.search');
+
+    Route::post('/users/{user}/login-as', [App\Http\Controllers\Admin\UserManagementController::class, 'loginAsUser'])->name('admin.login-as');
+});
+
 Route::get('/dashboard/projects', [App\Http\Controllers\ProjectsController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('projects.index');
@@ -55,7 +107,7 @@ Route::get('/dashboard/projects/{project}/tasks/{task}/subtasks/create', [App\Ht
 
 Route::get('/dashboard/projects/{project}/tasks/{task}/breakdown', [App\Http\Controllers\TasksController::class, 'showBreakdown'])
     ->middleware(['auth', 'verified'])
-    ->name('projects.tasks.breakdown');
+    ->name('projects.tasks.show_breakdown');
 
 Route::post('/dashboard/projects/{project}/tasks', [App\Http\Controllers\TasksController::class, 'store'])
     ->middleware(['auth', 'verified'])

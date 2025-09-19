@@ -21,6 +21,11 @@ class Project extends Model
         'description',
         'due_date',
         'status',
+        'ai_provider',
+        'ai_model',
+        'ai_api_key',
+        'ai_base_url',
+        'ai_config',
     ];
 
     /**
@@ -28,6 +33,7 @@ class Project extends Model
      */
     protected $casts = [
         'due_date' => 'date',
+        'ai_config' => 'array',
     ];
 
     /**
@@ -96,5 +102,49 @@ class Project extends Model
         }
 
         return today()->diffInDays($this->due_date, false);
+    }
+
+    /**
+     * Get the AI configuration for this project.
+     */
+    public function getAIConfiguration(): array
+    {
+        return [
+            'provider' => $this->ai_provider ?? 'cerebrus',
+            'model' => $this->ai_model,
+            'api_key' => $this->ai_api_key,
+            'base_url' => $this->ai_base_url,
+            'config' => $this->ai_config ?? [],
+        ];
+    }
+
+    /**
+     * Set the AI configuration for this project.
+     */
+    public function setAIConfiguration(array $config): void
+    {
+        $this->update([
+            'ai_provider' => $config['provider'] ?? 'cerebrus',
+            'ai_model' => $config['model'] ?? null,
+            'ai_api_key' => $config['api_key'] ?? null,
+            'ai_base_url' => $config['base_url'] ?? null,
+            'ai_config' => $config['config'] ?? [],
+        ]);
+    }
+
+    /**
+     * Apply default AI configuration from system settings.
+     */
+    public function applyDefaultAIConfiguration(): void
+    {
+        $defaultConfig = [
+            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebrus'),
+            'model' => \App\Models\Setting::get('ai.default.model'),
+            'api_key' => \App\Models\Setting::get('ai.default.api_key'),
+            'base_url' => \App\Models\Setting::get('ai.default.base_url'),
+            'config' => \App\Models\Setting::get('ai.default.config', []),
+        ];
+
+        $this->setAIConfiguration($defaultConfig);
     }
 }

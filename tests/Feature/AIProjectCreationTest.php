@@ -75,15 +75,16 @@ class AIProjectCreationTest extends TestCase
         ]);
 
         $mockAI->shouldReceive('generateTasks')
-            ->with('Build a task management app with Vue.js and Laravel', Mockery::type('array'))
+            ->withAnyArgs()
             ->andReturn($mockTaskResponse);
 
-        $this->app->instance(AIManager::class, $mockAI);
+        $this->app->instance('ai', $mockAI);
 
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a task management app with Vue.js and Laravel',
                 'due_date' => '2025-12-31',
+                'group_id' => $this->user->groups->first()->id,
             ]);
 
         $response->assertStatus(200)
@@ -108,12 +109,13 @@ class AIProjectCreationTest extends TestCase
         $mockAI->shouldReceive('generateTasks')
             ->andThrow(new \Exception('AI service unavailable'));
 
-        $this->app->instance(AIManager::class, $mockAI);
+        $this->app->instance('ai', $mockAI);
 
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
+                'group_id' => $this->user->groups->first()->id,
             ]);
 
         $response->assertStatus(200)

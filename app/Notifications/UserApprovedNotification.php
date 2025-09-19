@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Models\Organization;
 use App\Models\User;
+use App\Models\Organization;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,14 +13,16 @@ class UserApprovedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public User $approvedBy;
+    public Organization $organization;
+
     /**
      * Create a new notification instance.
      */
-    public function __construct(
-        public Organization $organization,
-        public User $approvedBy
-    ) {
-        //
+    public function __construct(User $approvedBy, ?Organization $organization = null)
+    {
+        $this->approvedBy = $approvedBy;
+        $this->organization = $organization ?? $approvedBy->organization;
     }
 
     /**
@@ -39,17 +41,13 @@ class UserApprovedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("Welcome to {$this->organization->name}! Your membership has been approved")
+            ->subject('Your account has been approved!')
             ->greeting("Hello {$notifiable->name}!")
-            ->line("Great news! Your request to join '{$this->organization->name}' has been approved.")
-            ->line("You now have full access to your organization's projects and resources.")
-            ->line("**Approval Details:**")
-            ->line("Organization: {$this->organization->name}")
-            ->line("Approved by: {$this->approvedBy->name}")
-            ->line("Approved on: " . now()->format('F j, Y \a\t g:i A'))
+            ->line('Great news! Your account has been approved and you can now access the platform.')
+            ->line("You were approved by {$this->approvedBy->name} from {$this->organization->name}.")
             ->action('Access Dashboard', url('/dashboard'))
-            ->line('You can now log in and start collaborating with your team!')
-            ->line('Welcome to the team!');
+            ->line('You can now create projects, manage tasks, and collaborate with your team.')
+            ->line('If you have any questions, please contact your organization administrator.');
     }
 
     /**
@@ -60,11 +58,11 @@ class UserApprovedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'organization_id' => $this->organization->id,
-            'organization_name' => $this->organization->name,
+            'message' => 'Your account has been approved',
             'approved_by_id' => $this->approvedBy->id,
             'approved_by_name' => $this->approvedBy->name,
-            'approved_at' => now()->toISOString(),
+            'organization_id' => $this->organization->id,
+            'organization_name' => $this->organization->name,
         ];
     }
 }

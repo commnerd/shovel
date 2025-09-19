@@ -259,14 +259,13 @@ class UserApprovalProcessTest extends TestCase
             'pending_approval' => true,
         ]);
 
-        $notification = new UserApprovedNotification($this->organization, $this->admin);
+        $notification = new UserApprovedNotification($this->admin, $this->organization);
         $mailMessage = $notification->toMail($pendingUser);
 
         // Test subject and content
-        $this->assertStringContainsString('Welcome to Test Company', $mailMessage->subject);
         $this->assertStringContainsString('approved', $mailMessage->subject);
         $this->assertStringContainsString('Test User', $mailMessage->greeting);
-        $this->assertStringContainsString('Test Company', $mailMessage->introLines[0]);
+        $this->assertStringContainsString('approved', $mailMessage->introLines[0]);
 
         // Check that admin name appears somewhere in the message
         $allContent = implode(' ', $mailMessage->introLines);

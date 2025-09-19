@@ -207,7 +207,7 @@ class CerebrusProvider implements AIProviderInterface
         Log::channel(config('ai.logging.channel', 'daily'))->info('AI Request', [
             'provider' => $this->getName(),
             'operation' => $operation,
-            'model' => $this->config['model'],
+            'model' => $this->config['model'] ?? 'unknown',
             'response_time' => $responseTime,
             'tokens_used' => $tokensUsed,
             'input' => config('ai.logging.log_requests') ? $input : '[REDACTED]',
@@ -376,6 +376,7 @@ class CerebrusProvider implements AIProviderInterface
                     'status' => in_array($status, ['pending', 'in_progress', 'completed'])
                         ? $status
                         : 'pending',
+                    'due_date' => $task['due_date'] ?? null,
                     'subtasks' => $task['subtasks'] ?? []
                 ];
             }

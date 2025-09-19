@@ -175,7 +175,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     v-for="task in tasks"
                     :key="task.id"
                     class="hover:shadow-md transition-shadow"
-                    :class="{ 'ml-6': task.depth > 0 }"
+                    :class="{ 'ml-6': task.depth > 0 && currentFilter !== 'leaf' }"
                 >
                     <CardHeader class="pb-3">
                         <div class="flex items-start justify-between">

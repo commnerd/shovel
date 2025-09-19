@@ -60,17 +60,19 @@ class AIWorkflowIntegrationTest extends TestCase
             ],
         ]);
 
-        $this->mock(AIManager::class, function ($mock) use ($mockTaskResponse) {
-            $mock->shouldReceive('generateTasks')
-                ->with('Build a comprehensive e-commerce platform', Mockery::type('array'))
-                ->andReturn($mockTaskResponse);
-        });
+        $mockAI = \Mockery::mock(\App\Services\AI\AIManager::class);
+        $mockAI->shouldReceive('generateTasks')
+            ->withAnyArgs()
+            ->andReturn($mockTaskResponse);
+
+        $this->app->instance('ai', $mockAI);
 
         // Step 1: User requests task generation
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a comprehensive e-commerce platform',
                 'due_date' => '2026-06-30',
+                'group_id' => $this->user->groups->first()->id,
             ]);
 
         $response->assertStatus(200)

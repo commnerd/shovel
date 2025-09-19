@@ -122,7 +122,7 @@ class NotificationComponentTest extends TestCase
         $response = $this->get('/registration/confirm-organization');
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('auth/ConfirmOrganization')
                 ->has('email')
                 ->has('organization')

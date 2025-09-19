@@ -49,6 +49,8 @@ class HandleInertiaRequests extends Middleware
                     'roles' => $request->user()->roles->pluck('name')->toArray(),
                     'permissions' => $request->user()->getAllPermissions(),
                 ] : null,
+                'original_super_admin_id' => session('original_super_admin_id'),
+                'original_admin_id' => session('original_admin_id'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

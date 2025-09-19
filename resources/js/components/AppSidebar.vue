@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, FolderOpen, Tag, Shield, Users } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, FolderOpen, Tag, Shield, Users, Settings, Crown } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import packageJson from '../../../package.json';
 import { computed } from 'vue';
@@ -35,12 +35,17 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
+const superAdminNavItems: NavItem[] = [
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Super Admin',
+        href: '/super-admin',
+        icon: Crown,
     },
+];
+
+
+const footerNavItems: NavItem[] = [
+    // Documentation link removed per user request
 ];
 </script>
 
@@ -60,17 +65,29 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            
-            <!-- Admin Section -->
-            <SidebarGroup v-if="user?.is_admin">
-                <SidebarGroupLabel class="flex items-center gap-2">
-                    <Shield class="h-4 w-4" />
-                    Administration
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <NavMain :items="adminNavItems" />
-                </SidebarGroupContent>
-            </SidebarGroup>
+
+        <!-- Super Admin Section -->
+        <SidebarGroup v-if="user?.is_super_admin">
+            <SidebarGroupLabel class="flex items-center gap-2">
+                <Crown class="h-4 w-4" />
+                Super Administration
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+                <NavMain :items="superAdminNavItems" />
+            </SidebarGroupContent>
+        </SidebarGroup>
+
+        <!-- Organization Admin Section -->
+        <SidebarGroup v-if="user?.is_admin && !user?.is_super_admin">
+            <SidebarGroupLabel class="flex items-center gap-2">
+                <Shield class="h-4 w-4" />
+                Administration
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+                <NavMain :items="adminNavItems" />
+            </SidebarGroupContent>
+        </SidebarGroup>
+
         </SidebarContent>
 
         <SidebarFooter>
@@ -82,6 +99,22 @@ const footerNavItems: NavItem[] = [
                             <SidebarMenuButton class="text-neutral-600 dark:text-neutral-300 cursor-default hover:bg-transparent">
                                 <Tag />
                                 <span>Version: {{ packageJson.version }}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+
+            <!-- Settings Link -->
+            <SidebarGroup class="group-data-[collapsible=icon]:p-0">
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child>
+                                <Link href="/settings/system" class="flex items-center gap-2">
+                                    <Settings />
+                                    <span>Settings</span>
+                                </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

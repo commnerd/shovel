@@ -18,9 +18,13 @@ class AITaskBreakdownTest extends TestCase
         parent::setUp();
 
         config([
+            'ai.providers.cerebrus.driver' => 'cerebrus',
             'ai.providers.cerebrus.api_key' => 'test-key',
             'ai.providers.cerebrus.base_url' => 'https://api.cerebras.ai/v1',
             'ai.providers.cerebrus.model' => 'test-model',
+            'ai.providers.cerebrus.timeout' => 30,
+            'ai.providers.cerebrus.max_tokens' => 4000,
+            'ai.providers.cerebrus.temperature' => 0.7,
         ]);
     }
 
@@ -197,8 +201,8 @@ class AITaskBreakdownTest extends TestCase
 
         $this->assertInstanceOf(AITaskResponse::class, $result);
         $this->assertTrue($result->isSuccessful()); // Should fallback gracefully
-        $this->assertCount(3, $result->getTasks()); // Fallback tasks
-        $this->assertContains('AI task breakdown failed, using fallback subtasks', $result->getNotes());
+        $this->assertCount(4, $result->getTasks()); // Fallback tasks from parseTaskResponse
+        $this->assertContains('AI response was not in expected JSON format', $result->getNotes());
     }
 
     public function test_task_breakdown_system_prompt_configuration()

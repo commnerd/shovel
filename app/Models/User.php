@@ -26,6 +26,7 @@ class User extends Authenticatable
         'pending_approval',
         'approved_at',
         'approved_by',
+        'is_super_admin',
     ];
 
     /**
@@ -46,10 +47,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'pending_approval' => 'boolean',
-            'approved_at' => 'datetime',
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'pending_approval' => 'boolean',
+        'approved_at' => 'datetime',
+        'is_super_admin' => 'boolean',
         ];
     }
 
@@ -227,5 +229,74 @@ class User extends Authenticatable
             ->unique()
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Check if the user is a super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
+    }
+
+    /**
+     * Make this user a super admin (can only be done by another super admin).
+     */
+    public function makeSuperAdmin(): void
+    {
+        $this->update(['is_super_admin' => true]);
+    }
+
+    /**
+     * Remove super admin privileges from this user.
+     */
+    public function removeSuperAdmin(): void
+    {
+        $this->update(['is_super_admin' => false]);
+    }
+
+    /**
+     * Check if user can manage organizations (super admin privilege).
+     */
+    public function canManageOrganizations(): bool
+    {
+        return $this->is_super_admin;
+    }
+
+    /**
+     * Check if user can login as other users (super admin privilege).
+     */
+    public function canLoginAsOtherUsers(): bool
+    {
+        return $this->is_super_admin;
+    }
+
+    /**
+     * Check if user can assign super admin role (super admin privilege).
+     */
+    public function canAssignSuperAdmin(): bool
+    {
+        return $this->is_super_admin;
+    }
+
+    /**
+     * Get all users that this user can manage.
+     */
+    public function getManagedUsers()
+    {
+        if ($this->is_super_admin) {
+            // Super admins can manage all users
+            return User::query();
+        }
+
+        if ($this->isAdmin()) {
+            // Regular admins can only manage users in their organization
+            return User::where('organization_id', $this->organization_id)
+                ->where('is_super_admin', false) // Cannot manage super admins
+                ->where('id', '!=', $this->id); // Cannot manage themselves
+        }
+
+        // Regular users cannot manage anyone
+        return User::whereRaw('1 = 0'); // Empty query
     }
 }

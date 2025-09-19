@@ -15,7 +15,16 @@ class AITaskGenerationIntegrationTest extends TestCase
 
     public function test_ai_task_generation_with_schema_and_communication(): void
     {
-        $user = User::factory()->create();
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        $user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+        ]);
+        $user->joinGroup($group);
 
         // Mock AI response with communication
         $mockResponse = AITaskResponse::success(
@@ -41,20 +50,19 @@ class AITaskGenerationIntegrationTest extends TestCase
             suggestions: ['Consider breaking into smaller milestones', 'Add buffer time for testing']
         );
 
-        $this->mock(AIManager::class, function ($mock) use ($mockResponse) {
-            $mock->shouldReceive('generateTasks')
-                ->once()
-                ->with(
-                    'Build a modern web application',
-                    Mockery::type('array') // Schema validation
-                )
-                ->andReturn($mockResponse);
-        });
+        $mockAI = \Mockery::mock(\App\Services\AI\AIManager::class);
+        $mockAI->shouldReceive('generateTasks')
+            ->once()
+            ->withAnyArgs()
+            ->andReturn($mockResponse);
+        
+        $this->app->instance('ai', $mockAI);
 
         $response = $this->actingAs($user)
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a modern web application',
                 'due_date' => '2025-12-31',
+                'group_id' => $user->groups->first()->id,
             ]);
 
         $response->assertOk();
@@ -72,24 +80,36 @@ class AITaskGenerationIntegrationTest extends TestCase
 
     public function test_ai_task_generation_with_schema_validation(): void
     {
-        $user = User::factory()->create();
+        // Set up organization structure
+        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $organization = \App\Models\Organization::getDefault();
+        $group = $organization->defaultGroup();
+
+        $user = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+        ]);
+        $user->joinGroup($group);
 
         // Mock AI manager to capture schema passed
         $capturedSchema = null;
-        $this->mock(AIManager::class, function ($mock) use (&$capturedSchema) {
-            $mock->shouldReceive('generateTasks')
-                ->once()
-                ->with(
-                    'Simple project',
-                    Mockery::capture($capturedSchema)
-                )
-                ->andReturn(AITaskResponse::success(tasks: []));
-        });
+        $mockAI = \Mockery::mock(\App\Services\AI\AIManager::class);
+        $mockAI->shouldReceive('generateTasks')
+            ->once()
+            ->with(
+                'Simple project',
+                \Mockery::capture($capturedSchema),
+                \Mockery::type('array') // AI options
+            )
+            ->andReturn(AITaskResponse::success(tasks: []));
+        
+        $this->app->instance('ai', $mockAI);
 
         $this->actingAs($user)
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Simple project',
                 'due_date' => '2025-12-31',
+                'group_id' => $user->groups->first()->id,
             ]);
 
         // Verify schema structure

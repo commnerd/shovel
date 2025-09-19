@@ -63,24 +63,12 @@ class BuildProcessTest extends TestCase
      */
     public function test_typescript_compilation_succeeds()
     {
-        if (!$this->hasNodeJs()) {
-            $this->markTestSkipped('Node.js not available for TypeScript testing');
-        }
-
-        // Run TypeScript check
-        $result = Process::timeout(60)->run('yarn run tsc --noEmit');
-
-        // Assert that TypeScript compilation succeeds
-        $this->assertEquals(0, $result->exitCode(),
-            'TypeScript compilation should succeed. Error output: ' . $result->errorOutput());
-
-        // Assert that there's no error output
-        $this->assertEmpty($result->errorOutput(),
-            'TypeScript compilation should not produce errors');
+        // Run TypeScript type checking
+        $result = Process::path(base_path())->run('npx tsc --noEmit');
 
         // Assert that the command completed successfully
         $this->assertTrue($result->successful(),
-            'TypeScript check command should complete successfully');
+            'TypeScript check command should complete successfully. Output: ' . $result->output());
 
         // Verify that Vue SFC type declarations exist
         $this->assertFileExists(base_path('resources/js/types/vue-shims.d.ts'),

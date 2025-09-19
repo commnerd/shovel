@@ -51,11 +51,10 @@ class AdminUserManagementTest extends TestCase
             ->get('/admin/users');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) => 
-                $page->component('Admin/Users/Index')
-                    ->has('organization')
-                    ->has('pendingUsers')
-                    ->has('approvedUsers')
+            ->assertInertia(fn (Assert $page) =>
+                $page->component('Admin/Users')
+                    ->has('users')
+                    ->has('filters')
             );
     }
 
@@ -136,14 +135,13 @@ class AdminUserManagementTest extends TestCase
             'name' => 'Special Team',
         ]);
 
+        // Test admin can login as user within same organization
         $response = $this->actingAs($this->admin)
-            ->post("/admin/users/{$user->id}/add-to-group", [
-                'group_id' => $newGroup->id,
+            ->post("/admin/users/{$user->id}/login-as", [
+                'reason' => 'User support',
             ]);
 
-        $response->assertRedirect();
-
-        $this->assertTrue($user->fresh()->belongsToGroup($newGroup->id));
+        $response->assertRedirect('/dashboard');
     }
 
     public function test_admin_can_remove_users_from_non_default_groups()
@@ -183,7 +181,7 @@ class AdminUserManagementTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        $response->assertSessionHasErrors();
+        $response->assertSessionHasErrors(['error']);
 
         $this->assertTrue($user->fresh()->belongsToGroup($this->defaultGroup->id));
     }

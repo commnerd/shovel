@@ -388,6 +388,9 @@ class ProjectsController extends Controller
                 'status' => 'active',
             ]);
 
+            // Apply default AI configuration to the new project
+            $project->applyDefaultAIConfiguration();
+
             // Create tasks if provided
             if (!empty($validated['tasks'])) {
                 foreach ($validated['tasks'] as $taskData) {

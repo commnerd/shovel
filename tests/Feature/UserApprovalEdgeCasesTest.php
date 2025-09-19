@@ -177,14 +177,20 @@ class UserApprovalEdgeCasesTest extends TestCase
     public function test_approval_notification_email_content()
     {
         $organization = Organization::factory()->create(['name' => 'Email Test Corp']);
-        $admin = User::factory()->create(['name' => 'Admin User']);
-        $user = User::factory()->create(['name' => 'Approved User']);
+        $admin = User::factory()->create([
+            'name' => 'Admin User',
+            'organization_id' => $organization->id,
+        ]);
+        $user = User::factory()->create([
+            'name' => 'Approved User',
+            'organization_id' => $organization->id,
+        ]);
 
-        $notification = new UserApprovedNotification($organization, $admin);
+        $notification = new UserApprovedNotification($admin);
         $mailMessage = $notification->toMail($user);
 
         // Verify email structure
-        $this->assertEquals("Welcome to Email Test Corp! Your membership has been approved", $mailMessage->subject);
+        $this->assertEquals("Your account has been approved!", $mailMessage->subject);
         $this->assertEquals("Hello Approved User!", $mailMessage->greeting);
 
         // Verify action button exists

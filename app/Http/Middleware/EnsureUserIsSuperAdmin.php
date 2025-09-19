@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureUserIsAdmin
+class EnsureUserIsSuperAdmin
 {
     /**
      * Handle an incoming request.
@@ -19,16 +19,8 @@ class EnsureUserIsAdmin
             return redirect('/login');
         }
 
-        $user = auth()->user();
-
-        // Super admins have admin privileges everywhere
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
-
-        // Check if user is an admin in their organization
-        if (!$user->isAdmin()) {
-            abort(403, 'Admin access required.');
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Super admin access required.');
         }
 
         return $next($request);
