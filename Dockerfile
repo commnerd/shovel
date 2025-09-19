@@ -91,19 +91,13 @@ RUN php artisan migrate --force
 RUN php artisan storage:link
 
 # Generate wayfinder files (actions, routes, etc.) after Laravel is set up
-# Temporarily set environment to local to ensure all routes are registered
+# Use environment override to ensure all routes are registered during generation
 RUN echo "Current working directory: $(pwd)" && \
     echo "Laravel app check:" && \
     php artisan --version && \
     echo "Current environment: $(php artisan env)" && \
-    echo "Temporarily setting APP_ENV to local for wayfinder generation..." && \
-    sed -i 's/APP_ENV=production/APP_ENV=local/' .env && \
-    echo "New environment: $(php artisan env)" && \
-    echo "Running wayfinder:generate..." && \
-    php artisan wayfinder:generate --verbose && \
-    echo "Restoring production environment..." && \
-    sed -i 's/APP_ENV=local/APP_ENV=production/' .env && \
-    echo "Environment restored: $(php artisan env)" && \
+    echo "Running wayfinder:generate with local environment override..." && \
+    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local && \
     echo "Wayfinder generation completed. Checking results:" && \
     ls -la resources/js/ && \
     if [ -d "resources/js/actions" ]; then \
