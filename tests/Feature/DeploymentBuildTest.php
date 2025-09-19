@@ -13,18 +13,18 @@ class DeploymentBuildTest extends TestCase
 
         $content = file_get_contents($registerPath);
 
-        // Ensure it uses relative imports to avoid Docker build issues
+        // Ensure it uses absolute imports with @ alias to avoid Docker build issues
         $this->assertStringContainsString(
-            '../../actions/App/Http/Controllers/Auth/RegisteredUserController',
-            $content,
-            'Register.vue should use relative import for RegisteredUserController to avoid Docker build issues'
-        );
-
-        // Ensure it doesn't use problematic absolute imports
-        $this->assertStringNotContainsString(
             '@/actions/App/Http/Controllers/Auth/RegisteredUserController',
             $content,
-            'Register.vue should not use absolute imports that fail in Docker builds'
+            'Register.vue should use absolute import with @ alias for RegisteredUserController to avoid Docker build issues'
+        );
+
+        // Ensure it doesn't use problematic relative imports
+        $this->assertStringNotContainsString(
+            '../../actions/App/Http/Controllers/Auth/RegisteredUserController',
+            $content,
+            'Register.vue should not use relative imports that fail in Docker builds'
         );
     }
 
