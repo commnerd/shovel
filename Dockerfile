@@ -91,26 +91,37 @@ RUN php artisan migrate --force
 RUN php artisan storage:link
 
 # Generate wayfinder files (actions, routes, etc.) after Laravel is set up
-# Use environment override to ensure all routes are registered during generation
-RUN echo "Current working directory: $(pwd)" && \
-    echo "Laravel app check:" && \
-    php artisan --version && \
-    echo "Current environment: $(php artisan env)" && \
-    echo "Running wayfinder:generate with local environment override..." && \
-    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local && \
-    echo "Wayfinder generation completed. Checking results:" && \
+RUN echo "=== WAYFINDER GENERATION START ===" && \
+    echo "Working directory: $(pwd)" && \
+    echo "Laravel version: $(php artisan --version)" && \
+    echo "Environment check: $(php artisan env)" && \
+    echo "Route list before generation:" && \
+    WAYFINDER_BUILD=true APP_ENV=local php artisan route:list --name=register && \
+    echo "=== RUNNING WAYFINDER GENERATION ===" && \
+    php artisan config:clear && \
+    php artisan route:clear && \
+    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local || (echo "WAYFINDER GENERATION FAILED!" && exit 1) && \
+    echo "=== CHECKING GENERATION RESULTS ===" && \
     ls -la resources/js/ && \
     if [ -d "resources/js/actions" ]; then \
-        echo "✓ Actions directory exists, listing contents:" && \
-        find resources/js/actions -name "*.ts" | head -5 && \
-        echo "✓ RegisteredUserController check:" && \
-        ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts || echo "✗ RegisteredUserController.ts not found"; \
+        echo "✓ Actions directory exists" && \
+        echo "Actions structure:" && \
+        find resources/js/actions -type f -name "*.ts" | sort && \
+        echo "=== CRITICAL FILE CHECK ===" && \
+        if [ -f "resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" ]; then \
+            echo "✓ SUCCESS: RegisteredUserController.ts found!" && \
+            ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts; \
+        else \
+            echo "✗ CRITICAL ERROR: RegisteredUserController.ts NOT FOUND!" && \
+            echo "Auth directory contents:" && \
+            ls -la resources/js/actions/App/Http/Controllers/Auth/ || echo "Auth directory doesn't exist" && \
+            exit 1; \
+        fi; \
     else \
-        echo "✗ ERROR: Actions directory was not created!" && \
-        echo "Full directory listing:" && \
-        find resources/js -type f -name "*.ts" | head -10 && \
+        echo "✗ FATAL ERROR: Actions directory was not created!" && \
         exit 1; \
-    fi
+    fi && \
+    echo "=== WAYFINDER GENERATION COMPLETE ==="
 
 # Now build the frontend assets with the generated files
 RUN npm run build
