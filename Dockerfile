@@ -91,7 +91,24 @@ RUN php artisan migrate --force
 RUN php artisan storage:link
 
 # Generate wayfinder files (actions, routes, etc.) after Laravel is set up
-RUN php artisan wayfinder:generate
+RUN echo "Current working directory: $(pwd)" && \
+    echo "Laravel app check:" && \
+    php artisan --version && \
+    echo "Running wayfinder:generate..." && \
+    php artisan wayfinder:generate --verbose && \
+    echo "Wayfinder generation completed. Checking results:" && \
+    ls -la resources/js/ && \
+    if [ -d "resources/js/actions" ]; then \
+        echo "✓ Actions directory exists, listing contents:" && \
+        find resources/js/actions -name "*.ts" | head -5 && \
+        echo "✓ RegisteredUserController check:" && \
+        ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts || echo "✗ RegisteredUserController.ts not found"; \
+    else \
+        echo "✗ ERROR: Actions directory was not created!" && \
+        echo "Full directory listing:" && \
+        find resources/js -type f -name "*.ts" | head -10 && \
+        exit 1; \
+    fi
 
 # Now build the frontend assets with the generated files
 RUN npm run build
