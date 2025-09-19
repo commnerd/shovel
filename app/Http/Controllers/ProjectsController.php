@@ -186,6 +186,7 @@ class ProjectsController extends Controller
             'due_date' => 'nullable|date|after_or_equal:today',
             'group_id' => 'nullable|exists:groups,id',
             'regenerate' => 'nullable|boolean',
+            'user_feedback' => 'nullable|string|max:2000',
         ]);
 
         $aiUsed = false;
@@ -214,7 +215,12 @@ class ProjectsController extends Controller
                 'suggestions' => ['array of strings (optional)']
             ];
 
-            $aiResponse = AI::generateTasks($validated['description'], $taskSchema);
+            $aiOptions = [];
+            if (!empty($validated['user_feedback'])) {
+                $aiOptions['user_feedback'] = $validated['user_feedback'];
+            }
+
+            $aiResponse = AI::generateTasks($validated['description'], $taskSchema, $aiOptions);
             $aiUsed = $aiResponse->isSuccessful();
 
             if ($aiResponse->isSuccessful()) {
@@ -306,7 +312,7 @@ class ProjectsController extends Controller
             'projectData' => [
                 'title' => $suggestedTitle,
                 'description' => $validated['description'],
-                'due_date' => $validated['due_date'],
+                'due_date' => $validated['due_date'] ?? null,
                 'group_id' => $validated['group_id'] ?? ($defaultGroup['id'] ?? null),
             ],
             'suggestedTasks' => $suggestedTasks,

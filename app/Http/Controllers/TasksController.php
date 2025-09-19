@@ -337,6 +337,44 @@ class TasksController extends Controller
     }
 
     /**
+     * Show the AI breakdown page for a specific task.
+     */
+    public function showBreakdown(Project $project, Task $task)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        // Ensure the task belongs to the project
+        if ($task->project_id !== $project->id) {
+            abort(404, 'Task not found in this project.');
+        }
+
+        return Inertia::render('Projects/Tasks/Breakdown', [
+            'project' => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'description' => $project->description,
+            ],
+            'task' => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'due_date' => $task->due_date?->format('Y-m-d'),
+                'parent_id' => $task->parent_id,
+                'has_children' => $task->children->count() > 0,
+                'is_leaf' => $task->isLeaf(),
+                'is_top_level' => $task->isTopLevel(),
+                'depth' => $task->depth,
+            ],
+            'projectTaskCount' => $project->tasks()->count(),
+        ]);
+    }
+
+    /**
      * Generate AI-powered task breakdown suggestions.
      */
     public function generateTaskBreakdown(Request $request, Project $project)
@@ -349,6 +387,7 @@ class TasksController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'user_feedback' => 'nullable|string|max:2000',
         ]);
 
         try {
@@ -382,6 +421,7 @@ class TasksController extends Controller
                 ],
                 'existing_tasks' => $existingTasks,
                 'task_stats' => $taskStats,
+                'user_feedback' => $validated['user_feedback'] ?? null,
             ];
 
             $aiResponse = \App\Services\AI\Facades\AI::breakdownTask(

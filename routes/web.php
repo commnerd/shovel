@@ -53,6 +53,10 @@ Route::get('/dashboard/projects/{project}/tasks/{task}/subtasks/create', [App\Ht
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.subtasks.create');
 
+Route::get('/dashboard/projects/{project}/tasks/{task}/breakdown', [App\Http\Controllers\TasksController::class, 'showBreakdown'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.breakdown');
+
 Route::post('/dashboard/projects/{project}/tasks', [App\Http\Controllers\TasksController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.store');

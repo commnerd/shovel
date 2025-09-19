@@ -64,6 +64,13 @@ class CerebrusProvider implements AIProviderInterface
         $systemPrompt = $prompts['system'] . "\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
         $userPrompt = str_replace('{description}', $projectDescription, $prompts['user']);
 
+        // Add user feedback if provided in options
+        if (!empty($options['user_feedback'])) {
+            $userPrompt .= "\n\n**User Feedback for Improvement:**\n";
+            $userPrompt .= $options['user_feedback'] . "\n\n";
+            $userPrompt .= "Please incorporate this feedback to improve the task generation.";
+        }
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
             ['role' => 'user', 'content' => $userPrompt],
@@ -423,9 +430,9 @@ class CerebrusProvider implements AIProviderInterface
             }
 
             $content = $this->cleanResponseContent($response->getContent());
-            $this->logSuccess('task_breakdown', $content, $taskTitle);
+            $this->logRequest('task_breakdown', [$taskTitle, $taskDescription], $content, 0, null);
 
-            $parsedResponse = $this->parseTaskResponse($content);
+            $parsedResponse = $this->parseTaskResponse($response, $taskTitle);
 
             return $parsedResponse ?: $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
 
@@ -458,6 +465,13 @@ class CerebrusProvider implements AIProviderInterface
         $prompt .= "**Task to Break Down:**\n";
         $prompt .= "Title: {$taskTitle}\n";
         $prompt .= "Description: {$taskDescription}\n\n";
+
+        // Add user feedback if provided
+        if (!empty($context['user_feedback'])) {
+            $prompt .= "**User Feedback for Improvement:**\n";
+            $prompt .= $context['user_feedback'] . "\n\n";
+            $prompt .= "Please incorporate this feedback to improve the task breakdown.\n\n";
+        }
 
         // Add project context
         if (!empty($context['project'])) {

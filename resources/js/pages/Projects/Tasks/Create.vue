@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
 import { ArrowLeft, Plus, Send, Sparkles, Loader } from 'lucide-vue-next';
+import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
 import type { BreadcrumbItem } from '@/types';
 
 interface Project {
@@ -60,6 +61,10 @@ const isGeneratingBreakdown = ref(false);
 const suggestedSubtasks = ref<any[]>([]);
 const aiNotes = ref<string[]>([]);
 const showBreakdownResults = ref(false);
+
+// Regeneration modal state
+const showRegenerationModal = ref(false);
+const isRegeneratingWithFeedback = ref(false);
 
 const submit = () => {
     if (form.processing) return;
@@ -159,6 +164,48 @@ const clearBreakdown = () => {
     suggestedSubtasks.value = [];
     aiNotes.value = [];
     showBreakdownResults.value = false;
+};
+
+const regenerateWithFeedback = async (feedback: string) => {
+    isRegeneratingWithFeedback.value = true;
+    showRegenerationModal.value = false;
+    suggestedSubtasks.value = [];
+    aiNotes.value = [];
+    showBreakdownResults.value = false;
+
+    try {
+        const response = await fetch(`/dashboard/projects/${props.project.id}/tasks/breakdown`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify({
+                title: form.title,
+                description: form.description,
+                user_feedback: feedback,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            suggestedSubtasks.value = data.subtasks || [];
+            aiNotes.value = data.notes || [];
+            showBreakdownResults.value = true;
+        } else {
+            alert(data.error || 'Failed to regenerate task breakdown. Please try again.');
+        }
+    } catch (error) {
+        console.error('AI breakdown error:', error);
+        alert('Failed to regenerate task breakdown. Please check your connection and try again.');
+    } finally {
+        isRegeneratingWithFeedback.value = false;
+    }
+};
+
+const cancelRegeneration = () => {
+    showRegenerationModal.value = false;
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -385,8 +432,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                                                     type="button"
                                                     variant="outline"
                                                     size="sm"
-                                                    @click="generateAIBreakdown"
-                                                    :disabled="isGeneratingBreakdown"
+                                                    @click="showRegenerationModal = true"
+                                                    :disabled="isGeneratingBreakdown || isRegeneratingWithFeedback"
                                                 >
                                                     Regenerate
                                                 </Button>
@@ -424,6 +471,21 @@ const handleKeydown = (event: KeyboardEvent) => {
             </div>
         </div>
     </AppLayout>
+
+    <!-- Regeneration Feedback Modal -->
+    <RegenerationFeedbackModal
+        :open="showRegenerationModal"
+        @update:open="showRegenerationModal = $event"
+        task-type="subtasks"
+        :current-results="suggestedSubtasks"
+        :context="{
+            projectTitle: project.title,
+            taskTitle: form.title
+        }"
+        :is-processing="isRegeneratingWithFeedback"
+        @regenerate="regenerateWithFeedback"
+        @cancel="cancelRegeneration"
+    />
 </template>
 
 <style scoped>

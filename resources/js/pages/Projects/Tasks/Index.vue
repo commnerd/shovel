@@ -6,7 +6,7 @@ import Heading from '@/components/Heading.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Filter, CheckCircle, Clock, Circle, Calendar, Users, Layers, Plus, Edit, Trash2, TreePine, Leaf, GitBranch, Sparkles, Loader } from 'lucide-vue-next';
+import { ArrowLeft, Filter, CheckCircle, Clock, Circle, Calendar, Users, Layers, Plus, Edit, Trash2, TreePine, Leaf, GitBranch, Sparkles } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface Task {
@@ -98,88 +98,7 @@ const deleteTask = (taskId: number) => {
     }
 };
 
-// AI Task Breakdown functionality
-const breakdownTaskId = ref<number | null>(null);
-const isGeneratingBreakdown = ref(false);
-const suggestedSubtasks = ref<any[]>([]);
-const aiNotes = ref<string[]>([]);
-const showBreakdownResults = ref(false);
-
-const generateAIBreakdown = async (task: Task) => {
-    breakdownTaskId.value = task.id;
-    isGeneratingBreakdown.value = true;
-    suggestedSubtasks.value = [];
-    aiNotes.value = [];
-    showBreakdownResults.value = false;
-
-    try {
-        const response = await fetch(`/dashboard/projects/${project.value.id}/tasks/breakdown`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-                title: task.title,
-                description: task.description || '',
-            }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            suggestedSubtasks.value = data.subtasks || [];
-            aiNotes.value = data.notes || [];
-            showBreakdownResults.value = true;
-        } else {
-            alert(data.error || 'Failed to generate task breakdown. Please try again.');
-        }
-    } catch (error) {
-        console.error('AI breakdown error:', error);
-        alert('Failed to generate task breakdown. Please check your connection and try again.');
-    } finally {
-        isGeneratingBreakdown.value = false;
-    }
-};
-
-const createSubtasksFromBreakdown = async () => {
-    if (!breakdownTaskId.value || suggestedSubtasks.value.length === 0) return;
-
-    try {
-        // Create each subtask individually
-        for (const [index, subtask] of suggestedSubtasks.value.entries()) {
-            await fetch(`/dashboard/projects/${project.value.id}/tasks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    title: subtask.title,
-                    description: subtask.description || '',
-                    parent_id: breakdownTaskId.value,
-                    priority: subtask.priority,
-                    status: subtask.status,
-                    due_date: subtask.due_date || null,
-                }),
-            });
-        }
-
-        // Clear breakdown state and refresh page
-        clearBreakdown();
-        router.reload({ preserveScroll: true });
-    } catch (error) {
-        console.error('Subtask creation error:', error);
-        alert('Failed to create subtasks. Please try again.');
-    }
-};
-
-const clearBreakdown = () => {
-    breakdownTaskId.value = null;
-    suggestedSubtasks.value = [];
-    aiNotes.value = [];
-    showBreakdownResults.value = false;
-};
+// No longer needed - AI breakdown is now on dedicated page
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -336,12 +255,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         size="sm"
                                         variant="outline"
                                         class="flex-1 flex items-center gap-2"
-                                        @click="generateAIBreakdown(task)"
-                                        :disabled="isGeneratingBreakdown && breakdownTaskId === task.id"
+                                        as-child
                                     >
-                                        <Loader v-if="isGeneratingBreakdown && breakdownTaskId === task.id" class="h-4 w-4 animate-spin" />
-                                        <Sparkles v-else class="h-4 w-4" />
-                                        AI Breakdown
+                                        <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`">
+                                            <Sparkles class="h-4 w-4" />
+                                            AI Breakdown
+                                        </Link>
                                     </Button>
                                 </div>
 
@@ -354,88 +273,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <Trash2 class="h-4 w-4" />
                                 </Button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <!-- AI Breakdown Results -->
-            <div v-if="showBreakdownResults && suggestedSubtasks.length > 0" class="mt-6">
-                <Card class="border-blue-200 bg-blue-50">
-                    <CardHeader>
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-blue-900 flex items-center gap-2">
-                                <Sparkles class="h-5 w-5" />
-                                AI Generated Subtasks
-                            </CardTitle>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                @click="clearBreakdown"
-                                class="text-blue-600 hover:text-blue-700"
-                            >
-                                Clear
-                            </Button>
-                        </div>
-                        <CardDescription class="text-blue-700">
-                            AI has suggested {{ suggestedSubtasks.length }} subtasks for this task
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <!-- AI Notes -->
-                        <div v-if="aiNotes.length > 0" class="mb-4">
-                            <h4 class="text-sm font-medium text-blue-800 mb-2">AI Analysis:</h4>
-                            <ul class="text-sm text-blue-700 space-y-1">
-                                <li v-for="note in aiNotes" :key="note" class="flex items-start gap-2">
-                                    <span class="text-blue-400 mt-1">•</span>
-                                    <span>{{ note }}</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Suggested Subtasks -->
-                        <div class="space-y-3 mb-4">
-                            <h4 class="text-sm font-medium text-blue-800">Suggested Subtasks:</h4>
-                            <div class="grid gap-3 max-h-80 overflow-y-auto">
-                                <div
-                                    v-for="(subtask, index) in suggestedSubtasks"
-                                    :key="index"
-                                    class="p-3 bg-white border border-blue-100 rounded-md hover:border-blue-200 transition-colors"
-                                >
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div class="flex-1 min-w-0">
-                                            <h5 class="text-sm font-medium text-gray-900">{{ subtask.title }}</h5>
-                                            <p class="text-sm text-gray-600 mt-1">{{ subtask.description }}</p>
-                                            <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-gray-100">
-                                                    {{ subtask.priority }}
-                                                </span>
-                                                <span v-if="subtask.due_date" class="flex items-center gap-1">
-                                                    <Calendar class="h-3 w-3" />
-                                                    {{ subtask.due_date }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex gap-3">
-                            <Button
-                                @click="createSubtasksFromBreakdown"
-                                class="flex-1"
-                            >
-                                Create All Subtasks
-                            </Button>
-                            <Button
-                                variant="outline"
-                                @click="generateAIBreakdown(tasks.find(t => t.id === breakdownTaskId)!)"
-                                :disabled="isGeneratingBreakdown"
-                            >
-                                Regenerate
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -471,5 +308,6 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             </div>
         </div>
+
     </AppLayout>
 </template>

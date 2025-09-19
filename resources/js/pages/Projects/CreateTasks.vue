@@ -6,6 +6,7 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
 import {
     ArrowLeft,
     Sparkles,
@@ -95,6 +96,10 @@ const newTaskTitle = ref('');
 const newTaskDescription = ref('');
 const isRegenerating = ref(false);
 
+// Regeneration modal state
+const showRegenerationModal = ref(false);
+const isRegeneratingWithFeedback = ref(false);
+
 // Priority colors
 const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -160,7 +165,12 @@ const changePriority = (index: number) => {
 };
 
 const regenerateTasks = () => {
-    isRegenerating.value = true;
+    showRegenerationModal.value = true;
+};
+
+const regenerateTasksWithFeedback = (feedback: string) => {
+    isRegeneratingWithFeedback.value = true;
+    showRegenerationModal.value = false;
 
     router.visit('/dashboard/projects/create/tasks', {
         method: 'post',
@@ -170,11 +180,16 @@ const regenerateTasks = () => {
             due_date: form.due_date,
             group_id: form.group_id,
             regenerate: true,
+            user_feedback: feedback,
         },
         onFinish: () => {
-            isRegenerating.value = false;
+            isRegeneratingWithFeedback.value = false;
         }
     });
+};
+
+const cancelRegeneration = () => {
+    showRegenerationModal.value = false;
 };
 
 const goBackToEdit = () => {
@@ -232,10 +247,10 @@ const createProject = () => {
                     <Button
                         variant="outline"
                         @click="regenerateTasks"
-                        :disabled="isRegenerating"
+                        :disabled="isRegeneratingWithFeedback"
                     >
-                        <RotateCcw class="h-4 w-4 mr-2" :class="{ 'animate-spin': isRegenerating }" />
-                        {{ isRegenerating ? 'Regenerating...' : 'Regenerate Tasks' }}
+                        <RotateCcw class="h-4 w-4 mr-2" :class="{ 'animate-spin': isRegeneratingWithFeedback }" />
+                        {{ isRegeneratingWithFeedback ? 'Regenerating...' : 'Regenerate Tasks' }}
                     </Button>
                 </div>
             </div>
@@ -480,5 +495,20 @@ const createProject = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Regeneration Feedback Modal -->
+        <RegenerationFeedbackModal
+            :open="showRegenerationModal"
+            @update:open="showRegenerationModal = $event"
+            task-type="tasks"
+            :current-results="form.tasks"
+            :context="{
+                projectTitle: form.title || 'Untitled Project',
+                existingTasksCount: form.tasks.length
+            }"
+            :is-processing="isRegeneratingWithFeedback"
+            @regenerate="regenerateTasksWithFeedback"
+            @cancel="cancelRegeneration"
+        />
     </AppLayout>
 </template>
