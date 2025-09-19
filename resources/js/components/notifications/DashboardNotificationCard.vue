@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { router } from '@inertiajs/vue3';
-import { Bell, UserPlus, AlertCircle, CheckCircle, Mail, Clock } from 'lucide-vue-next';
+import { Bell, UserPlus, AlertCircle, CheckCircle, Clock } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Notification {

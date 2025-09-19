@@ -20,19 +20,19 @@ class AIConnectivityTest extends TestCase
         try {
             // Make a simple request to the base URL or a health check endpoint
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->timeout(10)->get($baseUrl);
 
             // Assert that we get a 200 response (or any successful response)
             $this->assertTrue(
                 $response->successful() || $response->status() === 404, // 404 is OK for base URL
-                'AI base URL should be reachable. Got: ' . $response->status() .
-                ' Body: ' . $response->body()
+                'AI base URL should be reachable. Got: '.$response->status().
+                ' Body: '.$response->body()
             );
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus API: ' . $e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebrus API: '.$e->getMessage());
         }
     }
 
@@ -49,21 +49,21 @@ class AIConnectivityTest extends TestCase
         try {
             // Test the chat completions endpoint with a minimal request
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->post($baseUrl . '/chat/completions', [
+            ])->timeout(30)->post($baseUrl.'/chat/completions', [
                 'model' => config('ai.providers.cerebrus.model'),
                 'messages' => [
-                    ['role' => 'user', 'content' => 'Hello']
+                    ['role' => 'user', 'content' => 'Hello'],
                 ],
-                'max_tokens' => 10
+                'max_tokens' => 10,
             ]);
 
             // Assert that we get a successful response (200 or 201)
             $this->assertTrue(
                 in_array($response->status(), [200, 201]),
-                'AI chat endpoint should respond with 200/201 status. Got: ' . $response->status() .
-                ' Body: ' . $response->body()
+                'AI chat endpoint should respond with 200/201 status. Got: '.$response->status().
+                ' Body: '.$response->body()
             );
 
             // Verify response structure if successful
@@ -74,7 +74,7 @@ class AIConnectivityTest extends TestCase
             }
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus chat endpoint: ' . $e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebrus chat endpoint: '.$e->getMessage());
         }
     }
 
@@ -97,38 +97,38 @@ class AIConnectivityTest extends TestCase
                         'description' => 'string',
                         'priority' => 'high|medium|low',
                         'status' => 'pending|in_progress|completed',
-                        'subtasks' => []
-                    ]
+                        'subtasks' => [],
+                    ],
                 ],
                 'summary' => 'string (optional)',
                 'notes' => ['array of strings (optional)'],
                 'problems' => ['array of strings (optional)'],
-                'suggestions' => ['array of strings (optional)']
+                'suggestions' => ['array of strings (optional)'],
             ];
 
-            $prompt = 'Based on this project description: "Build a simple todo app", create a detailed task breakdown. ' .
-                     'IMPORTANT: Your response must be a JSON object with this exact structure: ' .
-                     json_encode($taskSchema, JSON_PRETTY_PRINT) .
+            $prompt = 'Based on this project description: "Build a simple todo app", create a detailed task breakdown. '.
+                     'IMPORTANT: Your response must be a JSON object with this exact structure: '.
+                     json_encode($taskSchema, JSON_PRETTY_PRINT).
                      "\n\nInclude 'notes', 'summary', 'problems', and 'suggestions' fields to communicate any insights, issues, or recommendations about the project.";
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(60)->post($baseUrl . '/chat/completions', [
+            ])->timeout(60)->post($baseUrl.'/chat/completions', [
                 'model' => config('ai.providers.cerebrus.model'),
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are an expert project manager and task breakdown specialist. You must respond with valid JSON only.'],
-                    ['role' => 'user', 'content' => $prompt]
+                    ['role' => 'user', 'content' => $prompt],
                 ],
                 'max_tokens' => 2000,
-                'temperature' => 0.7
+                'temperature' => 0.7,
             ]);
 
             // Assert successful response
             $this->assertTrue(
                 $response->successful(),
-                'AI task generation should succeed. Status: ' . $response->status() .
-                ' Body: ' . $response->body()
+                'AI task generation should succeed. Status: '.$response->status().
+                ' Body: '.$response->body()
             );
 
             if ($response->successful()) {
@@ -160,7 +160,7 @@ class AIConnectivityTest extends TestCase
             }
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus API for task generation: ' . $e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebrus API for task generation: '.$e->getMessage());
         }
     }
 }

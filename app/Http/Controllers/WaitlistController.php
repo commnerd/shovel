@@ -10,7 +10,7 @@ class WaitlistController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'email' => 'required|email|unique:waitlist_subscribers,email'
+            'email' => 'required|email|unique:waitlist_subscribers,email',
         ]);
 
         WaitlistSubscriber::create($data);

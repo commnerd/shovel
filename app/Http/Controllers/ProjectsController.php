@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\AI\Facades\AI;
 use App\Models\Project;
+use App\Services\AI\Facades\AI;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,7 +21,7 @@ class ProjectsController extends Controller
             // Get projects from user's groups or created by the user
             $projects = \App\Models\Project::where(function ($query) use ($userGroupIds) {
                 $query->where('user_id', auth()->id())
-                      ->orWhereIn('group_id', $userGroupIds);
+                    ->orWhereIn('group_id', $userGroupIds);
             })
                 ->with(['group', 'user'])
                 ->withCount('tasks')
@@ -52,7 +52,8 @@ class ProjectsController extends Controller
             ]);
         } catch (\Exception $e) {
             // If database tables don't exist, redirect to create page
-            \Log::warning('Projects table may not exist: ' . $e->getMessage());
+            \Log::warning('Projects table may not exist: '.$e->getMessage());
+
             return redirect()->route('projects.create');
         }
     }
@@ -87,7 +88,7 @@ class ProjectsController extends Controller
     public function edit(Project $project)
     {
         // Check if user can access this project
-        if (!$this->canAccessProject($project)) {
+        if (! $this->canAccessProject($project)) {
             abort(403, 'You do not have permission to access this project.');
         }
 
@@ -108,7 +109,7 @@ class ProjectsController extends Controller
     public function update(Request $request, Project $project)
     {
         // Check if user can modify this project
-        if (!$this->canModifyProject($project)) {
+        if (! $this->canModifyProject($project)) {
             abort(403, 'You do not have permission to modify this project.');
         }
 
@@ -136,11 +137,11 @@ class ProjectsController extends Controller
      */
     public function destroy(Project $project)
     {
-        \Log::info("Delete request received for project {$project->id} by user " . auth()->id());
+        \Log::info("Delete request received for project {$project->id} by user ".auth()->id());
 
         // Check if user can modify this project
-        if (!$this->canModifyProject($project)) {
-            \Log::warning("Unauthorized delete attempt for project {$project->id} by user " . auth()->id());
+        if (! $this->canModifyProject($project)) {
+            \Log::warning("Unauthorized delete attempt for project {$project->id} by user ".auth()->id());
             abort(403, 'You do not have permission to delete this project.');
         }
 
@@ -149,7 +150,7 @@ class ProjectsController extends Controller
             $deleted = $project->delete();
 
             if ($deleted) {
-                \Log::info("Project {$projectId} deleted successfully by user " . auth()->id());
+                \Log::info("Project {$projectId} deleted successfully by user ".auth()->id());
 
                 // Check if user has any remaining projects
                 $hasProjects = auth()->user()->projects()->exists();
@@ -165,13 +166,15 @@ class ProjectsController extends Controller
                     ]);
                 }
             } else {
-                \Log::error("Failed to delete project {$projectId} for user " . auth()->id());
+                \Log::error("Failed to delete project {$projectId} for user ".auth()->id());
+
                 return back()->withErrors(['error' => 'Failed to delete project. Please try again.']);
             }
         } catch (\Exception $e) {
-            \Log::error("Exception during project deletion: " . $e->getMessage());
-            \Log::error("Stack trace: " . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'An error occurred while deleting the project: ' . $e->getMessage()]);
+            \Log::error('Exception during project deletion: '.$e->getMessage());
+            \Log::error('Stack trace: '.$e->getTraceAsString());
+
+            return back()->withErrors(['error' => 'An error occurred while deleting the project: '.$e->getMessage()]);
         }
     }
 
@@ -206,17 +209,17 @@ class ProjectsController extends Controller
                         'description' => 'string',
                         'priority' => 'high|medium|low',
                         'status' => 'pending|in_progress|completed',
-                        'subtasks' => []
-                    ]
+                        'subtasks' => [],
+                    ],
                 ],
                 'summary' => 'string (optional)',
                 'notes' => ['array of strings (optional)'],
                 'problems' => ['array of strings (optional)'],
-                'suggestions' => ['array of strings (optional)']
+                'suggestions' => ['array of strings (optional)'],
             ];
 
             $aiOptions = [];
-            if (!empty($validated['user_feedback'])) {
+            if (! empty($validated['user_feedback'])) {
                 $aiOptions['user_feedback'] = $validated['user_feedback'];
             }
 
@@ -246,20 +249,20 @@ class ProjectsController extends Controller
                 \Log::info('AI task generation successful', [
                     'task_count' => count($suggestedTasks),
                     'has_notes' => $aiResponse->hasNotes(),
-                    'generated_title' => $suggestedTitle
+                    'generated_title' => $suggestedTitle,
                 ]);
             } else {
                 throw new \Exception($aiResponse->getError() ?? 'AI task generation failed');
             }
 
         } catch (\Exception $e) {
-            \Log::error('AI task generation failed: ' . $e->getMessage());
+            \Log::error('AI task generation failed: '.$e->getMessage());
 
             // Fallback to static tasks if AI fails
             $suggestedTasks = [
                 [
                     'title' => 'Project Setup & Planning',
-                    'description' => 'Set up project structure and define requirements based on: ' . $validated['description'],
+                    'description' => 'Set up project structure and define requirements based on: '.$validated['description'],
                     'status' => 'pending',
                     'priority' => 'high',
                     'sort_order' => 1,
@@ -360,21 +363,21 @@ class ProjectsController extends Controller
                 // Generate simple fallback title if AI didn't provide one
                 if (empty($projectTitle)) {
                     $words = str_word_count($validated['description'], 1);
-                    $projectTitle = implode(' ', array_slice($words, 0, 3)) . ' Project';
+                    $projectTitle = implode(' ', array_slice($words, 0, 3)).' Project';
                     \Log::info('Using fallback project title', ['title' => $projectTitle]);
                 }
             }
 
             // Determine group assignment
             $groupId = $validated['group_id'];
-            if (!$groupId) {
+            if (! $groupId) {
                 // Default to user's default group
                 $defaultGroup = auth()->user()->getDefaultGroup();
                 $groupId = $defaultGroup?->id;
             }
 
             // Verify user has access to the selected group
-            if ($groupId && !auth()->user()->belongsToGroup($groupId)) {
+            if ($groupId && ! auth()->user()->belongsToGroup($groupId)) {
                 throw new \Exception('You do not have access to the selected group.');
             }
 
@@ -392,7 +395,7 @@ class ProjectsController extends Controller
             $project->applyDefaultAIConfiguration();
 
             // Create tasks if provided
-            if (!empty($validated['tasks'])) {
+            if (! empty($validated['tasks'])) {
                 foreach ($validated['tasks'] as $taskData) {
                     $project->tasks()->create([
                         'title' => $taskData['title'],
@@ -406,15 +409,15 @@ class ProjectsController extends Controller
 
             \DB::commit();
 
-            \Log::info("Project {$project->id} created successfully with " . count($validated['tasks'] ?? []) . " tasks");
+            \Log::info("Project {$project->id} created successfully with ".count($validated['tasks'] ?? []).' tasks');
 
             return redirect()->route('projects.index')->with([
-                'message' => 'Project created successfully with ' . count($validated['tasks'] ?? []) . ' tasks!',
+                'message' => 'Project created successfully with '.count($validated['tasks'] ?? []).' tasks!',
             ]);
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            \Log::error('Project creation failed: ' . $e->getMessage());
+            \Log::error('Project creation failed: '.$e->getMessage());
 
             return back()->withErrors(['error' => 'Failed to create project. Please try again.']);
         }

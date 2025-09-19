@@ -2,21 +2,23 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class AIConfigurationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Organization $organization;
+
     protected Group $group;
 
     protected function setUp(): void
@@ -42,11 +44,10 @@ class AIConfigurationTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
-                ->has('defaultAISettings')
-                ->has('providerConfigs')
-                ->has('availableProviders')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
+            ->has('defaultAISettings')
+            ->has('providerConfigs')
+            ->has('availableProviders')
         );
     }
 
@@ -190,15 +191,14 @@ class AIConfigurationTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
-                ->where('defaultAISettings.provider', 'openai')
-                ->where('defaultAISettings.model', 'gpt-4')
-                ->where('providerConfigs.cerebrus.api_key', 'cerebrus-key')
-                ->where('providerConfigs.openai.api_key', 'openai-key')
-                ->has('availableProviders.cerebrus.models')
-                ->has('availableProviders.openai.models')
-                ->has('availableProviders.anthropic.models')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
+            ->where('defaultAISettings.provider', 'openai')
+            ->where('defaultAISettings.model', 'gpt-4')
+            ->where('providerConfigs.cerebrus.api_key', 'cerebrus-key')
+            ->where('providerConfigs.openai.api_key', 'openai-key')
+            ->has('availableProviders.cerebrus.models')
+            ->has('availableProviders.openai.models')
+            ->has('availableProviders.anthropic.models')
         );
     }
 

@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\AI\AIManager;
 use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ProjectTitleTest extends TestCase
 {
@@ -21,7 +21,7 @@ class ProjectTitleTest extends TestCase
 
         // Set up organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
-        
+
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 
@@ -31,7 +31,7 @@ class ProjectTitleTest extends TestCase
             'pending_approval' => false,
             'approved_at' => now(),
         ]);
-        
+
         // Add user to default group
         $this->user->groups()->attach($group->id, ['joined_at' => now()]);
     }
@@ -94,7 +94,7 @@ class ProjectTitleTest extends TestCase
         $this->app->instance('ai', $mockAIManager);
 
         $defaultGroup = $this->user->getDefaultGroup();
-        
+
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
@@ -121,7 +121,7 @@ class ProjectTitleTest extends TestCase
         $this->app->instance('ai', $mockAIManager);
 
         $defaultGroup = $this->user->getDefaultGroup();
-        
+
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => '', // Explicitly pass empty title to trigger AI generation
@@ -145,7 +145,7 @@ class ProjectTitleTest extends TestCase
         // No need to mock since it shouldn't be used
 
         $defaultGroup = $this->user->getDefaultGroup();
-        
+
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
                 'title' => 'My Custom Title',

@@ -61,14 +61,14 @@ class CerebrusProvider implements AIProviderInterface
         $prompts = config('ai.prompts.task_generation');
 
         // Build enhanced prompt with schema
-        $systemPrompt = $prompts['system'] . "\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
+        $systemPrompt = $prompts['system']."\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
         $userPrompt = str_replace('{description}', $projectDescription, $prompts['user']);
 
         // Add user feedback if provided in options
-        if (!empty($options['user_feedback'])) {
+        if (! empty($options['user_feedback'])) {
             $userPrompt .= "\n\n**User Feedback for Improvement:**\n";
-            $userPrompt .= $options['user_feedback'] . "\n\n";
-            $userPrompt .= "Please incorporate this feedback to improve the task generation.";
+            $userPrompt .= $options['user_feedback']."\n\n";
+            $userPrompt .= 'Please incorporate this feedback to improve the task generation.';
         }
 
         $messages = [
@@ -84,6 +84,7 @@ class CerebrusProvider implements AIProviderInterface
             ]);
 
             $response = $this->chat($messages, $jsonOptions);
+
             return $this->parseTaskResponse($response, $projectDescription);
         } catch (\Exception $e) {
             $this->logError('generateTasks', $e->getMessage());
@@ -93,7 +94,7 @@ class CerebrusProvider implements AIProviderInterface
                 tasks: $this->createFallbackTasks($projectDescription),
                 projectTitle: $this->generateFallbackTitle($projectDescription),
                 notes: ['AI service unavailable, using fallback tasks'],
-                problems: ['Could not connect to AI service: ' . $e->getMessage()],
+                problems: ['Could not connect to AI service: '.$e->getMessage()],
                 rawResponse: null
             );
         }
@@ -137,7 +138,7 @@ class CerebrusProvider implements AIProviderInterface
             // Return text-based suggestions if JSON parsing fails
             return [
                 'suggestions' => $response->getContent(),
-                'type' => 'text'
+                'type' => 'text',
             ];
         }
     }
@@ -155,7 +156,7 @@ class CerebrusProvider implements AIProviderInterface
      */
     public function isConfigured(): bool
     {
-        return !empty($this->config['api_key']);
+        return ! empty($this->config['api_key']);
     }
 
     /**
@@ -176,7 +177,7 @@ class CerebrusProvider implements AIProviderInterface
         $response = $client->post($endpoint, $data);
 
         if ($response->failed()) {
-            throw new \Exception("Cerebrus API request failed: " . $response->body());
+            throw new \Exception('Cerebrus API request failed: '.$response->body());
         }
 
         return $response->json();
@@ -189,7 +190,7 @@ class CerebrusProvider implements AIProviderInterface
     {
         return Http::baseUrl($this->config['base_url'])
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $this->config['api_key'],
+                'Authorization' => 'Bearer '.$this->config['api_key'],
                 'Content-Type' => 'application/json',
             ])
             ->timeout($this->config['timeout']);
@@ -200,7 +201,7 @@ class CerebrusProvider implements AIProviderInterface
      */
     protected function logRequest(string $operation, array $input, string $output, float $responseTime, ?int $tokensUsed): void
     {
-        if (!config('ai.logging.enabled')) {
+        if (! config('ai.logging.enabled')) {
             return;
         }
 
@@ -220,7 +221,7 @@ class CerebrusProvider implements AIProviderInterface
      */
     protected function logError(string $operation, string $error): void
     {
-        if (!config('ai.logging.log_errors')) {
+        if (! config('ai.logging.log_errors')) {
             return;
         }
 
@@ -244,7 +245,7 @@ class CerebrusProvider implements AIProviderInterface
         $content = trim($content);
 
         // If content starts with explanatory text before JSON, try to extract just the JSON
-        if (!str_starts_with($content, '{')) {
+        if (! str_starts_with($content, '{')) {
             // Look for the first { and take everything from there
             $jsonStart = strpos($content, '{');
             if ($jsonStart !== false) {
@@ -253,7 +254,7 @@ class CerebrusProvider implements AIProviderInterface
         }
 
         // If content ends with explanatory text after JSON, try to extract just the JSON
-        if (!str_ends_with(rtrim($content), '}')) {
+        if (! str_ends_with(rtrim($content), '}')) {
             // Look for the last } and take everything up to there
             $jsonEnd = strrpos($content, '}');
             if ($jsonEnd !== false) {
@@ -271,7 +272,7 @@ class CerebrusProvider implements AIProviderInterface
     {
         $enhancedPrompt = $basePrompt;
 
-        if (!empty($schema)) {
+        if (! empty($schema)) {
             $enhancedPrompt .= "\n\nYou must respond with a valid JSON object that includes:";
             $enhancedPrompt .= "\n- 'tasks': An array of task objects following the provided schema";
             $enhancedPrompt .= "\n- 'summary': A brief summary of your analysis and approach";
@@ -295,7 +296,7 @@ class CerebrusProvider implements AIProviderInterface
 
             $data = json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \InvalidArgumentException('Response content is not valid JSON: ' . json_last_error_msg());
+                throw new \InvalidArgumentException('Response content is not valid JSON: '.json_last_error_msg());
             }
 
             // Extract tasks, title, and communication
@@ -336,19 +337,19 @@ class CerebrusProvider implements AIProviderInterface
             // If JSON parsing fails, log the actual response for debugging
             $content = $response->getContent();
 
-            $this->logError('parseTaskResponse', 'JSON parsing failed. Response content: ' . substr($content, 0, 500) . '...');
+            $this->logError('parseTaskResponse', 'JSON parsing failed. Response content: '.substr($content, 0, 500).'...');
 
             return AITaskResponse::success(
                 tasks: $this->createFallbackTasks($projectDescription),
                 projectTitle: $this->generateFallbackTitle($projectDescription),
                 notes: ['AI response was not in expected JSON format'],
                 problems: [
-                    'Could not parse AI response: ' . $e->getMessage(),
-                    'AI returned: ' . substr($content, 0, 200) . '...'
+                    'Could not parse AI response: '.$e->getMessage(),
+                    'AI returned: '.substr($content, 0, 200).'...',
                 ],
                 suggestions: [
                     'The AI model may need clearer instructions about JSON format',
-                    'Consider using a different model or adjusting the prompt'
+                    'Consider using a different model or adjusting the prompt',
                 ],
                 rawResponse: $response
             );
@@ -377,7 +378,7 @@ class CerebrusProvider implements AIProviderInterface
                         ? $status
                         : 'pending',
                     'due_date' => $task['due_date'] ?? null,
-                    'subtasks' => $task['subtasks'] ?? []
+                    'subtasks' => $task['subtasks'] ?? [],
                 ];
             }
         }
@@ -398,7 +399,7 @@ class CerebrusProvider implements AIProviderInterface
         $title = implode(' ', array_map('ucfirst', array_map('strtolower', $keywords)));
 
         // Add "Project" if it doesn't seem to be included
-        if (!str_contains(strtolower($title), 'project') && !str_contains(strtolower($title), 'app') && !str_contains(strtolower($title), 'system')) {
+        if (! str_contains(strtolower($title), 'project') && ! str_contains(strtolower($title), 'app') && ! str_contains(strtolower($title), 'system')) {
             $title .= ' Project';
         }
 
@@ -425,8 +426,9 @@ class CerebrusProvider implements AIProviderInterface
                 'max_tokens' => 2000,
             ], $options));
 
-            if (!$response->isSuccessful()) {
+            if (! $response->isSuccessful()) {
                 $this->logError('task_breakdown', $response->getErrorMessage() ?? 'Unknown error');
+
                 return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
             }
 
@@ -439,6 +441,7 @@ class CerebrusProvider implements AIProviderInterface
 
         } catch (\Exception $e) {
             $this->logError('task_breakdown', $e->getMessage());
+
             return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
         }
     }
@@ -462,32 +465,32 @@ class CerebrusProvider implements AIProviderInterface
             'Please break down the following task into smaller, actionable subtasks:'
         );
 
-        $prompt = $basePrompt . "\n\n";
+        $prompt = $basePrompt."\n\n";
         $prompt .= "**Task to Break Down:**\n";
         $prompt .= "Title: {$taskTitle}\n";
         $prompt .= "Description: {$taskDescription}\n\n";
 
         // Add user feedback if provided
-        if (!empty($context['user_feedback'])) {
+        if (! empty($context['user_feedback'])) {
             $prompt .= "**User Feedback for Improvement:**\n";
-            $prompt .= $context['user_feedback'] . "\n\n";
+            $prompt .= $context['user_feedback']."\n\n";
             $prompt .= "Please incorporate this feedback to improve the task breakdown.\n\n";
         }
 
         // Add project context
-        if (!empty($context['project'])) {
+        if (! empty($context['project'])) {
             $project = $context['project'];
             $prompt .= "**Project Context:**\n";
             $prompt .= "Project: {$project['title']}\n";
             $prompt .= "Description: {$project['description']}\n";
-            if (!empty($project['due_date'])) {
+            if (! empty($project['due_date'])) {
                 $prompt .= "Due Date: {$project['due_date']}\n";
             }
             $prompt .= "\n";
         }
 
         // Add existing tasks context
-        if (!empty($context['existing_tasks'])) {
+        if (! empty($context['existing_tasks'])) {
             $prompt .= "**Existing Project Tasks:**\n";
             foreach ($context['existing_tasks'] as $task) {
                 $prompt .= "- {$task['title']} ({$task['status']})\n";
@@ -496,7 +499,7 @@ class CerebrusProvider implements AIProviderInterface
         }
 
         // Add task completion statistics
-        if (!empty($context['task_stats'])) {
+        if (! empty($context['task_stats'])) {
             $stats = $context['task_stats'];
             $prompt .= "**Project Progress:**\n";
             $prompt .= "Total Tasks: {$stats['total']}\n";
@@ -515,19 +518,19 @@ class CerebrusProvider implements AIProviderInterface
         $prompt .= "**Response Format:**\n";
         $prompt .= "Return ONLY a valid JSON object with this exact structure:\n";
         $prompt .= "{\n";
-        $prompt .= '  "tasks": [' . "\n";
-        $prompt .= '    {' . "\n";
-        $prompt .= '      "title": "Specific subtask title",' . "\n";
-        $prompt .= '      "description": "Detailed description of what needs to be done",' . "\n";
-        $prompt .= '      "priority": "high|medium|low",' . "\n";
-        $prompt .= '      "status": "pending",' . "\n";
-        $prompt .= '      "due_date": "YYYY-MM-DD"' . "\n";
-        $prompt .= '    }' . "\n";
-        $prompt .= '  ],' . "\n";
-        $prompt .= '  "notes": ["Analysis note 1", "Analysis note 2"]' . "\n";
+        $prompt .= '  "tasks": ['."\n";
+        $prompt .= '    {'."\n";
+        $prompt .= '      "title": "Specific subtask title",'."\n";
+        $prompt .= '      "description": "Detailed description of what needs to be done",'."\n";
+        $prompt .= '      "priority": "high|medium|low",'."\n";
+        $prompt .= '      "status": "pending",'."\n";
+        $prompt .= '      "due_date": "YYYY-MM-DD"'."\n";
+        $prompt .= '    }'."\n";
+        $prompt .= '  ],'."\n";
+        $prompt .= '  "notes": ["Analysis note 1", "Analysis note 2"]'."\n";
         $prompt .= "}\n\n";
 
-        $prompt .= "Do not include any explanatory text outside the JSON object.";
+        $prompt .= 'Do not include any explanatory text outside the JSON object.';
 
         return $prompt;
     }
@@ -554,7 +557,7 @@ class CerebrusProvider implements AIProviderInterface
             ],
             [
                 'title' => 'Testing & Validation',
-                'description' => "Test and validate the implementation",
+                'description' => 'Test and validate the implementation',
                 'priority' => 'medium',
                 'status' => 'pending',
                 'due_date' => now()->addDays(7)->format('Y-m-d'),
@@ -576,31 +579,31 @@ class CerebrusProvider implements AIProviderInterface
         return [
             [
                 'title' => 'Project Planning & Setup',
-                'description' => 'Set up project structure and define requirements based on: ' . $projectDescription,
+                'description' => 'Set up project structure and define requirements based on: '.$projectDescription,
                 'priority' => 'high',
                 'status' => 'pending',
-                'subtasks' => []
+                'subtasks' => [],
             ],
             [
                 'title' => 'Core Development',
                 'description' => 'Implement main functionality and features',
                 'priority' => 'high',
                 'status' => 'pending',
-                'subtasks' => []
+                'subtasks' => [],
             ],
             [
                 'title' => 'Testing & Quality Assurance',
                 'description' => 'Write tests and ensure code quality',
                 'priority' => 'medium',
                 'status' => 'pending',
-                'subtasks' => []
+                'subtasks' => [],
             ],
             [
                 'title' => 'Documentation & Deployment',
                 'description' => 'Create documentation and deploy the project',
                 'priority' => 'low',
                 'status' => 'pending',
-                'subtasks' => []
+                'subtasks' => [],
             ],
         ];
     }

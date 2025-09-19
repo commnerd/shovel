@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -44,9 +44,9 @@ class SuperAdminController extends Controller
         $users = User::with(['organization'])
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                    ->orWhere('email', 'like', "%{$query}%");
             })
-            ->orderByRaw("
+            ->orderByRaw('
                 CASE
                     WHEN name LIKE ? THEN 1
                     WHEN email LIKE ? THEN 2
@@ -54,11 +54,11 @@ class SuperAdminController extends Controller
                     WHEN email LIKE ? THEN 4
                     ELSE 5
                 END
-            ", [
+            ', [
                 "{$query}%",    // Name starts with query
                 "{$query}%",    // Email starts with query
                 "%{$query}%",   // Name contains query
-                "%{$query}%"    // Email contains query
+                "%{$query}%",    // Email contains query
             ])
             ->limit($limit)
             ->get()
@@ -100,7 +100,7 @@ class SuperAdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -146,8 +146,8 @@ class SuperAdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('domain', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%");
+                    ->orWhere('domain', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
             });
         }
 
@@ -207,7 +207,7 @@ class SuperAdminController extends Controller
         // Login as the target user
         Auth::login($user);
 
-        return redirect('/dashboard')->with('message', 'You are now logged in as ' . $user->name);
+        return redirect('/dashboard')->with('message', 'You are now logged in as '.$user->name);
     }
 
     /**
@@ -217,13 +217,13 @@ class SuperAdminController extends Controller
     {
         $originalSuperAdminId = session('original_super_admin_id');
 
-        if (!$originalSuperAdminId) {
+        if (! $originalSuperAdminId) {
             abort(403, 'No original super admin session found.');
         }
 
         $originalSuperAdmin = User::find($originalSuperAdminId);
 
-        if (!$originalSuperAdmin || !$originalSuperAdmin->isSuperAdmin()) {
+        if (! $originalSuperAdmin || ! $originalSuperAdmin->isSuperAdmin()) {
             abort(403, 'Original super admin account not found or no longer valid.');
         }
 

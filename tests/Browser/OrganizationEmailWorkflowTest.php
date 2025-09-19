@@ -25,23 +25,23 @@ class OrganizationEmailWorkflowTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->assertSee('Create an account')
-                    ->type('name', 'Test Founder')
-                    ->type('email', 'founder@uniquecompany123.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
-                    ->check('organization_email') // Check the organization email checkbox
-                    ->press('Create account')
-                    ->waitForLocation('/organization/create', 10)
-                    ->assertPathIs('/organization/create')
-                    ->assertSee('Create Your Organization')
-                    ->assertSee('founder@uniquecompany123.com') // Email should be displayed
-                    ->type('organization_name', 'Unique Company Inc')
-                    ->type('organization_address', '123 Business Street, City, State 12345')
-                    ->press('Create Organization')
-                    ->waitForLocation('/dashboard', 10)
-                    ->assertPathIs('/dashboard')
-                    ->assertSee('Dashboard');
+                ->assertSee('Create an account')
+                ->type('name', 'Test Founder')
+                ->type('email', 'founder@uniquecompany123.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
+                ->check('organization_email') // Check the organization email checkbox
+                ->press('Create account')
+                ->waitForLocation('/organization/create', 10)
+                ->assertPathIs('/organization/create')
+                ->assertSee('Create Your Organization')
+                ->assertSee('founder@uniquecompany123.com') // Email should be displayed
+                ->type('organization_name', 'Unique Company Inc')
+                ->type('organization_address', '123 Business Street, City, State 12345')
+                ->press('Create Organization')
+                ->waitForLocation('/dashboard', 10)
+                ->assertPathIs('/dashboard')
+                ->assertSee('Dashboard');
         });
     }
 
@@ -53,34 +53,34 @@ class OrganizationEmailWorkflowTest extends DuskTestCase
         // First create an organization
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->type('name', 'Company Creator')
-                    ->type('email', 'creator@testcompany.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
-                    ->check('organization_email')
-                    ->press('Create account')
-                    ->waitForLocation('/organization/create', 10)
-                    ->type('organization_name', 'Test Company')
-                    ->type('organization_address', '456 Corporate Blvd')
-                    ->press('Create Organization')
-                    ->waitForLocation('/dashboard', 10)
-                    ->visit('/logout')
-                    ->press('Log out');
+                ->type('name', 'Company Creator')
+                ->type('email', 'creator@testcompany.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
+                ->check('organization_email')
+                ->press('Create account')
+                ->waitForLocation('/organization/create', 10)
+                ->type('organization_name', 'Test Company')
+                ->type('organization_address', '456 Corporate Blvd')
+                ->press('Create Organization')
+                ->waitForLocation('/dashboard', 10)
+                ->visit('/logout')
+                ->press('Log out');
         });
 
         // Now test a new user joining the existing organization
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->assertSee('Create an account')
-                    ->type('name', 'New Employee')
-                    ->type('email', 'employee@testcompany.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
-                    ->check('organization_email') // Check the organization email checkbox
-                    ->press('Create account')
-                    ->waitForLocation('/dashboard', 10)
-                    ->assertPathIs('/dashboard')
-                    ->assertSee('Your registration is pending approval'); // Should see pending message
+                ->assertSee('Create an account')
+                ->type('name', 'New Employee')
+                ->type('email', 'employee@testcompany.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
+                ->check('organization_email') // Check the organization email checkbox
+                ->press('Create account')
+                ->waitForLocation('/dashboard', 10)
+                ->assertPathIs('/dashboard')
+                ->assertSee('Your registration is pending approval'); // Should see pending message
         });
     }
 
@@ -92,34 +92,34 @@ class OrganizationEmailWorkflowTest extends DuskTestCase
         // First create an organization
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->type('name', 'Org Creator')
-                    ->type('email', 'creator@comparison.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
-                    ->check('organization_email')
-                    ->press('Create account')
-                    ->waitForLocation('/organization/create', 10)
-                    ->type('organization_name', 'Comparison Company')
-                    ->type('organization_address', '789 Test Ave')
-                    ->press('Create Organization')
-                    ->waitForLocation('/dashboard', 10)
-                    ->visit('/logout')
-                    ->press('Log out');
+                ->type('name', 'Org Creator')
+                ->type('email', 'creator@comparison.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
+                ->check('organization_email')
+                ->press('Create account')
+                ->waitForLocation('/organization/create', 10)
+                ->type('organization_name', 'Comparison Company')
+                ->type('organization_address', '789 Test Ave')
+                ->press('Create Organization')
+                ->waitForLocation('/dashboard', 10)
+                ->visit('/logout')
+                ->press('Log out');
         });
 
         // Now test user with same domain but organization email UNCHECKED
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->type('name', 'Cautious User')
-                    ->type('email', 'user@comparison.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
+                ->type('name', 'Cautious User')
+                ->type('email', 'user@comparison.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
                     // Do NOT check organization_email
-                    ->press('Create account')
-                    ->waitForLocation('/registration/confirm-organization', 10)
-                    ->assertPathIs('/registration/confirm-organization')
-                    ->assertSee('Organization Found')
-                    ->assertSee('Comparison Company'); // Should see confirmation page
+                ->press('Create account')
+                ->waitForLocation('/registration/confirm-organization', 10)
+                ->assertPathIs('/registration/confirm-organization')
+                ->assertSee('Organization Found')
+                ->assertSee('Comparison Company'); // Should see confirmation page
         });
     }
 
@@ -130,20 +130,20 @@ class OrganizationEmailWorkflowTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->assertSee('Create an account')
-                    ->assertSee('Email address')
-                    ->type('email', 'test@example.com')
+                ->assertSee('Create an account')
+                ->assertSee('Email address')
+                ->type('email', 'test@example.com')
                     // Verify checkbox is present and positioned after email field
-                    ->assertSee('Organization Email')
-                    ->assertPresent('input[name="organization_email"]')
+                ->assertSee('Organization Email')
+                ->assertPresent('input[name="organization_email"]')
                     // Test checking and unchecking
-                    ->check('organization_email')
-                    ->assertChecked('organization_email')
-                    ->uncheck('organization_email')
-                    ->assertNotChecked('organization_email')
+                ->check('organization_email')
+                ->assertChecked('organization_email')
+                ->uncheck('organization_email')
+                ->assertNotChecked('organization_email')
                     // Check it again for the actual test
-                    ->check('organization_email')
-                    ->assertChecked('organization_email');
+                ->check('organization_email')
+                ->assertChecked('organization_email');
         });
     }
 
@@ -154,12 +154,12 @@ class OrganizationEmailWorkflowTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->check('organization_email')
-                    ->press('Create account')
+                ->check('organization_email')
+                ->press('Create account')
                     // Should show validation errors
-                    ->assertSee('The name field is required')
-                    ->assertSee('The email field is required')
-                    ->assertSee('The password field is required');
+                ->assertSee('The name field is required')
+                ->assertSee('The email field is required')
+                ->assertSee('The password field is required');
         });
     }
 }

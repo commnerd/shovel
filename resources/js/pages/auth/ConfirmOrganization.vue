@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
+// Removed unused InputError import
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import AuthBase from '@/layouts/AuthLayout.vue';
@@ -18,7 +18,7 @@ interface Props {
     organization: Organization;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const joinForm = useForm({
     join_organization: true,

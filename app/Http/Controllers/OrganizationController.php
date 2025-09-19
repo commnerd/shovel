@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Organization;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,7 +21,7 @@ class OrganizationController extends Controller
         // Check if we have registration data in session
         $registrationData = session('registration_data');
 
-        if (!$registrationData) {
+        if (! $registrationData) {
             return redirect()->route('register');
         }
 
@@ -38,7 +37,7 @@ class OrganizationController extends Controller
     {
         $registrationData = session('registration_data');
 
-        if (!$registrationData) {
+        if (! $registrationData) {
             return redirect()->route('register');
         }
 
@@ -47,7 +46,7 @@ class OrganizationController extends Controller
             'organization_address' => 'required|string|max:1000',
         ]);
 
-        $emailDomain = substr(strrchr($registrationData['email'], "@"), 1);
+        $emailDomain = substr(strrchr($registrationData['email'], '@'), 1);
 
         // Create the organization
         $organization = Organization::create([
@@ -104,7 +103,7 @@ class OrganizationController extends Controller
         $registrationData = session('registration_data');
         $existingOrg = session('existing_organization');
 
-        if (!$registrationData || !$existingOrg) {
+        if (! $registrationData || ! $existingOrg) {
             return redirect()->route('register');
         }
 
@@ -121,7 +120,7 @@ class OrganizationController extends Controller
     {
         $registrationData = session('registration_data');
 
-        if (!$registrationData) {
+        if (! $registrationData) {
             return redirect()->route('register');
         }
 
@@ -131,7 +130,7 @@ class OrganizationController extends Controller
 
         if ($request->boolean('join_organization')) {
             // User decided to join the organization after all
-            $existingOrg = Organization::where('domain', substr(strrchr($registrationData['email'], "@"), 1))->first();
+            $existingOrg = Organization::where('domain', substr(strrchr($registrationData['email'], '@'), 1))->first();
 
             if ($existingOrg) {
                 $user = User::create([

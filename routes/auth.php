@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     // Only allow registration when not in production
-    if (!app()->environment('production')) {
+    if (! app()->environment('production')) {
         Route::get('register', [RegisteredUserController::class, 'create'])
             ->name('register');
 
@@ -40,7 +40,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 
     // Organization creation routes (only when registration is enabled)
-    if (!app()->environment('production')) {
+    if (! app()->environment('production')) {
         Route::get('organization/create', [OrganizationController::class, 'create'])
             ->name('organization.create');
 

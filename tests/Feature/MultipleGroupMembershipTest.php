@@ -2,21 +2,24 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\User;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class MultipleGroupMembershipTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $user;
+
     protected $organization;
+
     protected $defaultGroup;
+
     protected $secondGroup;
 
     protected function setUp(): void
@@ -102,13 +105,12 @@ class MultipleGroupMembershipTest extends TestCase
             ->get('/dashboard/projects/create');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Create')
-                    ->has('userGroups', 2)
-                    ->where('userGroups.0.name', 'Everyone')
-                    ->where('userGroups.0.is_default', true)
-                    ->where('userGroups.1.name', 'Development Team')
-                    ->where('userGroups.1.is_default', false)
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Create')
+                ->has('userGroups', 2)
+                ->where('userGroups.0.name', 'Everyone')
+                ->where('userGroups.0.is_default', true)
+                ->where('userGroups.1.name', 'Development Team')
+                ->where('userGroups.1.is_default', false)
             );
     }
 
@@ -152,11 +154,10 @@ class MultipleGroupMembershipTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Index')
-                    ->has('projects', 2) // Should see 2 projects (myProject and sharedProject)
-                    ->where('projects.0.title', 'Shared Dev Project') // Latest first
-                    ->where('projects.1.title', 'My Default Project')
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+                ->has('projects', 2) // Should see 2 projects (myProject and sharedProject)
+                ->where('projects.0.title', 'Shared Dev Project') // Latest first
+                ->where('projects.1.title', 'My Default Project')
             );
     }
 

@@ -2,23 +2,26 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\Role;
+use App\Models\Organization;
 use App\Models\User;
+use App\Notifications\NewOrganizationMemberNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewOrganizationMemberNotification;
+use Tests\TestCase;
 
 class NotificationComponentTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $organization;
+
     protected $creator;
+
     protected $adminRole;
+
     protected $userRole;
+
     protected $defaultGroup;
 
     protected function setUp(): void
@@ -122,13 +125,12 @@ class NotificationComponentTest extends TestCase
         $response = $this->get('/registration/confirm-organization');
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('auth/ConfirmOrganization')
-                ->has('email')
-                ->has('organization')
-                ->where('email', 'user@testcompany.com')
-                ->where('organization.name', 'Test Company')
-                ->where('organization.domain', 'testcompany.com')
+        $response->assertInertia(fn ($page) => $page->component('auth/ConfirmOrganization')
+            ->has('email')
+            ->has('organization')
+            ->where('email', 'user@testcompany.com')
+            ->where('organization.name', 'Test Company')
+            ->where('organization.domain', 'testcompany.com')
         );
     }
 

@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,6 +14,7 @@ class UserApprovedNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public User $approvedBy;
+
     public Organization $organization;
 
     /**

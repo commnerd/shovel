@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\AI\AIManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\TestCase;
 
 class TaskPageWorkflowTest extends TestCase
 {
@@ -81,15 +81,14 @@ class TaskPageWorkflowTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/CreateTasks')
-                ->has('projectData')
-                ->has('suggestedTasks')
-                ->has('aiUsed')
-                ->where('projectData.description', 'Build a web application')
-                ->where('projectData.due_date', '2025-12-31')
-                ->where('aiUsed', true)
-                ->whereType('suggestedTasks', 'array')
+        $response->assertInertia(fn ($page) => $page->component('Projects/CreateTasks')
+            ->has('projectData')
+            ->has('suggestedTasks')
+            ->has('aiUsed')
+            ->where('projectData.description', 'Build a web application')
+            ->where('projectData.due_date', '2025-12-31')
+            ->where('aiUsed', true)
+            ->whereType('suggestedTasks', 'array')
         );
     }
 
@@ -110,11 +109,10 @@ class TaskPageWorkflowTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/CreateTasks')
-                ->where('aiUsed', false)
-                ->where('suggestedTasks.0.title', 'Project Setup & Planning')
-                ->whereType('suggestedTasks', 'array')
+        $response->assertInertia(fn ($page) => $page->component('Projects/CreateTasks')
+            ->where('aiUsed', false)
+            ->where('suggestedTasks.0.title', 'Project Setup & Planning')
+            ->whereType('suggestedTasks', 'array')
         );
     }
 
@@ -168,10 +166,9 @@ class TaskPageWorkflowTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/CreateTasks')
-                ->where('aiUsed', true)
-                ->where('suggestedTasks.0.title', 'Mobile App Setup')
+        $response->assertInertia(fn ($page) => $page->component('Projects/CreateTasks')
+            ->where('aiUsed', true)
+            ->where('suggestedTasks.0.title', 'Mobile App Setup')
         );
     }
 
@@ -199,7 +196,7 @@ class TaskPageWorkflowTest extends TestCase
                     'status' => 'pending',
                     'sort_order' => 2,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($this->user)
@@ -240,9 +237,8 @@ class TaskPageWorkflowTest extends TestCase
                 'group_id' => $this->user->groups->first()->id,
             ]);
 
-        $response->assertInertia(fn ($page) =>
-            $page->where('projectData.description', 'Complex project with detailed requirements')
-                ->where('projectData.due_date', '2025-12-31')
+        $response->assertInertia(fn ($page) => $page->where('projectData.description', 'Complex project with detailed requirements')
+            ->where('projectData.due_date', '2025-12-31')
         );
     }
 

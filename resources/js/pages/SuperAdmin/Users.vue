@@ -332,7 +332,7 @@ interface Props {
     users: PaginatedUsers;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const page = usePage();
 const currentUserId = computed(() => page.props.auth.user.id);
 
@@ -354,31 +354,7 @@ const isLoggingIn = ref(false);
 const isAssigning = ref(false);
 const isRemoving = ref(false);
 
-// Pagination
-const paginationPages = computed(() => {
-    const pages = [];
-    const current = props.users.current_page;
-    const last = props.users.last_page;
-
-    // Always show first page
-    if (current > 3) {
-        pages.push(1);
-        if (current > 4) pages.push('...');
-    }
-
-    // Show pages around current
-    for (let i = Math.max(1, current - 2); i <= Math.min(last, current + 2); i++) {
-        pages.push(i);
-    }
-
-    // Always show last page
-    if (current < last - 2) {
-        if (current < last - 3) pages.push('...');
-        pages.push(last);
-    }
-
-    return pages;
-});
+// Removed unused paginationPages computed
 
 // Search functions
 const selectUser = (user: UserData) => {
@@ -398,17 +374,17 @@ const clearSelection = () => {
 };
 
 // Modal functions
-const openLoginAsModal = (user: UserData) => {
+const openLoginAsModal = () => {
     loginReason.value = '';
     showLoginAsModal.value = true;
 };
 
-const openAssignSuperAdminModal = (user: UserData) => {
+const openAssignSuperAdminModal = () => {
     assignReason.value = '';
     showAssignSuperAdminModal.value = true;
 };
 
-const openRemoveSuperAdminModal = (user: UserData) => {
+const openRemoveSuperAdminModal = () => {
     removeReason.value = '';
     showRemoveSuperAdminModal.value = true;
 };
@@ -459,14 +435,7 @@ const removeSuperAdmin = () => {
     });
 };
 
-const goToPage = (pageNumber: number | string) => {
-    if (pageNumber === '...' || pageNumber === props.users.current_page) return;
-
-    router.get('/super-admin/users', { page: pageNumber }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
-};
+// Removed unused goToPage function
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

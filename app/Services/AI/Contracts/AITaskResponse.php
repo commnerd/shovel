@@ -101,7 +101,7 @@ class AITaskResponse
      */
     public function hasNotes(): bool
     {
-        return !empty($this->notes) || !empty($this->summary) || !empty($this->problems) || !empty($this->suggestions);
+        return ! empty($this->notes) || ! empty($this->summary) || ! empty($this->problems) || ! empty($this->suggestions);
     }
 
     /**

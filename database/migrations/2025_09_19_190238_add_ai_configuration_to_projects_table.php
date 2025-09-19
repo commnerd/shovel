@@ -31,7 +31,7 @@ return new class extends Migration
                 'ai_model',
                 'ai_api_key',
                 'ai_base_url',
-                'ai_config'
+                'ai_config',
             ]);
         });
     }

@@ -2,12 +2,11 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Services\AI\AIManager;
 use App\Services\AI\Providers\CerebrusProvider;
-use App\Services\AI\Contracts\AIResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\TestCase;
 
 class AITaskGenerationTest extends TestCase
 {

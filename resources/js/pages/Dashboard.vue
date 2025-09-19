@@ -5,7 +5,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
-import { Users, FolderOpen, CheckSquare, Clock, AlertTriangle, Target } from 'lucide-vue-next';
+import { Users, FolderOpen } from 'lucide-vue-next';
 
 interface ProjectMetrics {
     total: number;

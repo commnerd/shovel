@@ -62,7 +62,7 @@ class AIManager extends Manager
     /**
      * Get a provider by name.
      */
-    public function provider(string $name = null): AIProviderInterface
+    public function provider(?string $name = null): AIProviderInterface
     {
         return $this->driver($name);
     }
@@ -159,12 +159,12 @@ class AIManager extends Manager
     /**
      * Test a provider connection.
      */
-    public function testProvider(string $name = null): array
+    public function testProvider(?string $name = null): array
     {
         try {
             $provider = $this->provider($name);
 
-            if (!$provider->isConfigured()) {
+            if (! $provider->isConfigured()) {
                 return [
                     'success' => false,
                     'message' => 'Provider is not properly configured',
@@ -173,7 +173,7 @@ class AIManager extends Manager
 
             // Test with a simple message
             $response = $provider->chat([
-                ['role' => 'user', 'content' => 'Say "Hello, I am working!" and nothing else.']
+                ['role' => 'user', 'content' => 'Say "Hello, I am working!" and nothing else.'],
             ]);
 
             return [
@@ -186,7 +186,7 @@ class AIManager extends Manager
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Provider test failed: ' . $e->getMessage(),
+                'message' => 'Provider test failed: '.$e->getMessage(),
             ];
         }
     }

@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class TaskCountAndEmptyStateBugfixTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -53,11 +53,10 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Index')
-                ->has('projects', 1)
-                ->where('projects.0.tasks_count', 3)
-                ->where('projects.0.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+            ->has('projects', 1)
+            ->where('projects.0.tasks_count', 3)
+            ->where('projects.0.id', $this->project->id)
         );
     }
 
@@ -68,11 +67,10 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Index')
-                ->has('projects', 1)
-                ->where('projects.0.tasks_count', 0)
-                ->where('projects.0.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+            ->has('projects', 1)
+            ->where('projects.0.tasks_count', 0)
+            ->where('projects.0.id', $this->project->id)
         );
     }
 
@@ -88,10 +86,9 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 2)
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 2)
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -102,10 +99,9 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 0)
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 0)
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -121,11 +117,10 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 1)
-                ->where('tasks.0.title', 'Existing Task')
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 1)
+            ->where('tasks.0.title', 'Existing Task')
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -135,8 +130,7 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get('/dashboard/projects');
 
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('projects.0.tasks_count', 0)
+        $response->assertInertia(fn (Assert $page) => $page->where('projects.0.tasks_count', 0)
         );
 
         // Add tasks
@@ -148,8 +142,7 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get('/dashboard/projects');
 
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('projects.0.tasks_count', 5)
+        $response->assertInertia(fn (Assert $page) => $page->where('projects.0.tasks_count', 5)
         );
     }
 
@@ -172,9 +165,8 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Index')
-                ->where('projects.0.tasks_count', 4) // 1 parent + 3 children
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+            ->where('projects.0.tasks_count', 4) // 1 parent + 3 children
         );
     }
 
@@ -197,10 +189,9 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 3) // Should show all tasks regardless of hierarchy
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 3) // Should show all tasks regardless of hierarchy
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -221,9 +212,8 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Index')
-                ->has('projects', 2)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+            ->has('projects', 2)
         );
 
         // Check that each project has the correct task count
@@ -246,16 +236,14 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
         $projectsResponse = $this->actingAs($this->user)
             ->get('/dashboard/projects');
 
-        $projectsResponse->assertInertia(fn (Assert $page) =>
-            $page->where('projects.0.tasks_count', 3)
+        $projectsResponse->assertInertia(fn (Assert $page) => $page->where('projects.0.tasks_count', 3)
         );
 
         // Check tasks index shows same number of tasks
         $tasksResponse = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
-        $tasksResponse->assertInertia(fn (Assert $page) =>
-            $page->has('tasks', 3)
+        $tasksResponse->assertInertia(fn (Assert $page) => $page->has('tasks', 3)
         );
     }
 }

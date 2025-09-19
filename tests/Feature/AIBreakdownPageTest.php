@@ -2,21 +2,22 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class AIBreakdownPageTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
+
     protected Task $task;
 
     protected function setUp(): void
@@ -57,16 +58,15 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$this->task->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('project.id', $this->project->id)
-                ->where('project.title', $this->project->title)
-                ->where('task.id', $this->task->id)
-                ->where('task.title', $this->task->title)
-                ->where('task.description', $this->task->description)
-                ->where('task.status', $this->task->status)
-                ->where('task.priority', $this->task->priority)
-                ->has('projectTaskCount')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('project.id', $this->project->id)
+            ->where('project.title', $this->project->title)
+            ->where('task.id', $this->task->id)
+            ->where('task.title', $this->task->title)
+            ->where('task.description', $this->task->description)
+            ->where('task.status', $this->task->status)
+            ->where('task.priority', $this->task->priority)
+            ->has('projectTaskCount')
         );
     }
 
@@ -136,11 +136,10 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$parentTask->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('task.has_children', true)
-                ->where('task.is_leaf', false)
-                ->where('task.is_top_level', true)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('task.has_children', true)
+            ->where('task.is_leaf', false)
+            ->where('task.is_top_level', true)
         );
 
         // Test child task
@@ -148,12 +147,11 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$childTask->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('task.has_children', false)
-                ->where('task.is_leaf', true)
-                ->where('task.is_top_level', false)
-                ->where('task.parent_id', $parentTask->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('task.has_children', false)
+            ->where('task.is_leaf', true)
+            ->where('task.is_top_level', false)
+            ->where('task.parent_id', $parentTask->id)
         );
     }
 
@@ -168,9 +166,8 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$this->task->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('projectTaskCount', 4) // Original task + 3 additional
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('projectTaskCount', 4) // Original task + 3 additional
         );
     }
 
@@ -183,9 +180,8 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$this->task->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('task.due_date', '2025-12-31')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('task.due_date', '2025-12-31')
         );
     }
 
@@ -202,10 +198,9 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$taskWithoutDesc->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
-                ->where('task.title', 'Task Without Description')
-                ->where('task.description', null)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+            ->where('task.title', 'Task Without Description')
+            ->where('task.description', null)
         );
     }
 
@@ -215,11 +210,10 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$this->task->id}/breakdown");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Breakdown')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
                 // The breadcrumbs are built in the component, so we just verify the page loads
-                ->where('project.title', $this->project->title)
-                ->where('task.title', $this->task->title)
+            ->where('project.title', $this->project->title)
+            ->where('task.title', $this->task->title)
         );
     }
 
@@ -229,11 +223,10 @@ class AIBreakdownPageTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 1)
-                ->where('tasks.0.id', $this->task->id)
-                ->where('tasks.0.title', $this->task->title)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 1)
+            ->where('tasks.0.id', $this->task->id)
+            ->where('tasks.0.title', $this->task->title)
         );
     }
 
@@ -290,10 +283,9 @@ class AIBreakdownPageTest extends TestCase
                 ->get("/dashboard/projects/{$this->project->id}/tasks/{$testTask->id}/breakdown");
 
             $response->assertOk();
-            $response->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Tasks/Breakdown')
-                    ->where('task.id', $testTask->id)
-                    ->where('task.title', $testTask->title)
+            $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Breakdown')
+                ->where('task.id', $testTask->id)
+                ->where('task.title', $testTask->title)
             );
         }
     }

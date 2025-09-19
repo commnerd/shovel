@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
             $table->boolean('is_default')->default(false); // For the 'Everyone' group
             $table->timestamps();
-            
+
             $table->index(['organization_id', 'is_default']);
         });
     }

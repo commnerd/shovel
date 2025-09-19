@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AITaskBreakdownTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void

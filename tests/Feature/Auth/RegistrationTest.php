@@ -22,7 +22,7 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
-    
+
     // Verify user was assigned to default organization
     $user = \App\Models\User::where('email', 'test@example.com')->first();
     $defaultOrg = \App\Models\Organization::getDefault();

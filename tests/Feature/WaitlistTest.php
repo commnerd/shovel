@@ -111,7 +111,7 @@ class WaitlistTest extends TestCase
 
     public function test_waitlist_subscriber_model_fillable_attributes(): void
     {
-        $subscriber = new WaitlistSubscriber();
+        $subscriber = new WaitlistSubscriber;
         $fillable = $subscriber->getFillable();
 
         $this->assertContains('email', $fillable);

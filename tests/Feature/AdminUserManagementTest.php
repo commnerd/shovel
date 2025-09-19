@@ -2,22 +2,26 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\Models\Group;
 use App\Models\Organization;
 use App\Models\Role;
-use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $organization;
+
     protected $adminRole;
+
     protected $userRole;
+
     protected $defaultGroup;
 
     protected function setUp(): void
@@ -51,10 +55,9 @@ class AdminUserManagementTest extends TestCase
             ->get('/admin/users');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Admin/Users')
-                    ->has('users')
-                    ->has('filters')
+            ->assertInertia(fn (Assert $page) => $page->component('Admin/Users')
+                ->has('users')
+                ->has('filters')
             );
     }
 
@@ -230,7 +233,7 @@ class AdminUserManagementTest extends TestCase
                 'name' => $creator->name,
                 'email' => $creator->email,
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         $response = $this->post('/organization/create', [

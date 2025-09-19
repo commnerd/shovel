@@ -2,18 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class SuperAdminImpersonationUITest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $targetUser;
+
     protected Organization $organization;
 
     protected function setUp(): void
@@ -53,9 +55,8 @@ class SuperAdminImpersonationUITest extends TestCase
             ->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', null)
-                ->where('auth.user.id', $this->superAdmin->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', null)
+            ->where('auth.user.id', $this->superAdmin->id)
         );
     }
 
@@ -70,10 +71,9 @@ class SuperAdminImpersonationUITest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', $this->superAdmin->id)
-                ->where('auth.user.id', $this->targetUser->id)
-                ->where('auth.user.name', $this->targetUser->name)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+            ->where('auth.user.id', $this->targetUser->id)
+            ->where('auth.user.name', $this->targetUser->name)
         );
     }
 
@@ -88,10 +88,9 @@ class SuperAdminImpersonationUITest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.user.name', 'Target User')
-                ->where('auth.user.email', 'target@test.com')
-                ->where('auth.original_super_admin_id', $this->superAdmin->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.user.name', 'Target User')
+            ->where('auth.user.email', 'target@test.com')
+            ->where('auth.original_super_admin_id', $this->superAdmin->id)
         );
     }
 
@@ -111,9 +110,8 @@ class SuperAdminImpersonationUITest extends TestCase
             $response = $this->get($page);
 
             $response->assertOk();
-            $response->assertInertia(fn (Assert $inertiaPage) =>
-                $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
-                    ->where('auth.user.id', $this->targetUser->id)
+            $response->assertInertia(fn (Assert $inertiaPage) => $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
+                ->where('auth.user.id', $this->targetUser->id)
             );
         }
     }
@@ -124,9 +122,8 @@ class SuperAdminImpersonationUITest extends TestCase
             ->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', null)
-                ->where('auth.user.id', $this->targetUser->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', null)
+            ->where('auth.user.id', $this->targetUser->id)
         );
     }
 
@@ -189,9 +186,8 @@ class SuperAdminImpersonationUITest extends TestCase
             $response = $this->get($page);
 
             $response->assertOk();
-            $response->assertInertia(fn (Assert $inertiaPage) =>
-                $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
-                    ->where('auth.user.id', $this->targetUser->id)
+            $response->assertInertia(fn (Assert $inertiaPage) => $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
+                ->where('auth.user.id', $this->targetUser->id)
             );
 
             // Verify session state
@@ -220,9 +216,8 @@ class SuperAdminImpersonationUITest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.user.name', 'This Is A Very Long User Name That Should Be Truncated In The UI')
-                ->where('auth.original_super_admin_id', $this->superAdmin->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.user.name', 'This Is A Very Long User Name That Should Be Truncated In The UI')
+            ->where('auth.original_super_admin_id', $this->superAdmin->id)
         );
     }
 
@@ -233,8 +228,7 @@ class SuperAdminImpersonationUITest extends TestCase
             ->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', null)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', null)
         );
 
         // Login as another user
@@ -248,9 +242,8 @@ class SuperAdminImpersonationUITest extends TestCase
         $dashboardResponse = $this->get('/dashboard');
 
         $dashboardResponse->assertOk();
-        $dashboardResponse->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', $this->superAdmin->id)
-                ->where('auth.user.id', $this->targetUser->id)
+        $dashboardResponse->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+            ->where('auth.user.id', $this->targetUser->id)
         );
     }
 
@@ -265,8 +258,7 @@ class SuperAdminImpersonationUITest extends TestCase
         // Verify banner is shown
         $impersonatingResponse = $this->get('/dashboard');
         $impersonatingResponse->assertOk();
-        $impersonatingResponse->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+        $impersonatingResponse->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
         );
 
         // Return to super admin
@@ -276,9 +268,8 @@ class SuperAdminImpersonationUITest extends TestCase
         // Follow redirect and verify banner is gone
         $superAdminResponse = $this->get('/super-admin');
         $superAdminResponse->assertOk();
-        $superAdminResponse->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', null)
-                ->where('auth.user.id', $this->superAdmin->id)
+        $superAdminResponse->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', null)
+            ->where('auth.user.id', $this->superAdmin->id)
         );
     }
 
@@ -293,17 +284,16 @@ class SuperAdminImpersonationUITest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->has('auth')
-                ->has('auth.user')
-                ->has('auth.user.id')
-                ->has('auth.user.name')
-                ->has('auth.user.email')
-                ->has('auth.original_super_admin_id')
-                ->where('auth.user.id', $this->targetUser->id)
-                ->where('auth.user.name', $this->targetUser->name)
-                ->where('auth.user.email', $this->targetUser->email)
-                ->where('auth.original_super_admin_id', $this->superAdmin->id)
+        $response->assertInertia(fn (Assert $page) => $page->has('auth')
+            ->has('auth.user')
+            ->has('auth.user.id')
+            ->has('auth.user.name')
+            ->has('auth.user.email')
+            ->has('auth.original_super_admin_id')
+            ->where('auth.user.id', $this->targetUser->id)
+            ->where('auth.user.name', $this->targetUser->name)
+            ->where('auth.user.email', $this->targetUser->email)
+            ->where('auth.original_super_admin_id', $this->superAdmin->id)
         );
     }
 
@@ -337,10 +327,9 @@ class SuperAdminImpersonationUITest extends TestCase
             $response = $this->get('/dashboard');
 
             $response->assertOk();
-            $response->assertInertia(fn (Assert $page) =>
-                $page->where('auth.original_super_admin_id', $this->superAdmin->id)
-                    ->where('auth.user.id', $user->id)
-                    ->where('auth.user.name', $user->name)
+            $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+                ->where('auth.user.id', $user->id)
+                ->where('auth.user.name', $user->name)
             );
 
             // Return to super admin for next iteration

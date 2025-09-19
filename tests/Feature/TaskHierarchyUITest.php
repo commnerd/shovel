@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TaskHierarchyUITest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -55,11 +55,10 @@ class TaskHierarchyUITest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/create");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Create')
-                ->has('parentTasks', 2)
-                ->where('parentTasks.0.title', 'Available Parent 1')
-                ->where('parentTasks.1.title', 'Available Parent 2')
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Create')
+            ->has('parentTasks', 2)
+            ->where('parentTasks.0.title', 'Available Parent 1')
+            ->where('parentTasks.1.title', 'Available Parent 2')
         );
     }
 
@@ -74,11 +73,10 @@ class TaskHierarchyUITest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$parentTask->id}/subtasks/create");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Create')
-                ->where('parentTask.id', $parentTask->id)
-                ->where('parentTask.title', 'Preselected Parent')
-                ->has('parentTasks', 0) // Should be empty since parent is preselected
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Create')
+            ->where('parentTask.id', $parentTask->id)
+            ->where('parentTask.title', 'Preselected Parent')
+            ->has('parentTasks', 0) // Should be empty since parent is preselected
         );
     }
 
@@ -135,10 +133,9 @@ class TaskHierarchyUITest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$task->id}/edit");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Edit')
-                ->where('task.due_date', '2025-12-31')
-                ->where('task.title', 'Task with Due Date')
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Edit')
+            ->where('task.due_date', '2025-12-31')
+            ->where('task.title', 'Task with Due Date')
         );
     }
 
@@ -314,9 +311,8 @@ class TaskHierarchyUITest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/create");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Create')
-                ->has('parentTasks', 0) // Should be empty since no tasks in current project yet
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Create')
+            ->has('parentTasks', 0) // Should be empty since no tasks in current project yet
         );
 
         // Create task in current project
@@ -328,9 +324,8 @@ class TaskHierarchyUITest extends TestCase
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/tasks/create");
 
-        $response->assertInertia(fn ($page) =>
-            $page->has('parentTasks', 1)
-                ->where('parentTasks.0.title', 'My Task')
+        $response->assertInertia(fn ($page) => $page->has('parentTasks', 1)
+            ->where('parentTasks.0.title', 'My Task')
         );
     }
 }

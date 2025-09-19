@@ -47,11 +47,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'pending_approval' => 'boolean',
-        'approved_at' => 'datetime',
-        'is_super_admin' => 'boolean',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'pending_approval' => 'boolean',
+            'approved_at' => 'datetime',
+            'is_super_admin' => 'boolean',
         ];
     }
 
@@ -100,7 +100,7 @@ class User extends Authenticatable
      */
     public function isApproved(): bool
     {
-        return !$this->pending_approval;
+        return ! $this->pending_approval;
     }
 
     /**
@@ -108,7 +108,7 @@ class User extends Authenticatable
      */
     public function getEmailDomain(): string
     {
-        return substr(strrchr($this->email, "@"), 1);
+        return substr(strrchr($this->email, '@'), 1);
     }
 
     /**
@@ -124,7 +124,7 @@ class User extends Authenticatable
      */
     public function getOrganizationGroups()
     {
-        if (!$this->organization_id) {
+        if (! $this->organization_id) {
             return collect();
         }
 
@@ -146,7 +146,7 @@ class User extends Authenticatable
      */
     public function joinGroup(Group $group): void
     {
-        if (!$this->belongsToGroup($group->id)) {
+        if (! $this->belongsToGroup($group->id)) {
             $this->groups()->attach($group->id, ['joined_at' => now()]);
         }
     }
@@ -161,6 +161,7 @@ class User extends Authenticatable
         }
 
         $this->groups()->detach($group->id);
+
         return true;
     }
 
@@ -203,7 +204,7 @@ class User extends Authenticatable
      */
     public function assignRole(Role $role, ?User $assignedBy = null): void
     {
-        if (!$this->hasRole($role->name)) {
+        if (! $this->hasRole($role->name)) {
             $this->roles()->attach($role->id, [
                 'assigned_at' => now(),
                 'assigned_by' => $assignedBy?->id,
@@ -225,7 +226,7 @@ class User extends Authenticatable
     public function getAllPermissions(): array
     {
         return $this->roles()->get()
-            ->flatMap(fn($role) => $role->permissions ?? [])
+            ->flatMap(fn ($role) => $role->permissions ?? [])
             ->unique()
             ->values()
             ->toArray();

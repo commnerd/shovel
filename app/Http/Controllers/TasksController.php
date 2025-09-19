@@ -128,15 +128,15 @@ class TasksController extends Controller
         ]);
 
         // If parent_id is provided, ensure it belongs to the same project
-        if (!empty($validated['parent_id'])) {
+        if (! empty($validated['parent_id'])) {
             $parentTask = Task::find($validated['parent_id']);
-            if (!$parentTask || $parentTask->project_id !== $project->id) {
+            if (! $parentTask || $parentTask->project_id !== $project->id) {
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
             }
         }
 
         // Determine sort order based on parent
-        $sortOrder = !empty($validated['parent_id'])
+        $sortOrder = ! empty($validated['parent_id'])
             ? Task::find($validated['parent_id'])->getNextChildSortOrder()
             : $project->tasks()->whereNull('parent_id')->max('sort_order') + 1;
 
@@ -155,7 +155,7 @@ class TasksController extends Controller
         $task->updateHierarchyPath();
 
         // Create subtasks if provided
-        if (!empty($validated['subtasks'])) {
+        if (! empty($validated['subtasks'])) {
             foreach ($validated['subtasks'] as $index => $subtaskData) {
                 $subtask = Task::create([
                     'project_id' => $project->id,
@@ -172,9 +172,9 @@ class TasksController extends Controller
             }
         }
 
-        $message = !empty($validated['subtasks'])
-            ? "Task created successfully with " . count($validated['subtasks']) . " subtasks!"
-            : "Task created successfully!";
+        $message = ! empty($validated['subtasks'])
+            ? 'Task created successfully with '.count($validated['subtasks']).' subtasks!'
+            : 'Task created successfully!';
 
         return redirect()->route('projects.tasks.index', $project)->with([
             'message' => $message,
@@ -252,9 +252,9 @@ class TasksController extends Controller
         ]);
 
         // If parent_id is provided, ensure it belongs to the same project and isn't self
-        if (!empty($validated['parent_id'])) {
+        if (! empty($validated['parent_id'])) {
             $parentTask = Task::find($validated['parent_id']);
-            if (!$parentTask || $parentTask->project_id !== $project->id || $parentTask->id === $task->id) {
+            if (! $parentTask || $parentTask->project_id !== $project->id || $parentTask->id === $task->id) {
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
             }
 

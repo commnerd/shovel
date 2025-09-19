@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('depth')->default(0)->after('parent_id');
             $table->string('path')->nullable()->after('depth'); // For efficient hierarchy queries
             $table->date('due_date')->nullable()->after('priority'); // Add due_date field
-            
+
             // Add indexes for performance
             $table->index(['project_id', 'depth']);
             $table->index('path');

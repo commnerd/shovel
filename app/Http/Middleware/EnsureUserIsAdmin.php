@@ -15,7 +15,7 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect('/login');
         }
 
@@ -27,7 +27,7 @@ class EnsureUserIsAdmin
         }
 
         // Check if user is an admin in their organization
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             abort(403, 'Admin access required.');
         }
 

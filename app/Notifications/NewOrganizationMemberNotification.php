@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -42,13 +42,13 @@ class NewOrganizationMemberNotification extends Notification implements ShouldQu
             ->subject("New member request for {$this->organization->name}")
             ->greeting("Hello {$notifiable->name}!")
             ->line("A new user has requested to join your organization '{$this->organization->name}'.")
-            ->line("**User Details:**")
+            ->line('**User Details:**')
             ->line("Name: {$this->newUser->name}")
             ->line("Email: {$this->newUser->email}")
-            ->line("The user is currently pending approval and waiting for an administrator to review their request.")
-            ->action('Approve User', url("/admin/users/{$this->newUser->id}/approve?token=" . encrypt($this->newUser->id)))
+            ->line('The user is currently pending approval and waiting for an administrator to review their request.')
+            ->action('Approve User', url("/admin/users/{$this->newUser->id}/approve?token=".encrypt($this->newUser->id)))
             ->line('Or you can review all pending users from the admin panel:')
-            ->action('Admin Panel', url("/admin/users"))
+            ->action('Admin Panel', url('/admin/users'))
             ->line('Thank you for managing your organization!');
     }
 

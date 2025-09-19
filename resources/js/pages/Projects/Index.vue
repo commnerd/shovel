@@ -17,13 +17,7 @@ interface Project {
     created_at: string;
 }
 
-interface Task {
-    id: number;
-    title: string;
-    description: string;
-    status: 'pending' | 'in_progress' | 'completed';
-    priority: 'low' | 'medium' | 'high';
-}
+// Removed unused Task interface
 
 const page = usePage();
 const projects = computed(() => page.props.projects as Project[]);

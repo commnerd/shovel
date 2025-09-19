@@ -16,7 +16,7 @@ return new class extends Migration
             $table->boolean('pending_approval')->default(false);
             $table->timestamp('approved_at')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
-            
+
             $table->index('organization_id');
             $table->index('pending_approval');
         });

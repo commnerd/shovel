@@ -102,13 +102,13 @@ I hope this helps with your project planning!';
                     'description' => 'Test Description',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             'summary' => 'Test project analysis',
             'notes' => ['Good project scope'],
             'problems' => [],
-            'suggestions' => ['Consider adding tests']
+            'suggestions' => ['Consider adding tests'],
         ]);
 
         $aiResponse = new AIResponse($jsonContent);

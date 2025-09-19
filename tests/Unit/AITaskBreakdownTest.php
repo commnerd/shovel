@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Services\AI\Providers\CerebrusProvider;
-use App\Services\AI\Contracts\AITaskResponse;
 use App\Services\AI\Contracts\AIResponse;
+use App\Services\AI\Contracts\AITaskResponse;
+use App\Services\AI\Providers\CerebrusProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\TestCase;
 
 class AITaskBreakdownTest extends TestCase
 {
@@ -208,7 +208,7 @@ class AITaskBreakdownTest extends TestCase
     public function test_task_breakdown_system_prompt_configuration()
     {
         config([
-            'ai.prompts.task_breakdown.system' => 'Custom system prompt for testing'
+            'ai.prompts.task_breakdown.system' => 'Custom system prompt for testing',
         ]);
 
         $provider = new CerebrusProvider(config('ai.providers.cerebrus'));
@@ -226,7 +226,7 @@ class AITaskBreakdownTest extends TestCase
     public function test_task_breakdown_user_prompt_configuration()
     {
         config([
-            'ai.prompts.task_breakdown.user' => 'Custom user prompt: {task_title}'
+            'ai.prompts.task_breakdown.user' => 'Custom user prompt: {task_title}',
         ]);
 
         $provider = new CerebrusProvider(config('ai.providers.cerebrus'));

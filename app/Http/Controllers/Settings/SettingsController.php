@@ -115,13 +115,13 @@ class SettingsController extends Controller
 
         // Update provider-specific settings
         foreach (['cerebrus', 'openai', 'anthropic'] as $provider) {
-            if (!empty($validated["{$provider}_api_key"])) {
+            if (! empty($validated["{$provider}_api_key"])) {
                 Setting::set("ai.{$provider}.api_key", $validated["{$provider}_api_key"], 'string', "{$provider} API key");
             }
-            if (!empty($validated["{$provider}_base_url"])) {
+            if (! empty($validated["{$provider}_base_url"])) {
                 Setting::set("ai.{$provider}.base_url", $validated["{$provider}_base_url"], 'string', "{$provider} base URL");
             }
-            if (!empty($validated["{$provider}_model"])) {
+            if (! empty($validated["{$provider}_model"])) {
                 Setting::set("ai.{$provider}.model", $validated["{$provider}_model"], 'string', "{$provider} model");
             }
         }
@@ -145,11 +145,11 @@ class SettingsController extends Controller
         Setting::set('ai.default.provider', $validated['provider'], 'string', 'Default AI provider for new projects');
         Setting::set('ai.default.model', $validated['model'], 'string', 'Default AI model for new projects');
 
-        if (!empty($validated['api_key'])) {
+        if (! empty($validated['api_key'])) {
             Setting::set('ai.default.api_key', $validated['api_key'], 'string', 'Default AI API key for new projects');
         }
 
-        if (!empty($validated['base_url'])) {
+        if (! empty($validated['base_url'])) {
             Setting::set('ai.default.base_url', $validated['base_url'], 'string', 'Default AI base URL for new projects');
         }
 
@@ -190,7 +190,7 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Connection test failed: ' . $e->getMessage(),
+                'message' => 'Connection test failed: '.$e->getMessage(),
             ], 500);
         }
     }

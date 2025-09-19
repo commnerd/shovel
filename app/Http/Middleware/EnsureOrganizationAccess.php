@@ -15,12 +15,12 @@ class EnsureOrganizationAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         $user = auth()->user();
-        
+
         // Check if user is approved (not pending)
         if ($user->pending_approval) {
             return redirect()->route('dashboard')->with([

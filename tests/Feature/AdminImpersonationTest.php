@@ -2,35 +2,46 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\Role;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class AdminImpersonationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $orgAdmin;
+
     protected User $targetUser;
+
     protected User $otherOrgUser;
+
     protected User $regularUser;
+
     protected Organization $organization;
+
     protected Organization $otherOrganization;
+
     protected Group $group;
+
     protected Group $otherGroup;
+
     protected Project $project;
+
     protected Project $otherProject;
+
     protected Task $task;
+
     protected Task $subtask;
+
     protected Task $otherTask;
 
     protected function setUp(): void
@@ -229,14 +240,12 @@ class AdminImpersonationTest extends TestCase
         $response = $this->get('/dashboard/projects');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Index')
-                ->has('projects')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+            ->has('projects')
         );
 
         // Should be able to see the target user's project
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('projects.0.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('projects.0.id', $this->project->id)
         );
     }
 
@@ -251,22 +260,20 @@ class AdminImpersonationTest extends TestCase
         $response = $this->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks')
         );
 
         // Should be able to see both main task and subtask
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) {
-                $taskIds = collect($tasks)->pluck('id')->toArray();
-                $this->assertContains($this->task->id, $taskIds);
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) {
+            $taskIds = collect($tasks)->pluck('id')->toArray();
+            $this->assertContains($this->task->id, $taskIds);
 
-                $mainTask = collect($tasks)->firstWhere('id', $this->task->id);
-                $this->assertEquals('Main Task', $mainTask['title']);
+            $mainTask = collect($tasks)->firstWhere('id', $this->task->id);
+            $this->assertEquals('Main Task', $mainTask['title']);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -283,17 +290,16 @@ class AdminImpersonationTest extends TestCase
         $response->assertOk();
 
         // Should be able to see subtasks in the hierarchy
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) {
-                $taskIds = collect($tasks)->pluck('id')->toArray();
-                $this->assertContains($this->subtask->id, $taskIds);
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) {
+            $taskIds = collect($tasks)->pluck('id')->toArray();
+            $this->assertContains($this->subtask->id, $taskIds);
 
-                $subtask = collect($tasks)->firstWhere('id', $this->subtask->id);
-                $this->assertEquals('Subtask', $subtask['title']);
-                $this->assertEquals($this->task->id, $subtask['parent_id']);
+            $subtask = collect($tasks)->firstWhere('id', $this->subtask->id);
+            $this->assertEquals('Subtask', $subtask['title']);
+            $this->assertEquals($this->task->id, $subtask['parent_id']);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -393,22 +399,20 @@ class AdminImpersonationTest extends TestCase
         $response = $this->get("/dashboard/projects/{$this->otherProject->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks')
         );
 
         // Should be able to see tasks from other organization
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) {
-                $taskIds = collect($tasks)->pluck('id')->toArray();
-                $this->assertContains($this->otherTask->id, $taskIds);
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) {
+            $taskIds = collect($tasks)->pluck('id')->toArray();
+            $this->assertContains($this->otherTask->id, $taskIds);
 
-                $otherTask = collect($tasks)->firstWhere('id', $this->otherTask->id);
-                $this->assertEquals('Other Org Task', $otherTask['title']);
+            $otherTask = collect($tasks)->firstWhere('id', $this->otherTask->id);
+            $this->assertEquals('Other Org Task', $otherTask['title']);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -423,9 +427,8 @@ class AdminImpersonationTest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_admin_id', $this->orgAdmin->id)
-                ->where('auth.user.id', $this->targetUser->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_admin_id', $this->orgAdmin->id)
+            ->where('auth.user.id', $this->targetUser->id)
         );
     }
 
@@ -536,4 +539,3 @@ class AdminImpersonationTest extends TestCase
         $this->assertEquals($this->orgAdmin->id, session('original_admin_id'));
     }
 }
-

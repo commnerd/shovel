@@ -14,13 +14,13 @@ class WaitlistControllerTest extends TestCase
 
     public function test_waitlist_controller_can_be_instantiated(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $this->assertInstanceOf(WaitlistController::class, $controller);
     }
 
     public function test_store_method_creates_waitlist_subscriber(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', [
             'email' => 'test@example.com',
         ]);
@@ -34,7 +34,7 @@ class WaitlistControllerTest extends TestCase
 
     public function test_store_method_returns_redirect_response(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', [
             'email' => 'test@example.com',
         ]);
@@ -46,7 +46,7 @@ class WaitlistControllerTest extends TestCase
 
     public function test_store_method_has_success_message(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', [
             'email' => 'test@example.com',
         ]);
@@ -59,7 +59,7 @@ class WaitlistControllerTest extends TestCase
 
     public function test_store_method_validates_email_required(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', []);
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
@@ -68,7 +68,7 @@ class WaitlistControllerTest extends TestCase
 
     public function test_store_method_validates_email_format(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', [
             'email' => 'invalid-email',
         ]);
@@ -82,7 +82,7 @@ class WaitlistControllerTest extends TestCase
         // Create existing subscriber
         WaitlistSubscriber::create(['email' => 'existing@example.com']);
 
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
         $request = Request::create('/waitlist', 'POST', [
             'email' => 'existing@example.com',
         ]);
@@ -93,7 +93,7 @@ class WaitlistControllerTest extends TestCase
 
     public function test_store_method_uses_correct_validation_rules(): void
     {
-        $controller = new WaitlistController();
+        $controller = new WaitlistController;
 
         // Test that the validation rules are properly configured
         $reflection = new \ReflectionClass($controller);

@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TaskHierarchyFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -114,12 +114,11 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$parentTask->id}/subtasks/create");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Create')
-                ->has('project')
-                ->has('parentTask')
-                ->where('parentTask.id', $parentTask->id)
-                ->where('parentTask.title', 'Parent Task')
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Create')
+            ->has('project')
+            ->has('parentTask')
+            ->where('parentTask.id', $parentTask->id)
+            ->where('parentTask.title', 'Parent Task')
         );
     }
 
@@ -227,9 +226,8 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=top-level");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->has('tasks', 2) // parent and standalone
-                ->where('filter', 'top-level')
+        $response->assertInertia(fn ($page) => $page->has('tasks', 2) // parent and standalone
+            ->where('filter', 'top-level')
         );
 
         // Test leaf filter
@@ -237,9 +235,8 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->has('tasks', 2) // child and standalone
-                ->where('filter', 'leaf')
+        $response->assertInertia(fn ($page) => $page->has('tasks', 2) // child and standalone
+            ->where('filter', 'leaf')
         );
     }
 
@@ -271,10 +268,9 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->where('taskCounts.all', 4)
-                ->where('taskCounts.top_level', 2)
-                ->where('taskCounts.leaf', 2)
+        $response->assertInertia(fn ($page) => $page->where('taskCounts.all', 4)
+            ->where('taskCounts.top_level', 2)
+            ->where('taskCounts.leaf', 2)
         );
     }
 
@@ -395,11 +391,10 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$child->id}/edit");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Edit')
-                ->where('task.parent_id', $parent->id)
-                ->where('task.due_date', '2025-12-31')
-                ->has('parentTasks')
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Edit')
+            ->where('task.parent_id', $parent->id)
+            ->where('task.due_date', '2025-12-31')
+            ->has('parentTasks')
         );
     }
 

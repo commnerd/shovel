@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\User;
-use App\Models\Role;
+use App\Notifications\UserApprovedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\UserApprovedNotification;
+use Tests\TestCase;
 
 class UserApprovalEdgeCasesTest extends TestCase
 {
@@ -85,7 +84,7 @@ class UserApprovalEdgeCasesTest extends TestCase
 
         // Try to approve non-existent user
         $response = $this->actingAs($admin)
-            ->post("/admin/users/99999/approve");
+            ->post('/admin/users/99999/approve');
 
         $response->assertStatus(404);
     }
@@ -190,8 +189,8 @@ class UserApprovalEdgeCasesTest extends TestCase
         $mailMessage = $notification->toMail($user);
 
         // Verify email structure
-        $this->assertEquals("Your account has been approved!", $mailMessage->subject);
-        $this->assertEquals("Hello Approved User!", $mailMessage->greeting);
+        $this->assertEquals('Your account has been approved!', $mailMessage->subject);
+        $this->assertEquals('Hello Approved User!', $mailMessage->greeting);
 
         // Verify action button exists
         $this->assertNotEmpty($mailMessage->actionText);

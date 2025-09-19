@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\User;
+use App\Notifications\NewOrganizationMemberNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewOrganizationMemberNotification;
+use Tests\TestCase;
 
 class OrganizationEmailCheckedWorkflowTest extends TestCase
 {
@@ -96,7 +96,7 @@ class OrganizationEmailCheckedWorkflowTest extends TestCase
                 'name' => 'Startup Founder',
                 'email' => 'founder@mystartup.com',
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         // Submit organization creation form

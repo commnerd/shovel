@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class OrganizationModelTest extends TestCase
 {
@@ -44,11 +44,11 @@ class OrganizationModelTest extends TestCase
         $organization = Organization::factory()->create([
             'creator_id' => $creator->id,
         ]);
-        
+
         $group = Group::factory()->create([
             'organization_id' => $organization->id,
         ]);
-        
+
         $user = User::factory()->create([
             'organization_id' => $organization->id,
         ]);

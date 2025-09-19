@@ -2,23 +2,25 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class SuperAdminImpersonationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $targetUser;
+
     protected User $regularAdmin;
+
     protected User $regularUser;
+
     protected Organization $organization;
 
     protected function setUp(): void
@@ -233,9 +235,8 @@ class SuperAdminImpersonationTest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('auth.original_super_admin_id', $this->superAdmin->id)
-                ->where('auth.user.id', $this->targetUser->id)
+        $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+            ->where('auth.user.id', $this->targetUser->id)
         );
     }
 
@@ -251,10 +252,9 @@ class SuperAdminImpersonationTest extends TestCase
         $response = $this->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $inertiaPage) =>
-            $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
-                ->where('auth.user.id', $this->targetUser->id)
-                ->where('auth.user.name', $this->targetUser->name)
+        $response->assertInertia(fn (Assert $inertiaPage) => $inertiaPage->where('auth.original_super_admin_id', $this->superAdmin->id)
+            ->where('auth.user.id', $this->targetUser->id)
+            ->where('auth.user.name', $this->targetUser->name)
         );
     }
 
@@ -360,9 +360,8 @@ class SuperAdminImpersonationTest extends TestCase
             $response = $this->get('/dashboard');
 
             $response->assertOk();
-            $response->assertInertia(fn (Assert $page) =>
-                $page->where('auth.original_super_admin_id', $this->superAdmin->id)
-                    ->where('auth.user.id', $this->targetUser->id)
+            $response->assertInertia(fn (Assert $page) => $page->where('auth.original_super_admin_id', $this->superAdmin->id)
+                ->where('auth.user.id', $this->targetUser->id)
             );
 
             // Verify we're still logged in as target user

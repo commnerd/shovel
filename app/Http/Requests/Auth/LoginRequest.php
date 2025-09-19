@@ -52,7 +52,7 @@ class LoginRequest extends FormRequest
         $user = Auth::user();
         if ($user && $user->pending_approval) {
             Auth::logout();
-            
+
             throw ValidationException::withMessages([
                 'email' => 'Your account is pending approval from your organization administrator. Please wait for approval before logging in.',
             ]);

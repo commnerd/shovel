@@ -2,23 +2,26 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
+use Tests\TestCase;
 
 class SuperAdminUserSearchTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $regularUser;
+
     protected User $adminUser;
+
     protected User $pendingUser;
+
     protected Organization $organization;
+
     protected Organization $secondOrganization;
 
     protected function setUp(): void
@@ -98,7 +101,7 @@ class SuperAdminUserSearchTest extends TestCase
                     'is_admin' => false,
                     'is_super_admin' => false,
                     'pending_approval' => false,
-                ]
+                ],
             ],
             'query' => 'John',
         ]);
@@ -120,7 +123,7 @@ class SuperAdminUserSearchTest extends TestCase
                     'is_admin' => true,
                     'is_super_admin' => false,
                     'pending_approval' => false,
-                ]
+                ],
             ],
             'query' => 'admin@techcorp',
         ]);
@@ -183,7 +186,7 @@ class SuperAdminUserSearchTest extends TestCase
         });
 
         $nameContainsTest = collect($data['users'])->first(function ($user) {
-            return str_contains($user['name'], 'Test') && !str_starts_with($user['name'], 'Test');
+            return str_contains($user['name'], 'Test') && ! str_starts_with($user['name'], 'Test');
         });
 
         if ($emailStartsWithTest && $nameContainsTest) {
@@ -246,7 +249,7 @@ class SuperAdminUserSearchTest extends TestCase
 
         $response = $this->actingAs($this->superAdmin)
             ->withHeaders(['Accept' => 'application/json'])
-            ->get('/super-admin/users/search?query=' . $longQuery);
+            ->get('/super-admin/users/search?query='.$longQuery);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['query']);
@@ -330,7 +333,7 @@ class SuperAdminUserSearchTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->superAdmin)
-            ->get('/super-admin/users/search?query=' . urlencode("O'Connor"));
+            ->get('/super-admin/users/search?query='.urlencode("O'Connor"));
 
         $response->assertOk();
         $data = $response->json();

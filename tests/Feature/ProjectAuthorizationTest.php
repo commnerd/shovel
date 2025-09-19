@@ -2,63 +2,71 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ProjectAuthorizationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $organization;
+
     protected $otherOrganization;
+
     protected $adminRole;
+
     protected $userRole;
+
     protected $group1;
+
     protected $group2;
+
     protected $admin;
+
     protected $user1;
+
     protected $user2;
+
     protected $outsideUser;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up organizations
         $this->organization = Organization::factory()->create(['name' => 'Test Org']);
         $this->otherOrganization = Organization::factory()->create(['name' => 'Other Org']);
-        
+
         // Create roles
         $orgRoles = $this->organization->createDefaultRoles();
         $this->adminRole = $orgRoles['admin'];
         $this->userRole = $orgRoles['user'];
-        
+
         $otherOrgRoles = $this->otherOrganization->createDefaultRoles();
-        
+
         // Create groups
         $this->group1 = Group::factory()->create([
             'organization_id' => $this->organization->id,
             'name' => 'Group 1',
             'is_default' => true,
         ]);
-        
+
         $this->group2 = Group::factory()->create([
             'organization_id' => $this->organization->id,
             'name' => 'Group 2',
             'is_default' => false,
         ]);
-        
+
         $otherGroup = Group::factory()->create([
             'organization_id' => $this->otherOrganization->id,
             'name' => 'Other Group',
             'is_default' => true,
         ]);
-        
+
         // Create users
         $this->admin = User::factory()->create([
             'organization_id' => $this->organization->id,
@@ -67,21 +75,21 @@ class ProjectAuthorizationTest extends TestCase
         $this->admin->assignRole($this->adminRole);
         $this->admin->assignRole($this->userRole);
         $this->admin->joinGroup($this->group1);
-        
+
         $this->user1 = User::factory()->create([
             'organization_id' => $this->organization->id,
             'pending_approval' => false,
         ]);
         $this->user1->assignRole($this->userRole);
         $this->user1->joinGroup($this->group1);
-        
+
         $this->user2 = User::factory()->create([
             'organization_id' => $this->organization->id,
             'pending_approval' => false,
         ]);
         $this->user2->assignRole($this->userRole);
         $this->user2->joinGroup($this->group2);
-        
+
         $this->outsideUser = User::factory()->create([
             'organization_id' => $this->otherOrganization->id,
             'pending_approval' => false,
@@ -292,12 +300,12 @@ class ProjectAuthorizationTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk();
-        
+
         // Should see own project and same group project, but not others
         $projects = $response->viewData('page')['props']['projects'];
-        
+
         $this->assertCount(2, $projects);
-        
+
         $projectTitles = collect($projects)->pluck('title')->toArray();
         $this->assertContains('Own Project', $projectTitles);
         $this->assertContains('Same Group Project', $projectTitles);

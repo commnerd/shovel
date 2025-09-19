@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('creator_id')->nullable()->constrained('users')->onDelete('set null');
             $table->boolean('is_default')->default(false); // For the 'None' organization
             $table->timestamps();
-            
+
             $table->unique('domain');
             $table->index('is_default');
         });

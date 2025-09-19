@@ -25,13 +25,13 @@ class RegistrationFormTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->assertSee('Create an account')
-                    ->assertPresent('input[name="name"]')
-                    ->assertPresent('input[name="email"]')
-                    ->assertPresent('input[name="password"]')
-                    ->assertPresent('input[name="password_confirmation"]')
-                    ->assertPresent('input[name="organization_email"]')
-                    ->assertSee('Organization Email');
+                ->assertSee('Create an account')
+                ->assertPresent('input[name="name"]')
+                ->assertPresent('input[name="email"]')
+                ->assertPresent('input[name="password"]')
+                ->assertPresent('input[name="password_confirmation"]')
+                ->assertPresent('input[name="organization_email"]')
+                ->assertSee('Organization Email');
         });
     }
 
@@ -42,11 +42,11 @@ class RegistrationFormTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->assertNotChecked('organization_email')
-                    ->check('organization_email')
-                    ->assertChecked('organization_email')
-                    ->uncheck('organization_email')
-                    ->assertNotChecked('organization_email');
+                ->assertNotChecked('organization_email')
+                ->check('organization_email')
+                ->assertChecked('organization_email')
+                ->uncheck('organization_email')
+                ->assertNotChecked('organization_email');
         });
     }
 
@@ -57,16 +57,16 @@ class RegistrationFormTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/register')
-                    ->type('name', 'Dusk Test Founder')
-                    ->type('email', 'duskfounder@dusktest123.com')
-                    ->type('password', 'password')
-                    ->type('password_confirmation', 'password')
-                    ->check('organization_email')
-                    ->press('Create account')
-                    ->waitForLocation('/organization/create', 30)
-                    ->assertPathIs('/organization/create')
-                    ->assertSee('Create Your Organization')
-                    ->assertValue('input[readonly]', 'duskfounder@dusktest123.com'); // Email should be shown
+                ->type('name', 'Dusk Test Founder')
+                ->type('email', 'duskfounder@dusktest123.com')
+                ->type('password', 'password')
+                ->type('password_confirmation', 'password')
+                ->check('organization_email')
+                ->press('Create account')
+                ->waitForLocation('/organization/create', 30)
+                ->assertPathIs('/organization/create')
+                ->assertSee('Create Your Organization')
+                ->assertValue('input[readonly]', 'duskfounder@dusktest123.com'); // Email should be shown
         });
     }
 }

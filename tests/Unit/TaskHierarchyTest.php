@@ -2,21 +2,24 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TaskHierarchyTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
+
     protected Organization $organization;
+
     protected Group $group;
 
     protected function setUp(): void
@@ -447,7 +450,7 @@ class TaskHierarchyTest extends TestCase
 
     public function test_task_fillable_attributes()
     {
-        $fillable = (new Task())->getFillable();
+        $fillable = (new Task)->getFillable();
 
         $expectedFillable = [
             'project_id',

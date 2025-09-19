@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
 import {
@@ -94,7 +94,6 @@ const form = useForm({
 const editingTaskIndex = ref<number | null>(null);
 const newTaskTitle = ref('');
 const newTaskDescription = ref('');
-const isRegenerating = ref(false);
 
 // Regeneration modal state
 const showRegenerationModal = ref(false);
@@ -124,7 +123,7 @@ const editTask = (index: number) => {
     editingTaskIndex.value = index;
 };
 
-const saveTask = (index: number) => {
+const saveTask = () => {
     editingTaskIndex.value = null;
 };
 

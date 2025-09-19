@@ -215,7 +215,7 @@
 
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -233,9 +233,7 @@ import {
     TreePine,
     Leaf,
     GitBranch,
-    CheckCircle,
-    Clock,
-    Circle
+    // Removed unused icons: CheckCircle, Clock, Circle
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
@@ -385,7 +383,7 @@ const createAllSubtasks = async () => {
 
     try {
         // Create each subtask individually
-        for (const [index, subtask] of suggestedSubtasks.value.entries()) {
+        for (const subtask of suggestedSubtasks.value) {
             await fetch(`/dashboard/projects/${props.project.id}/tasks`, {
                 method: 'POST',
                 headers: {

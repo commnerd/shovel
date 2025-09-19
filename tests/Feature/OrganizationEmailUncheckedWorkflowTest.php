@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\User;
+use App\Notifications\NewOrganizationMemberNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewOrganizationMemberNotification;
+use Tests\TestCase;
 
 class OrganizationEmailUncheckedWorkflowTest extends TestCase
 {
@@ -216,6 +216,7 @@ class OrganizationEmailUncheckedWorkflowTest extends TestCase
                 // If redirected to dashboard, it means no matching org was found
                 // This could happen if domain matching failed
                 $this->assertTrue(true); // Skip the rest of this test case
+
                 return;
             }
         }

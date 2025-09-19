@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\Organization;
-use App\Models\Group;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class SettingsTest extends TestCase
 {
@@ -40,11 +39,10 @@ class SettingsTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
-                ->has('defaultAISettings')
-                ->has('providerConfigs')
-                ->has('availableProviders')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
+            ->has('defaultAISettings')
+            ->has('providerConfigs')
+            ->has('availableProviders')
         );
     }
 
@@ -60,14 +58,13 @@ class SettingsTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
-                ->has('availableProviders.cerebrus')
-                ->has('availableProviders.openai')
-                ->has('availableProviders.anthropic')
-                ->where('availableProviders.cerebrus.name', 'Cerebras')
-                ->where('availableProviders.openai.name', 'OpenAI')
-                ->where('availableProviders.anthropic.name', 'Anthropic')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
+            ->has('availableProviders.cerebrus')
+            ->has('availableProviders.openai')
+            ->has('availableProviders.anthropic')
+            ->where('availableProviders.cerebrus.name', 'Cerebras')
+            ->where('availableProviders.openai.name', 'OpenAI')
+            ->where('availableProviders.anthropic.name', 'Anthropic')
         );
     }
 

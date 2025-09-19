@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\User;
 use App\Notifications\NewOrganizationMemberNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Tests\TestCase;
 
 class EmailNotificationTest extends TestCase
 {
@@ -17,7 +17,7 @@ class EmailNotificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
     }
@@ -171,11 +171,11 @@ class EmailNotificationTest extends TestCase
         // Test the mail representation
         $mailMessage = $notification->toMail($creator);
 
-        $this->assertEquals("New member request for Test Organization", $mailMessage->subject);
-        $this->assertStringContainsString("Hello Organization Creator!", $mailMessage->greeting);
-        $this->assertStringContainsString("Test Organization", $mailMessage->introLines[0]);
-        $this->assertStringContainsString("New Member", $mailMessage->introLines[2]);
-        $this->assertStringContainsString("new@example.com", $mailMessage->introLines[3]);
+        $this->assertEquals('New member request for Test Organization', $mailMessage->subject);
+        $this->assertStringContainsString('Hello Organization Creator!', $mailMessage->greeting);
+        $this->assertStringContainsString('Test Organization', $mailMessage->introLines[0]);
+        $this->assertStringContainsString('New Member', $mailMessage->introLines[2]);
+        $this->assertStringContainsString('new@example.com', $mailMessage->introLines[3]);
 
         // Test the array representation
         $arrayData = $notification->toArray($creator);

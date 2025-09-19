@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
@@ -28,7 +28,7 @@ class Setting extends Model
     {
         $setting = static::where('key', $key)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             return $default;
         }
 
@@ -38,7 +38,7 @@ class Setting extends Model
     /**
      * Set a setting value by key.
      */
-    public static function set(string $key, mixed $value, string $type = 'string', string $description = null, bool $isPublic = false): void
+    public static function set(string $key, mixed $value, string $type = 'string', ?string $description = null, bool $isPublic = false): void
     {
         static::updateOrCreate(
             ['key' => $key],
@@ -114,7 +114,7 @@ class Setting extends Model
     /**
      * Prepare value for storage based on type.
      */
-    protected static function prepareValue(mixed $value, string $type): string|null
+    protected static function prepareValue(mixed $value, string $type): ?string
     {
         if ($value === null) {
             return null;

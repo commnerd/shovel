@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Role;
 use App\Models\Task;
+use App\Models\User;
+use App\Notifications\NewOrganizationMemberNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewOrganizationMemberNotification;
+use Tests\TestCase;
 
 class OrganizationIntegrationTest extends TestCase
 {
@@ -30,7 +30,7 @@ class OrganizationIntegrationTest extends TestCase
         Notification::fake();
 
         // Step 1: Create organization creator using unique email
-        $uniqueEmail = 'creator-' . uniqid() . '@testcompany.com';
+        $uniqueEmail = 'creator-'.uniqid().'@testcompany.com';
         $creator = User::factory()->make([
             'email' => $uniqueEmail,
         ]);
@@ -41,7 +41,7 @@ class OrganizationIntegrationTest extends TestCase
                 'name' => $creator->name,
                 'email' => $creator->email,
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         $response = $this->post('/organization/create', [

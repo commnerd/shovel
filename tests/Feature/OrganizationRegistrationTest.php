@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class OrganizationRegistrationTest extends TestCase
 {
@@ -17,7 +16,7 @@ class OrganizationRegistrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Ensure default organization exists
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
     }
@@ -37,7 +36,7 @@ class OrganizationRegistrationTest extends TestCase
 
         $user = User::where('email', 'individual@example.com')->first();
         $defaultOrg = Organization::getDefault();
-        
+
         $this->assertEquals($defaultOrg->id, $user->organization_id);
         $this->assertFalse($user->pending_approval);
         $this->assertNotNull($user->approved_at);
@@ -143,7 +142,7 @@ class OrganizationRegistrationTest extends TestCase
 
         $user = User::where('email', 'user@company.com')->first();
         $defaultOrg = Organization::getDefault();
-        
+
         $this->assertEquals($defaultOrg->id, $user->organization_id);
         $this->assertFalse($user->pending_approval);
     }
@@ -200,7 +199,7 @@ class OrganizationRegistrationTest extends TestCase
                 'name' => 'Test User',
                 'email' => 'test@neworg.com',
                 'password' => Hash::make('password'),
-            ]
+            ],
         ]);
 
         $response = $this->post('/organization/create', [

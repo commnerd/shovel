@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Tests\TestCase;
 
 class ProductionRegistrationTest extends TestCase
 {
@@ -46,7 +45,7 @@ class ProductionRegistrationTest extends TestCase
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         // Test organization creation GET route
@@ -77,7 +76,7 @@ class ProductionRegistrationTest extends TestCase
     {
         // Test the condition logic directly
         $isProduction = app()->environment('production');
-        $shouldAllowRegistration = !$isProduction;
+        $shouldAllowRegistration = ! $isProduction;
 
         // In testing environment, registration should be allowed
         $this->assertTrue($shouldAllowRegistration);
@@ -119,7 +118,7 @@ class ProductionRegistrationTest extends TestCase
         $isProductionSimulated = true; // This simulates app()->environment('production')
 
         // Test the condition logic that's used in routes/auth.php
-        $shouldRegisterRoutesBeIncluded = !$isProductionSimulated;
+        $shouldRegisterRoutesBeIncluded = ! $isProductionSimulated;
 
         // In production, registration routes should NOT be included
         $this->assertFalse($shouldRegisterRoutesBeIncluded);

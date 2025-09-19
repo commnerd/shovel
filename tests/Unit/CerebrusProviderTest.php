@@ -12,6 +12,7 @@ use Tests\TestCase;
 class CerebrusProviderTest extends TestCase
 {
     private array $config;
+
     private CerebrusProvider $provider;
 
     protected function setUp(): void
@@ -62,19 +63,19 @@ class CerebrusProviderTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => 'Test response'
-                        ]
-                    ]
+                            'content' => 'Test response',
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 50
+                    'total_tokens' => 50,
                 ],
-                'model' => 'llama3.1-8b'
-            ])
+                'model' => 'llama3.1-8b',
+            ]),
         ]);
 
         $messages = [
-            ['role' => 'user', 'content' => 'Test message']
+            ['role' => 'user', 'content' => 'Test message'],
         ];
 
         $response = $this->provider->chat($messages);
@@ -101,13 +102,13 @@ class CerebrusProviderTest extends TestCase
                     'description' => 'Initialize project structure',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             'summary' => 'Project analysis complete',
             'notes' => ['Good project scope'],
             'problems' => [],
-            'suggestions' => ['Consider adding tests']
+            'suggestions' => ['Consider adding tests'],
         ];
 
         Http::fake([
@@ -115,15 +116,15 @@ class CerebrusProviderTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => json_encode($mockResponse)
-                        ]
-                    ]
+                            'content' => json_encode($mockResponse),
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 100
+                    'total_tokens' => 100,
                 ],
-                'model' => 'llama3.1-8b'
-            ])
+                'model' => 'llama3.1-8b',
+            ]),
         ]);
 
         $schema = ['tasks' => [], 'summary' => '', 'notes' => [], 'problems' => [], 'suggestions' => []];
@@ -145,15 +146,15 @@ class CerebrusProviderTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => 'Invalid JSON response'
-                        ]
-                    ]
+                            'content' => 'Invalid JSON response',
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 50
+                    'total_tokens' => 50,
                 ],
-                'model' => 'llama3.1-8b'
-            ])
+                'model' => 'llama3.1-8b',
+            ]),
         ]);
 
         $response = $this->provider->generateTasks('Build a web app');
@@ -167,7 +168,7 @@ class CerebrusProviderTest extends TestCase
     public function test_generate_tasks_handles_api_failure(): void
     {
         Http::fake([
-            'api.cerebras.ai/*' => Http::response('API Error', 500)
+            'api.cerebras.ai/*' => Http::response('API Error', 500),
         ]);
 
         $response = $this->provider->generateTasks('Build a web app');
@@ -186,7 +187,7 @@ class CerebrusProviderTest extends TestCase
                 'description' => 'Good description',
                 'priority' => 'high',
                 'status' => 'pending',
-                'subtasks' => []
+                'subtasks' => [],
             ],
             [
                 // Missing title - should be filtered or fixed
@@ -197,7 +198,7 @@ class CerebrusProviderTest extends TestCase
             [
                 'title' => 'Partial Task',
                 // Missing other fields - should get defaults
-            ]
+            ],
         ];
 
         // Use reflection to test the protected method
@@ -262,13 +263,13 @@ class CerebrusProviderTest extends TestCase
                     'description' => 'Test Description',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             'summary' => 'Test summary',
             'notes' => 'Single note string', // String instead of array
             'problems' => 'Single problem string', // String instead of array
-            'suggestions' => ['Proper array suggestion'] // Already array
+            'suggestions' => ['Proper array suggestion'], // Already array
         ];
 
         Http::fake([
@@ -276,15 +277,15 @@ class CerebrusProviderTest extends TestCase
                 'choices' => [
                     [
                         'message' => [
-                            'content' => json_encode($mockResponse)
-                        ]
-                    ]
+                            'content' => json_encode($mockResponse),
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 100
+                    'total_tokens' => 100,
                 ],
-                'model' => 'llama3.1-8b'
-            ])
+                'model' => 'llama3.1-8b',
+            ]),
         ]);
 
         $response = $this->provider->generateTasks('Test project');

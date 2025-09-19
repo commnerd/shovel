@@ -2,22 +2,25 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class LeafTasksFilterTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Organization $organization;
+
     protected Group $group;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -84,27 +87,25 @@ class LeafTasksFilterTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks')
-                ->where('filter', 'leaf')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks')
+            ->where('filter', 'leaf')
         );
 
         // Should only return leaf tasks (not parent or child tasks with children)
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) use ($leafTask1, $leafTask2, $standaloneLeafTask) {
-                $taskIds = collect($tasks)->pluck('id')->toArray();
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) use ($leafTask1, $leafTask2, $standaloneLeafTask) {
+            $taskIds = collect($tasks)->pluck('id')->toArray();
 
-                // Should include leaf tasks
-                $this->assertContains($leafTask1->id, $taskIds);
-                $this->assertContains($leafTask2->id, $taskIds);
-                $this->assertContains($standaloneLeafTask->id, $taskIds);
+            // Should include leaf tasks
+            $this->assertContains($leafTask1->id, $taskIds);
+            $this->assertContains($leafTask2->id, $taskIds);
+            $this->assertContains($standaloneLeafTask->id, $taskIds);
 
-                // Should have exactly 3 tasks (only leaf tasks)
-                $this->assertCount(3, $tasks);
+            // Should have exactly 3 tasks (only leaf tasks)
+            $this->assertCount(3, $tasks);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -127,23 +128,21 @@ class LeafTasksFilterTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks')
-                ->where('filter', 'all')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks')
+            ->where('filter', 'all')
         );
 
         // Should show all tasks
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) use ($parentTask, $childTask) {
-                $this->assertCount(2, $tasks);
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) use ($parentTask, $childTask) {
+            $this->assertCount(2, $tasks);
 
-                $taskIds = collect($tasks)->pluck('id')->toArray();
-                $this->assertContains($parentTask->id, $taskIds);
-                $this->assertContains($childTask->id, $taskIds);
+            $taskIds = collect($tasks)->pluck('id')->toArray();
+            $this->assertContains($parentTask->id, $taskIds);
+            $this->assertContains($childTask->id, $taskIds);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -171,22 +170,20 @@ class LeafTasksFilterTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=top-level");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->where('filter', 'top-level')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->where('filter', 'top-level')
         );
 
         // Should only show top-level tasks
-        $response->assertInertia(fn (Assert $page) =>
-            $page->where('tasks', function ($tasks) use ($topLevelTask1, $topLevelTask2) {
-                $this->assertCount(2, $tasks);
+        $response->assertInertia(fn (Assert $page) => $page->where('tasks', function ($tasks) use ($topLevelTask1, $topLevelTask2) {
+            $this->assertCount(2, $tasks);
 
-                $taskIds = collect($tasks)->pluck('id')->toArray();
-                $this->assertContains($topLevelTask1->id, $taskIds);
-                $this->assertContains($topLevelTask2->id, $taskIds);
+            $taskIds = collect($tasks)->pluck('id')->toArray();
+            $this->assertContains($topLevelTask1->id, $taskIds);
+            $this->assertContains($topLevelTask2->id, $taskIds);
 
-                return true;
-            })
+            return true;
+        })
         );
     }
 
@@ -225,11 +222,10 @@ class LeafTasksFilterTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->where('taskCounts.all', 5)      // All 5 tasks
-                ->where('taskCounts.top_level', 2) // topLevel1, topLevel2
-                ->where('taskCounts.leaf', 3)      // topLevel2, leaf1, leaf2
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->where('taskCounts.all', 5)      // All 5 tasks
+            ->where('taskCounts.top_level', 2) // topLevel1, topLevel2
+            ->where('taskCounts.leaf', 3)      // topLevel2, leaf1, leaf2
         );
     }
 
@@ -258,22 +254,21 @@ class LeafTasksFilterTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->where('filter', 'leaf')
-                ->where('tasks', function ($tasks) use ($leafTask) {
-                    // Should only have the leaf task
-                    $this->assertCount(1, $tasks);
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->where('filter', 'leaf')
+            ->where('tasks', function ($tasks) use ($leafTask) {
+                // Should only have the leaf task
+                $this->assertCount(1, $tasks);
 
-                    $task = $tasks[0];
-                    $this->assertEquals($leafTask->id, $task['id']);
-                    $this->assertEquals('Deep Leaf Task', $task['title']);
+                $task = $tasks[0];
+                $this->assertEquals($leafTask->id, $task['id']);
+                $this->assertEquals('Deep Leaf Task', $task['title']);
 
-                    // Should still have depth information
-                    $this->assertEquals(2, $task['depth']);
+                // Should still have depth information
+                $this->assertEquals(2, $task['depth']);
 
-                    return true;
-                })
+                return true;
+            })
         );
     }
 }

@@ -2,38 +2,40 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\User;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class ProjectGroupAssignmentTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $user;
+
     protected $organization;
+
     protected $group;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
-        
+
         $this->organization = Organization::getDefault();
         $this->group = $this->organization->defaultGroup();
-        
+
         $this->user = User::factory()->create([
             'organization_id' => $this->organization->id,
             'pending_approval' => false,
             'approved_at' => now(),
         ]);
-        
+
         // Add user to default group
         $this->user->groups()->attach($this->group->id, ['joined_at' => now()]);
     }
@@ -44,12 +46,11 @@ class ProjectGroupAssignmentTest extends TestCase
             ->get('/dashboard/projects/create');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) => 
-                $page->component('Projects/Create')
-                    ->has('userGroups')
-                    ->has('defaultGroupId')
-                    ->where('userGroups.0.name', 'Everyone')
-                    ->where('userGroups.0.is_default', true)
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Create')
+                ->has('userGroups')
+                ->has('defaultGroupId')
+                ->where('userGroups.0.name', 'Everyone')
+                ->where('userGroups.0.is_default', true)
             );
     }
 
@@ -146,12 +147,11 @@ class ProjectGroupAssignmentTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) => 
-                $page->component('Projects/Index')
-                    ->has('projects', 2)
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+                ->has('projects', 2)
                     // Projects are ordered by latest first, so project2 (created later) should be first
-                    ->where('projects.0.title', 'Shared Project')
-                    ->where('projects.1.title', 'My Project')
+                ->where('projects.0.title', 'Shared Project')
+                ->where('projects.1.title', 'My Project')
             );
     }
 
@@ -166,11 +166,10 @@ class ProjectGroupAssignmentTest extends TestCase
             ]);
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) => 
-                $page->component('Projects/CreateTasks')
-                    ->has('userGroups')
-                    ->has('defaultGroupId')
-                    ->where('projectData.group_id', $this->group->id)
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/CreateTasks')
+                ->has('userGroups')
+                ->has('defaultGroupId')
+                ->where('projectData.group_id', $this->group->id)
             );
     }
 }

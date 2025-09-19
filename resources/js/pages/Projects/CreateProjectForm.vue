@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import axios from 'axios';
 
 interface Group {
     id: number;
@@ -19,7 +18,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Define emits
-const emit = defineEmits<{
+defineEmits<{
     success: []
 }>();
 
@@ -28,7 +27,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
-import { Sparkles, Send, Calendar, Wand2, Users } from 'lucide-vue-next';
+import { Sparkles, Calendar, Wand2, Users } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 
 export interface TaskSuggestion {
@@ -156,7 +155,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                         :disabled="form.processing || isGeneratingTasks"
                     >
                         <option v-for="group in userGroups" :key="group.id" :value="group.id">
-                            {{ group.name }} 
+                            {{ group.name }}
                             <span v-if="group.organization_name !== 'None'"> ({{ group.organization_name }})</span>
                             <span v-if="group.is_default"> - Default</span>
                         </option>

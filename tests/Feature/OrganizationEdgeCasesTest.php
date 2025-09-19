@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Tests\TestCase;
 
 class OrganizationEdgeCasesTest extends TestCase
 {
@@ -31,7 +31,7 @@ class OrganizationEdgeCasesTest extends TestCase
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         $response = $this->post('/organization/create', [
@@ -309,7 +309,7 @@ class OrganizationEdgeCasesTest extends TestCase
 
         // Try to approve non-existent user
         $response = $this->actingAs($admin)
-            ->post("/admin/users/99999/approve");
+            ->post('/admin/users/99999/approve');
 
         $response->assertStatus(404);
     }
@@ -374,7 +374,7 @@ class OrganizationEdgeCasesTest extends TestCase
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         // Test with empty strings
@@ -401,7 +401,7 @@ class OrganizationEdgeCasesTest extends TestCase
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'password' => \Hash::make('password'),
-            ]
+            ],
         ]);
 
         // Test with very long organization name

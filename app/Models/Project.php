@@ -97,7 +97,7 @@ class Project extends Model
      */
     public function daysRemaining(): ?int
     {
-        if (!$this->due_date) {
+        if (! $this->due_date) {
             return null;
         }
 

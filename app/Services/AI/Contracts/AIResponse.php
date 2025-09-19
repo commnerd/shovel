@@ -66,7 +66,7 @@ class AIResponse
      */
     public function isSuccessful(): bool
     {
-        return !empty($this->content);
+        return ! empty($this->content);
     }
 
     /**

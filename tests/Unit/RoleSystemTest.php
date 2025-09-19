@@ -2,19 +2,20 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\Group;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class RoleSystemTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $organization;
+
     protected $adminRole;
+
     protected $userRole;
 
     protected function setUp(): void

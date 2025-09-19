@@ -5,8 +5,8 @@ import NewUserPendingNotification from '@/components/notifications/NewUserPendin
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Head, router } from '@inertiajs/vue3';
+// Removed unused Separator import
+import { Head } from '@inertiajs/vue3';
 import { Users, UserCheck, UserX, Shield, User as UserIcon, Mail, Calendar, Settings } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -37,44 +37,7 @@ const props = defineProps<Props>();
 
 const totalUsers = computed(() => props.pendingUsers.length + props.approvedUsers.length);
 
-const approveUser = (userId: number) => {
-  router.post(`/admin/users/${userId}/approve`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Success message will be shown via session flash
-    },
-  });
-};
-
-const assignRole = (userId: number, roleId: number) => {
-  router.post(`/admin/users/${userId}/assign-role`, {
-    role_id: roleId,
-  }, {
-    preserveScroll: true,
-  });
-};
-
-const removeRole = (userId: number, roleId: number) => {
-  router.delete(`/admin/users/${userId}/remove-role`, {
-    data: { role_id: roleId },
-    preserveScroll: true,
-  });
-};
-
-const addToGroup = (userId: number, groupId: number) => {
-  router.post(`/admin/users/${userId}/add-to-group`, {
-    group_id: groupId,
-  }, {
-    preserveScroll: true,
-  });
-};
-
-const removeFromGroup = (userId: number, groupId: number) => {
-  router.delete(`/admin/users/${userId}/remove-from-group`, {
-    data: { group_id: groupId },
-    preserveScroll: true,
-  });
-};
+// Removed unused admin functions (approveUser, assignRole, removeRole, addToGroup, removeFromGroup)
 </script>
 
 <template>

@@ -29,7 +29,7 @@ class AIMockConnectivityTest extends TestCase
 
         // Mock a successful chat response
         Http::fake([
-            $baseUrl . '/chat/completions' => Http::response([
+            $baseUrl.'/chat/completions' => Http::response([
                 'choices' => [
                     [
                         'message' => [
@@ -40,33 +40,33 @@ class AIMockConnectivityTest extends TestCase
                                         'description' => 'Initialize the todo app project',
                                         'priority' => 'high',
                                         'status' => 'pending',
-                                        'subtasks' => []
-                                    ]
+                                        'subtasks' => [],
+                                    ],
                                 ],
                                 'summary' => 'Simple todo app project analysis',
                                 'notes' => ['Project scope is well-defined'],
                                 'problems' => [],
-                                'suggestions' => ['Consider adding user authentication']
-                            ])
-                        ]
-                    ]
+                                'suggestions' => ['Consider adding user authentication'],
+                            ]),
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 150
+                    'total_tokens' => 150,
                 ],
-                'model' => 'llama3.1-8b'
-            ], 200)
+                'model' => 'llama3.1-8b',
+            ], 200),
         ]);
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer test-key',
             'Content-Type' => 'application/json',
-        ])->timeout(30)->post($baseUrl . '/chat/completions', [
+        ])->timeout(30)->post($baseUrl.'/chat/completions', [
             'model' => 'llama3.1-8b',
             'messages' => [
-                ['role' => 'user', 'content' => 'Generate tasks for a todo app']
+                ['role' => 'user', 'content' => 'Generate tasks for a todo app'],
             ],
-            'max_tokens' => 1000
+            'max_tokens' => 1000,
         ]);
 
         // Assert successful response
@@ -110,22 +110,22 @@ class AIMockConnectivityTest extends TestCase
                                         'description' => 'Initialize project structure',
                                         'priority' => 'high',
                                         'status' => 'pending',
-                                        'subtasks' => []
-                                    ]
+                                        'subtasks' => [],
+                                    ],
                                 ],
                                 'summary' => 'Well-defined project scope',
                                 'notes' => ['Good project description'],
                                 'problems' => [],
-                                'suggestions' => ['Consider adding tests']
-                            ])
-                        ]
-                    ]
+                                'suggestions' => ['Consider adding tests'],
+                            ]),
+                        ],
+                    ],
                 ],
                 'usage' => [
-                    'total_tokens' => 100
+                    'total_tokens' => 100,
                 ],
-                'model' => 'llama3.1-8b'
-            ], 200)
+                'model' => 'llama3.1-8b',
+            ], 200),
         ]);
 
         $schema = [
@@ -133,7 +133,7 @@ class AIMockConnectivityTest extends TestCase
             'summary' => '',
             'notes' => [],
             'problems' => [],
-            'suggestions' => []
+            'suggestions' => [],
         ];
 
         $response = $provider->generateTasks('Build a test app', $schema);

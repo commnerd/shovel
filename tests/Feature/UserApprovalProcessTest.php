@@ -2,22 +2,24 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Organization;
 use App\Models\User;
-use App\Models\Role;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewOrganizationMemberNotification;
 use App\Notifications\UserApprovedNotification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Tests\TestCase;
 
 class UserApprovalProcessTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $organization;
+
     protected $admin;
+
     protected $adminRole;
+
     protected $userRole;
 
     protected function setUp(): void

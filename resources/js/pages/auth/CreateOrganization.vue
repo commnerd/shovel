@@ -15,7 +15,7 @@ interface Props {
     email: string;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const form = useForm({
     organization_name: '',

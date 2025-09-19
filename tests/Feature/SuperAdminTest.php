@@ -2,21 +2,22 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class SuperAdminTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $regularUser;
+
     protected User $admin;
+
     protected Organization $organization;
 
     protected function setUp(): void
@@ -62,13 +63,12 @@ class SuperAdminTest extends TestCase
             ->get('/super-admin');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('SuperAdmin/Index')
-                ->has('stats')
-                ->has('stats.total_users')
-                ->has('stats.total_organizations')
-                ->has('stats.pending_users')
-                ->has('stats.super_admins')
+        $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Index')
+            ->has('stats')
+            ->has('stats.total_users')
+            ->has('stats.total_organizations')
+            ->has('stats.pending_users')
+            ->has('stats.super_admins')
         );
     }
 
@@ -100,10 +100,9 @@ class SuperAdminTest extends TestCase
             ->get('/super-admin/users');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('SuperAdmin/Users')
-                ->has('users')
-                ->has('users.data', 3) // superAdmin, admin, regularUser
+        $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Users')
+            ->has('users')
+            ->has('users.data', 3) // superAdmin, admin, regularUser
         );
     }
 
@@ -113,10 +112,9 @@ class SuperAdminTest extends TestCase
             ->get('/super-admin/organizations');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('SuperAdmin/Organizations')
-                ->has('organizations')
-                ->has('organizations.data', 1) // Default organization
+        $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Organizations')
+            ->has('organizations')
+            ->has('organizations.data', 1) // Default organization
         );
     }
 
@@ -128,7 +126,7 @@ class SuperAdminTest extends TestCase
             ]);
 
         $response->assertRedirect('/dashboard');
-        $response->assertSessionHas('message', 'You are now logged in as ' . $this->regularUser->name);
+        $response->assertSessionHas('message', 'You are now logged in as '.$this->regularUser->name);
 
         // Verify we're now logged in as the regular user
         $this->assertEquals($this->regularUser->id, auth()->id());
@@ -326,7 +324,7 @@ class SuperAdminTest extends TestCase
 
     public function test_super_admin_middleware_functionality()
     {
-        $middleware = new \App\Http\Middleware\EnsureUserIsSuperAdmin();
+        $middleware = new \App\Http\Middleware\EnsureUserIsSuperAdmin;
 
         $request = \Illuminate\Http\Request::create('/super-admin');
 
@@ -345,4 +343,3 @@ class SuperAdminTest extends TestCase
         });
     }
 }
-

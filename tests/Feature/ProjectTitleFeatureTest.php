@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\AI\AIManager;
 use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class ProjectTitleFeatureTest extends TestCase
 {
@@ -42,8 +42,7 @@ class ProjectTitleFeatureTest extends TestCase
             ->get('/dashboard/projects/create');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Create')
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Create')
             );
     }
 
@@ -60,7 +59,7 @@ class ProjectTitleFeatureTest extends TestCase
                         'description' => 'Install tools and dependencies',
                         'priority' => 'high',
                         'status' => 'pending',
-                    ]
+                    ],
                 ],
                 projectTitle: 'E-Commerce Platform',
                 summary: 'Building a comprehensive e-commerce solution'
@@ -76,11 +75,10 @@ class ProjectTitleFeatureTest extends TestCase
             ]);
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/CreateTasks')
-                    ->has('projectData.title')
-                    ->where('projectData.title', 'My Custom Title')
-                    ->has('suggestedTasks')
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/CreateTasks')
+                ->has('projectData.title')
+                ->where('projectData.title', 'My Custom Title')
+                ->has('suggestedTasks')
             );
     }
 
@@ -97,7 +95,7 @@ class ProjectTitleFeatureTest extends TestCase
                         'description' => 'Install tools and dependencies',
                         'priority' => 'high',
                         'status' => 'pending',
-                    ]
+                    ],
                 ],
                 projectTitle: 'AI Generated Title',
                 summary: 'AI analysis of the project'
@@ -112,10 +110,9 @@ class ProjectTitleFeatureTest extends TestCase
             ]);
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/CreateTasks')
-                    ->has('projectData.title')
-                    ->where('projectData.title', 'AI Generated Title')
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/CreateTasks')
+                ->has('projectData.title')
+                ->where('projectData.title', 'AI Generated Title')
             );
     }
 
@@ -131,10 +128,9 @@ class ProjectTitleFeatureTest extends TestCase
             ->get("/dashboard/projects/{$project->id}/edit");
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Edit')
-                    ->has('project.title')
-                    ->where('project.title', 'Test Project Title')
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Edit')
+                ->has('project.title')
+                ->where('project.title', 'Test Project Title')
             );
     }
 
@@ -181,11 +177,10 @@ class ProjectTitleFeatureTest extends TestCase
             ->get('/dashboard/projects');
 
         $response->assertOk()
-            ->assertInertia(fn (Assert $page) =>
-                $page->component('Projects/Index')
-                    ->has('projects', 2)
-                    ->where('projects.0.title', 'First Project')
-                    ->where('projects.1.title', null)
+            ->assertInertia(fn (Assert $page) => $page->component('Projects/Index')
+                ->has('projects', 2)
+                ->where('projects.0.title', 'First Project')
+                ->where('projects.1.title', null)
             );
     }
 
@@ -217,8 +212,8 @@ class ProjectTitleFeatureTest extends TestCase
                         'status' => 'pending',
                         'priority' => 'high',
                         'sort_order' => 1,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertRedirect('/dashboard/projects');
@@ -283,7 +278,7 @@ class ProjectTitleFeatureTest extends TestCase
                 'description' => 'Build mobile app for iOS',
                 'due_date' => '2025-12-31',
                 'group_id' => $defaultGroup->id,
-                'tasks' => []
+                'tasks' => [],
             ]);
 
         $response->assertRedirect('/dashboard/projects');

@@ -212,7 +212,7 @@ const testConnection = async () => {
             success: data.success,
             message: data.message || (data.success ? 'Connection successful!' : 'Connection failed'),
         };
-    } catch (error) {
+    } catch {
         connectionTestResult.value = {
             success: false,
             message: 'Failed to test connection. Please check your settings.',

@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class TaskIndexAIBreakdownTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -57,11 +57,10 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 1)
-                ->where('tasks.0.title', 'Test Task')
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 1)
+            ->where('tasks.0.title', 'Test Task')
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -90,10 +89,9 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 3)
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 3)
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -118,10 +116,9 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 2)
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 2)
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -174,10 +171,9 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 2)
-                ->where('filter', 'all')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 2)
+            ->where('filter', 'all')
         );
 
         // Test leaf tasks filter
@@ -185,11 +181,10 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 1)
-                ->where('filter', 'leaf')
-                ->where('tasks.0.title', 'Leaf Task')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 1)
+            ->where('filter', 'leaf')
+            ->where('tasks.0.title', 'Leaf Task')
         );
 
         // Test top-level tasks filter
@@ -197,11 +192,10 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=top-level");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 1)
-                ->where('filter', 'top-level')
-                ->where('tasks.0.title', 'Top Level Task')
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 1)
+            ->where('filter', 'top-level')
+            ->where('tasks.0.title', 'Top Level Task')
         );
     }
 
@@ -232,13 +226,12 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 3)
-                ->has('taskCounts')
-                ->where('taskCounts.all', 3)
-                ->where('taskCounts.leaf', 2) // Only child tasks are leaf
-                ->where('taskCounts.top_level', 1) // Only parent task is top-level
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 3)
+            ->has('taskCounts')
+            ->where('taskCounts.all', 3)
+            ->where('taskCounts.leaf', 2) // Only child tasks are leaf
+            ->where('taskCounts.top_level', 1) // Only parent task is top-level
         );
     }
 
@@ -248,10 +241,9 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->has('tasks', 0)
-                ->where('project.id', $this->project->id)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->has('tasks', 0)
+            ->where('project.id', $this->project->id)
         );
     }
 
@@ -261,10 +253,9 @@ class TaskIndexAIBreakdownTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('Projects/Tasks/Index')
-                ->where('project.id', $this->project->id)
-                ->where('project.title', $this->project->title)
+        $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
+            ->where('project.id', $this->project->id)
+            ->where('project.title', $this->project->title)
         );
     }
 }

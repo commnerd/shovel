@@ -1,13 +1,14 @@
 <?php
 
+use App\Http\Controllers\WaitlistController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\WaitlistController;
 
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
+
     return Inertia::render('Landing');
 })->name('landing');
 

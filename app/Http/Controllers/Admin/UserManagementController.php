@@ -29,9 +29,9 @@ class UserManagementController extends Controller
             ->where('organization_id', $adminUser->organization_id)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                    ->orWhere('email', 'like', "%{$query}%");
             })
-            ->orderByRaw("
+            ->orderByRaw('
                 CASE
                     WHEN name LIKE ? THEN 1
                     WHEN email LIKE ? THEN 2
@@ -39,11 +39,11 @@ class UserManagementController extends Controller
                     WHEN email LIKE ? THEN 4
                     ELSE 5
                 END
-            ", [
+            ', [
                 "{$query}%",    // Name starts with query
                 "{$query}%",    // Email starts with query
                 "%{$query}%",   // Name contains query
-                "%{$query}%"    // Email contains query
+                "%{$query}%",    // Email contains query
             ])
             ->limit($limit)
             ->get()
@@ -84,7 +84,7 @@ class UserManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -189,7 +189,7 @@ class UserManagementController extends Controller
         // Login as the target user
         Auth::login($user);
 
-        return redirect('/dashboard')->with('message', 'You are now logged in as ' . $user->name);
+        return redirect('/dashboard')->with('message', 'You are now logged in as '.$user->name);
     }
 
     /**
@@ -199,13 +199,13 @@ class UserManagementController extends Controller
     {
         $originalAdminId = session('original_admin_id');
 
-        if (!$originalAdminId) {
+        if (! $originalAdminId) {
             abort(403, 'No original admin session found.');
         }
 
         $originalAdmin = User::find($originalAdminId);
 
-        if (!$originalAdmin || !$originalAdmin->isAdmin()) {
+        if (! $originalAdmin || ! $originalAdmin->isAdmin()) {
             abort(403, 'Original admin account not found or no longer valid.');
         }
 
@@ -240,7 +240,7 @@ class UserManagementController extends Controller
         }
 
         // Ensure user is actually pending approval
-        if (!$user->pending_approval) {
+        if (! $user->pending_approval) {
             return redirect()->back()->withErrors(['error' => 'User is already approved']);
         }
 
@@ -253,7 +253,7 @@ class UserManagementController extends Controller
 
         // Add user to default group
         $defaultGroup = $user->organization->defaultGroup();
-        if ($defaultGroup && !$user->belongsToGroup($defaultGroup->id)) {
+        if ($defaultGroup && ! $user->belongsToGroup($defaultGroup->id)) {
             $user->joinGroup($defaultGroup);
         }
 

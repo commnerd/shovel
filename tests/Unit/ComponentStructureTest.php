@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use Illuminate\Support\Facades\File;
+use Tests\TestCase;
 
 class ComponentStructureTest extends TestCase
 {
@@ -65,12 +65,12 @@ class ComponentStructureTest extends TestCase
             'default',
             'secondary',
             'destructive',
-            'outline'
+            'outline',
         ];
 
         foreach ($expectedVariants as $variant) {
             $this->assertStringContainsString(
-                $variant . ':',
+                $variant.':',
                 $content,
                 "Badge component should have {$variant} variant defined"
             );
@@ -134,7 +134,7 @@ class ComponentStructureTest extends TestCase
 
         $expectedImports = [
             'import { cva, type VariantProps } from \'class-variance-authority\';',
-            'import { cn } from \'@/lib/utils\';'
+            'import { cn } from \'@/lib/utils\';',
         ];
 
         foreach ($expectedImports as $import) {
@@ -221,13 +221,6 @@ class ComponentStructureTest extends TestCase
         $this->assertFileExists($formPath, 'CreateProjectForm component should exist');
 
         $content = File::get($formPath);
-
-        // Test AI integration imports and usage
-        $this->assertStringContainsString(
-            'import axios from \'axios\';',
-            $content,
-            'CreateProjectForm should import axios for API calls'
-        );
 
         $this->assertStringContainsString(
             'router.visit',

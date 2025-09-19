@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $isOrganizationEmail = $request->boolean('organization_email');
-        $emailDomain = substr(strrchr($request->email, "@"), 1);
+        $emailDomain = substr(strrchr($request->email, '@'), 1);
 
         // Check if an organization with this domain already exists
         $existingOrg = Organization::where('domain', $emailDomain)->first();
@@ -113,7 +113,7 @@ class RegisteredUserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-            ]
+            ],
         ]);
 
         return redirect()->route('organization.create');

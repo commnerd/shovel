@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
+use Tests\TestCase;
 
 class BuildProcessTest extends TestCase
 {
@@ -14,7 +14,7 @@ class BuildProcessTest extends TestCase
     public function test_yarn_build_completes_successfully()
     {
         // Skip if not in a development environment with Node.js
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for build testing');
         }
 
@@ -22,7 +22,7 @@ class BuildProcessTest extends TestCase
         $result = Process::timeout(120)->run('yarn build');
 
         $this->assertEquals(0, $result->exitCode(),
-            'Build process failed with output: ' . $result->output() . $result->errorOutput());
+            'Build process failed with output: '.$result->output().$result->errorOutput());
 
         $this->assertStringContainsString('built in', $result->output());
     }
@@ -32,14 +32,14 @@ class BuildProcessTest extends TestCase
      */
     public function test_build_artifacts_are_generated()
     {
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for build testing');
         }
 
         // Ensure build directory exists
         $buildPath = public_path('build');
 
-        if (!File::exists($buildPath)) {
+        if (! File::exists($buildPath)) {
             // Run build if artifacts don't exist
             Process::timeout(120)->run('yarn build');
         }
@@ -68,7 +68,7 @@ class BuildProcessTest extends TestCase
 
         // Assert that the command completed successfully
         $this->assertTrue($result->successful(),
-            'TypeScript check command should complete successfully. Output: ' . $result->output());
+            'TypeScript check command should complete successfully. Output: '.$result->output());
 
         // Verify that Vue SFC type declarations exist
         $this->assertFileExists(base_path('resources/js/types/vue-shims.d.ts'),
@@ -92,7 +92,7 @@ class BuildProcessTest extends TestCase
      */
     public function test_vue_components_compile_correctly()
     {
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for Vue testing');
         }
 
@@ -142,7 +142,7 @@ class BuildProcessTest extends TestCase
      */
     public function test_build_includes_new_components()
     {
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for build testing');
         }
 
@@ -166,12 +166,12 @@ class BuildProcessTest extends TestCase
      */
     public function test_css_compilation_includes_components()
     {
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for CSS testing');
         }
 
         // Ensure build is complete
-        if (!File::exists(public_path('build/manifest.json'))) {
+        if (! File::exists(public_path('build/manifest.json'))) {
             Process::timeout(120)->run('yarn build');
         }
 
@@ -182,8 +182,8 @@ class BuildProcessTest extends TestCase
         $this->assertNotEmpty($cssFiles, 'CSS files should be present in app entry');
 
         foreach ($cssFiles as $cssFile) {
-            $this->assertFileExists(public_path('build/' . $cssFile));
-            $cssContent = File::get(public_path('build/' . $cssFile));
+            $this->assertFileExists(public_path('build/'.$cssFile));
+            $cssContent = File::get(public_path('build/'.$cssFile));
             $this->assertNotEmpty($cssContent, 'CSS file should not be empty');
         }
     }
@@ -193,7 +193,7 @@ class BuildProcessTest extends TestCase
      */
     public function test_ai_components_build_successfully()
     {
-        if (!$this->hasNodeJs()) {
+        if (! $this->hasNodeJs()) {
             $this->markTestSkipped('Node.js not available for component testing');
         }
 
@@ -202,13 +202,13 @@ class BuildProcessTest extends TestCase
             'resources/js/pages/Projects/CreateTasks.vue' => [
                 'TaskSuggestion',
                 'AICommunication',
-                'aiCommunication'
+                'aiCommunication',
             ],
             'resources/js/pages/Projects/CreateProjectForm.vue' => [
                 'const generateTasks',
                 'router.visit',
-                '/dashboard/projects/create/tasks'
-            ]
+                '/dashboard/projects/create/tasks',
+            ],
         ];
 
         foreach ($aiComponents as $componentPath => $expectedContent) {

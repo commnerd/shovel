@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Organization;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class SettingsSystemPageTest extends TestCase
 {
@@ -38,8 +38,7 @@ class SettingsSystemPageTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
         );
     }
 
@@ -54,14 +53,13 @@ class SettingsSystemPageTest extends TestCase
             ->get('/settings/system');
 
         $response->assertOk();
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/System')
-                ->has('defaultAISettings')
-                ->has('providerConfigs')
-                ->has('availableProviders')
-                ->where('defaultAISettings.provider', 'openai')
-                ->where('defaultAISettings.model', 'gpt-4')
-                ->where('providerConfigs.cerebrus.api_key', 'test-key')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
+            ->has('defaultAISettings')
+            ->has('providerConfigs')
+            ->has('availableProviders')
+            ->where('defaultAISettings.provider', 'openai')
+            ->where('defaultAISettings.model', 'gpt-4')
+            ->where('providerConfigs.cerebrus.api_key', 'test-key')
         );
     }
 

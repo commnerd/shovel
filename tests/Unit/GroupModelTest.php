@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
-use App\Models\User;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class GroupModelTest extends TestCase
 {
@@ -16,7 +16,7 @@ class GroupModelTest extends TestCase
     public function test_group_can_be_created()
     {
         $organization = Organization::factory()->create();
-        
+
         $group = Group::factory()->create([
             'name' => 'Test Group',
             'organization_id' => $organization->id,
@@ -44,7 +44,7 @@ class GroupModelTest extends TestCase
         $group = Group::factory()->create([
             'organization_id' => $organization->id,
         ]);
-        
+
         $user1 = User::factory()->create([
             'organization_id' => $organization->id,
         ]);
@@ -66,7 +66,7 @@ class GroupModelTest extends TestCase
         $group = Group::factory()->create([
             'organization_id' => $organization->id,
         ]);
-        
+
         $user = User::factory()->create([
             'organization_id' => $organization->id,
         ]);
@@ -83,7 +83,7 @@ class GroupModelTest extends TestCase
     public function test_everyone_group_factory_state()
     {
         $organization = Organization::factory()->create();
-        
+
         $group = Group::factory()->everyone()->create([
             'organization_id' => $organization->id,
         ]);

@@ -20,7 +20,7 @@ interface Props {
     defaultGroupId?: number;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -62,9 +62,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                 <!-- Create form -->
                 <div class="max-w-2xl">
-                    <CreateProjectForm 
-                        :user-groups="userGroups" 
-                        :default-group-id="defaultGroupId" 
+                    <CreateProjectForm
+                        :user-groups="userGroups"
+                        :default-group-id="defaultGroupId"
                     />
                 </div>
             </div>

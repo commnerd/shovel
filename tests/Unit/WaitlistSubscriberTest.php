@@ -23,7 +23,7 @@ class WaitlistSubscriberTest extends TestCase
 
     public function test_waitlist_subscriber_has_correct_fillable_attributes(): void
     {
-        $subscriber = new WaitlistSubscriber();
+        $subscriber = new WaitlistSubscriber;
         $fillable = $subscriber->getFillable();
 
         $this->assertIsArray($fillable);
@@ -33,19 +33,19 @@ class WaitlistSubscriberTest extends TestCase
 
     public function test_waitlist_subscriber_uses_timestamps(): void
     {
-        $subscriber = new WaitlistSubscriber();
+        $subscriber = new WaitlistSubscriber;
         $this->assertTrue($subscriber->usesTimestamps());
     }
 
     public function test_waitlist_subscriber_table_name(): void
     {
-        $subscriber = new WaitlistSubscriber();
+        $subscriber = new WaitlistSubscriber;
         $this->assertEquals('waitlist_subscribers', $subscriber->getTable());
     }
 
     public function test_waitlist_subscriber_primary_key(): void
     {
-        $subscriber = new WaitlistSubscriber();
+        $subscriber = new WaitlistSubscriber;
         $this->assertEquals('id', $subscriber->getKeyName());
     }
 

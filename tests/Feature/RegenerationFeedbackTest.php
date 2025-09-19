@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class RegenerationFeedbackTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -104,6 +104,7 @@ class RegenerationFeedbackTest extends TestCase
                 \Mockery::on(function ($options) {
                     // Verify user feedback is included in options
                     $this->assertEquals('Focus on security and add more testing tasks', $options['user_feedback']);
+
                     return true;
                 })
             )
@@ -380,6 +381,7 @@ class RegenerationFeedbackTest extends TestCase
                 \Mockery::on(function ($options) {
                     // Verify user feedback is passed in options
                     $this->assertEquals('Focus on payment security and user experience', $options['user_feedback']);
+
                     return true;
                 })
             )

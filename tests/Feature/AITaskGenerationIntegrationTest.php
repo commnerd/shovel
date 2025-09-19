@@ -3,10 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Services\AI\Contracts\AITaskResponse;
 use App\Services\AI\AIManager;
+use App\Services\AI\Contracts\AITaskResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
 use Tests\TestCase;
 
 class AITaskGenerationIntegrationTest extends TestCase
@@ -34,15 +33,15 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'description' => 'Configure development tools and dependencies',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
+                    'subtasks' => [],
                 ],
                 [
                     'title' => 'Implement Core Features',
                     'description' => 'Build main application functionality',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             notes: ['Project looks well-defined', 'Consider using modern frameworks'],
             summary: 'This is a solid project with clear requirements.',
@@ -55,7 +54,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->once()
             ->withAnyArgs()
             ->andReturn($mockResponse);
-        
+
         $this->app->instance('ai', $mockAI);
 
         $response = $this->actingAs($user)
@@ -102,7 +101,7 @@ class AITaskGenerationIntegrationTest extends TestCase
                 \Mockery::type('array') // AI options
             )
             ->andReturn(AITaskResponse::success(tasks: []));
-        
+
         $this->app->instance('ai', $mockAI);
 
         $this->actingAs($user)
@@ -161,8 +160,8 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'description' => 'Test Description',
                     'priority' => 'medium',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             notes: ['Note 1', 'Note 2'],
             summary: 'Comprehensive analysis summary',
@@ -209,8 +208,8 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'description' => 'This is a regenerated task',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             notes: ['Regenerated based on feedback'],
             summary: 'Updated task breakdown'
@@ -250,15 +249,15 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'description' => 'Good description',
                     'priority' => 'high',
                     'status' => 'pending',
-                    'subtasks' => []
+                    'subtasks' => [],
                 ],
                 [
                     'title' => 'Partial Task',
                     'description' => '',
                     'priority' => 'medium', // Default applied by validation
                     'status' => 'pending', // Default applied by validation
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
                 // Task without title was filtered out by CerebrusProvider validation
             ]
         );
@@ -307,8 +306,8 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'description' => 'Test Description',
                     'priority' => 'medium',
                     'status' => 'pending',
-                    'subtasks' => []
-                ]
+                    'subtasks' => [],
+                ],
             ],
             notes: 'Single note string', // String instead of array
             summary: 'Test summary',

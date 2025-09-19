@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TaskSeeder extends Seeder
@@ -17,6 +16,7 @@ class TaskSeeder extends Seeder
 
         if ($projects->isEmpty()) {
             $this->command->warn('No projects found. Please create some projects first.');
+
             return;
         }
 

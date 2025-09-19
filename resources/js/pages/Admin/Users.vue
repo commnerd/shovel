@@ -205,7 +205,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Users, User, Shield, LogIn, Search, Info, X } from 'lucide-vue-next';
+import { ArrowLeft, Users, Shield, LogIn, Search, Info, X } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface UserData {
@@ -253,7 +253,7 @@ const clearSelection = () => {
 };
 
 // Modal functions
-const openLoginAsModal = (user: UserData) => {
+const openLoginAsModal = () => {
     loginReason.value = '';
     showLoginAsModal.value = true;
 };

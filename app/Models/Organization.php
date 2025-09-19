@@ -83,7 +83,7 @@ class Organization extends Model
     {
         return $this->groups()->create([
             'name' => 'Everyone',
-            'description' => 'Default group for all members of ' . $this->name,
+            'description' => 'Default group for all members of '.$this->name,
             'is_default' => true,
         ]);
     }

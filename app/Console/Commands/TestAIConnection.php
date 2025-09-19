@@ -49,18 +49,18 @@ class TestAIConnection extends Command
             $result = $ai->testProvider($providerName);
 
             if ($result['success']) {
-                $this->info("✅ {$providerName}: " . $result['message']);
+                $this->info("✅ {$providerName}: ".$result['message']);
                 if (isset($result['response_time'])) {
-                    $this->line("   Response time: " . round($result['response_time'], 3) . "s");
+                    $this->line('   Response time: '.round($result['response_time'], 3).'s');
                 }
                 if (isset($result['tokens_used'])) {
-                    $this->line("   Tokens used: " . $result['tokens_used']);
+                    $this->line('   Tokens used: '.$result['tokens_used']);
                 }
             } else {
-                $this->error("❌ {$providerName}: " . $result['message']);
+                $this->error("❌ {$providerName}: ".$result['message']);
             }
         } catch (\Exception $e) {
-            $this->error("❌ {$providerName}: " . $e->getMessage());
+            $this->error("❌ {$providerName}: ".$e->getMessage());
         }
     }
 
@@ -73,12 +73,14 @@ class TestAIConnection extends Command
 
         foreach ($providers as $name => $info) {
             if (isset($info['error'])) {
-                $this->error("❌ {$name}: " . $info['error']);
+                $this->error("❌ {$name}: ".$info['error']);
+
                 continue;
             }
 
-            if (!$info['configured']) {
+            if (! $info['configured']) {
                 $this->warn("⚠️  {$name}: Not configured (missing API key)");
+
                 continue;
             }
 
@@ -88,7 +90,7 @@ class TestAIConnection extends Command
         $this->newLine();
         $this->info('Test completed!');
 
-        if (!$ai->hasConfiguredProvider()) {
+        if (! $ai->hasConfiguredProvider()) {
             $this->warn('No AI providers are properly configured. Please set up API keys in your .env file.');
         }
     }

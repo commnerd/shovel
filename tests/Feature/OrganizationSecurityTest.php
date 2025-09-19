@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class OrganizationSecurityTest extends TestCase
 {
@@ -109,7 +109,7 @@ class OrganizationSecurityTest extends TestCase
         $user = User::factory()->create(['organization_id' => $organization->id]);
 
         // Test SQL injection attempts in role assignment
-        $maliciousRoleId = "1; DROP TABLE users; --";
+        $maliciousRoleId = '1; DROP TABLE users; --';
 
         $response = $this->actingAs($admin)
             ->post("/admin/users/{$user->id}/assign-role", [

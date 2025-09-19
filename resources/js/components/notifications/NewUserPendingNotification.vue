@@ -5,8 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { router } from '@inertiajs/vue3';
 import { UserPlus, Mail, Clock, CheckCircle, XCircle, Building2 } from 'lucide-vue-next';
-import { computed } from 'vue';
-
 interface PendingUser {
   id: number;
   name: string;
@@ -22,7 +20,7 @@ interface Props {
   showActions?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showActions: true,
 });
 

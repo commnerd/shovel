@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\Group;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TaskHierarchyIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+
     protected Project $project;
 
     protected function setUp(): void
@@ -106,16 +106,14 @@ class TaskHierarchyIntegrationTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=top-level");
 
-        $response->assertInertia(fn ($page) =>
-            $page->has('tasks', 1)
-                ->where('tasks.0.title', 'Implement User Authentication')
+        $response->assertInertia(fn ($page) => $page->has('tasks', 1)
+            ->where('tasks.0.title', 'Implement User Authentication')
         );
 
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
-        $response->assertInertia(fn ($page) =>
-            $page->has('tasks', 4) // 3 first-level children + 1 sub-subtask
+        $response->assertInertia(fn ($page) => $page->has('tasks', 4) // 3 first-level children + 1 sub-subtask
         );
 
         // Step 6: Test completion workflow
@@ -175,11 +173,10 @@ class TaskHierarchyIntegrationTest extends TestCase
         $response = $this->actingAs($this->user)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->where('taskMetrics.totalLeaf', 3)
-                ->where('taskMetrics.completed', 1)
-                ->where('taskMetrics.inProgress', 1)
-                ->where('taskMetrics.pending', 1)
+        $response->assertInertia(fn ($page) => $page->where('taskMetrics.totalLeaf', 3)
+            ->where('taskMetrics.completed', 1)
+            ->where('taskMetrics.inProgress', 1)
+            ->where('taskMetrics.pending', 1)
         );
     }
 
@@ -309,10 +306,9 @@ class TaskHierarchyIntegrationTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->where('taskCounts.all', 36)
-                ->where('taskCounts.top_level', 1)
-                ->where('taskCounts.leaf', 30) // 25 second-level children + 5 childless first-level
+        $response->assertInertia(fn ($page) => $page->where('taskCounts.all', 36)
+            ->where('taskCounts.top_level', 1)
+            ->where('taskCounts.leaf', 30) // 25 second-level children + 5 childless first-level
         );
     }
 
@@ -328,10 +324,9 @@ class TaskHierarchyIntegrationTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks/{$parent->id}/subtasks/create");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) =>
-            $page->component('Projects/Tasks/Create')
-                ->where('parentTask.id', $parent->id)
-                ->where('parentTask.title', 'Parent Task for Navigation')
+        $response->assertInertia(fn ($page) => $page->component('Projects/Tasks/Create')
+            ->where('parentTask.id', $parent->id)
+            ->where('parentTask.title', 'Parent Task for Navigation')
         );
     }
 }

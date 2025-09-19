@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\AI\AIManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\TestCase;
 
 class AIProjectCreationTest extends TestCase
 {
@@ -159,7 +159,7 @@ class AIProjectCreationTest extends TestCase
                     'status' => 'pending',
                     'sort_order' => 3,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($this->user)
@@ -291,7 +291,7 @@ class AIProjectCreationTest extends TestCase
                     'status' => 'invalid_status', // Invalid status
                     'sort_order' => 3,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($this->user)
@@ -359,7 +359,7 @@ class AIProjectCreationTest extends TestCase
                     'status' => 'pending',
                     'sort_order' => 1,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->actingAs($this->user)
