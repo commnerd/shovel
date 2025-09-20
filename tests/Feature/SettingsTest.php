@@ -28,6 +28,7 @@ class SettingsTest extends TestCase
         $this->user = User::factory()->create([
             'organization_id' => $organization->id,
             'pending_approval' => false,
+            'is_super_admin' => true, // Need Super Admin to update provider settings
         ]);
         $this->user->joinGroup($group);
     }

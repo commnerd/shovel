@@ -14,6 +14,13 @@ class SettingsController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+
+        // Check permissions for different sections
+        $canAccessProviderConfig = $user->isSuperAdmin();
+        $canAccessDefaultConfig = $user->isSuperAdmin() ||
+            $user->isAdmin() ||
+            ($user->organization && $user->organization->is_default);
         // Get current default AI configuration for new projects
         $defaultAISettings = [
             'provider' => Setting::get('ai.default.provider', 'cerebrus'),
@@ -59,6 +66,7 @@ class SettingsController extends Controller
                 'name' => 'OpenAI',
                 'description' => 'GPT models from OpenAI',
                 'models' => [
+                    'gpt-5' => 'GPT-5',
                     'gpt-4' => 'GPT-4',
                     'gpt-4-turbo' => 'GPT-4 Turbo',
                     'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
@@ -89,6 +97,10 @@ class SettingsController extends Controller
             'defaultAISettings' => $defaultAISettings,
             'providerConfigs' => $providerConfigs,
             'availableProviders' => $availableProviders,
+            'permissions' => [
+                'canAccessProviderConfig' => $canAccessProviderConfig,
+                'canAccessDefaultConfig' => $canAccessDefaultConfig,
+            ],
         ]);
     }
 
@@ -97,6 +109,10 @@ class SettingsController extends Controller
      */
     public function updateAI(Request $request)
     {
+        // Only Super Admins can update provider-specific configurations
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Only Super Admins can access provider-specific configurations.');
+        }
         $validated = $request->validate([
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'cerebrus_api_key' => 'nullable|string|max:255',
@@ -134,6 +150,16 @@ class SettingsController extends Controller
      */
     public function updateDefaultAI(Request $request)
     {
+        $user = auth()->user();
+
+        // Check if user can access default AI configuration
+        $canAccess = $user->isSuperAdmin() ||
+            $user->isAdmin() ||
+            ($user->organization && $user->organization->is_default);
+
+        if (!$canAccess) {
+            abort(403, 'You do not have permission to modify default AI settings.');
+        }
         $validated = $request->validate([
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'model' => 'required|string|max:100',
@@ -161,6 +187,17 @@ class SettingsController extends Controller
      */
     public function testAI(Request $request)
     {
+        $user = auth()->user();
+
+        // Check if user has permission to test AI configurations
+        $canTestProvider = $user->isSuperAdmin();
+        $canTestDefault = $user->isSuperAdmin() ||
+            $user->isAdmin() ||
+            ($user->organization && $user->organization->is_default);
+
+        if (!$canTestProvider && !$canTestDefault) {
+            abort(403, 'You do not have permission to test AI configurations.');
+        }
         $validated = $request->validate([
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'api_key' => 'required|string',

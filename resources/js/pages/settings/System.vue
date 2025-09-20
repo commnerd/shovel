@@ -14,7 +14,7 @@
             </div>
 
             <!-- Default AI Configuration for New Projects -->
-            <Card>
+            <Card v-if="props.permissions.canAccessDefaultConfig">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Sparkles class="h-5 w-5 text-purple-600" />
@@ -129,7 +129,7 @@
             </Card>
 
             <!-- Provider-Specific Configuration -->
-            <Card>
+            <Card v-if="props.permissions.canAccessProviderConfig">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Cog class="h-5 w-5 text-gray-600" />
@@ -175,7 +175,7 @@
                                 <Input
                                     :id="`${form.provider}-${field}`"
                                     :type="field.includes('api_key') ? 'password' : 'text'"
-                                    v-model="form[`${form.provider}_${field}`]"
+                                    v-model="(form as any)[`${form.provider}_${field}`]"
                                     :placeholder="getFieldPlaceholder(form.provider, field)"
                                 />
                             </div>
@@ -221,6 +221,26 @@
                     </form>
                 </CardContent>
             </Card>
+
+            <!-- No Access Message -->
+            <Card v-if="!props.permissions.canAccessDefaultConfig && !props.permissions.canAccessProviderConfig" class="border-amber-200 bg-amber-50">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-amber-800">
+                        <Info class="h-5 w-5" />
+                        Access Restricted
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-amber-700">
+                        <p class="mb-2">You don't have permission to access AI configuration settings.</p>
+                        <div class="text-sm space-y-1">
+                            <p><strong>Default AI Configuration:</strong> Available to Super Admins, Organization Admins, and users in the 'None' organization.</p>
+                            <p><strong>Provider-Specific Configuration:</strong> Available to Super Admins only.</p>
+                        </div>
+                        <p class="mt-3 text-sm">Contact your administrator if you need access to these settings.</p>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     </AppLayout>
 </template>
@@ -261,6 +281,10 @@ interface Props {
     defaultAISettings: DefaultAISettings;
     providerConfigs: Record<string, ProviderConfig>;
     availableProviders: Record<string, ProviderInfo>;
+    permissions: {
+        canAccessProviderConfig: boolean;
+        canAccessDefaultConfig: boolean;
+    };
 }
 
 const props = defineProps<Props>();
@@ -285,7 +309,7 @@ const form = useForm({
     anthropic_api_key: props.providerConfigs?.anthropic?.api_key || '',
     anthropic_base_url: props.providerConfigs?.anthropic?.base_url || '',
     anthropic_model: props.providerConfigs?.anthropic?.model || '',
-});
+} as Record<string, any>);
 
 const isTestingConnection = ref(false);
 const isTestingDefaultConnection = ref(false);
@@ -369,9 +393,9 @@ const testConnection = async () => {
             },
             body: JSON.stringify({
                 provider: form.provider,
-                api_key: form[`${form.provider}_api_key`],
-                base_url: form[`${form.provider}_base_url`],
-                model: form[`${form.provider}_model`],
+                api_key: (form as any)[`${form.provider}_api_key`],
+                base_url: (form as any)[`${form.provider}_base_url`],
+                model: (form as any)[`${form.provider}_model`],
             }),
         });
 

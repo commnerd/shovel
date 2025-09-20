@@ -15,12 +15,16 @@ interface AIProviderInterface
     /**
      * Generate tasks based on a project description with schema validation.
      *
+     * Note: Implementations should include AI service and model information in the response notes.
+     *
      * @param  array  $schema  The expected JSON schema for the response
      */
     public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse;
 
     /**
      * Break down a task into subtasks with project context.
+     *
+     * Note: Implementations should include AI service and model information in the response notes.
      *
      * @param  array  $context  Project and task context information
      */

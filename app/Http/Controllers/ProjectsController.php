@@ -374,6 +374,11 @@ class ProjectsController extends Controller
                 // Default to user's default group
                 $defaultGroup = auth()->user()->getDefaultGroup();
                 $groupId = $defaultGroup?->id;
+
+                // If user has no default group, we need to handle this case
+                if (!$groupId) {
+                    throw new \Exception('No group specified and user has no default group available.');
+                }
             }
 
             // Verify user has access to the selected group

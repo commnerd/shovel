@@ -90,18 +90,65 @@
 
                     <!-- AI Results -->
                     <div v-else class="space-y-6">
-                        <!-- AI Notes -->
-                        <div v-if="aiNotes.length > 0" class="p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <h4 class="text-sm font-medium text-green-800 mb-2 flex items-center gap-2">
+                        <!-- Consolidated AI Analysis -->
+                        <div v-if="aiCommunication.summary || aiCommunication.notes?.length || aiCommunication.problems?.length || aiCommunication.suggestions?.length" class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <h4 class="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
                                 <Lightbulb class="h-4 w-4" />
-                                AI Analysis
+                                Notes & Analysis
                             </h4>
-                            <ul class="text-sm text-green-700 space-y-1">
-                                <li v-for="note in aiNotes" :key="note" class="flex items-start gap-2">
-                                    <span class="text-green-400 mt-1">•</span>
-                                    <span>{{ note }}</span>
-                                </li>
-                            </ul>
+
+                            <div class="space-y-3">
+                                <!-- Summary -->
+                                <div v-if="aiCommunication.summary" class="pb-2">
+                                    <h5 class="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
+                                        <Info class="h-3 w-3" />
+                                        Summary
+                                    </h5>
+                                    <p class="text-sm text-slate-700 pl-4">{{ aiCommunication.summary }}</p>
+                                </div>
+
+                                <!-- Notes -->
+                                <div v-if="aiCommunication.notes?.length" class="pb-2">
+                                    <h5 class="text-xs font-semibold text-slate-800 mb-1 flex items-center gap-1">
+                                        <MessageSquare class="h-3 w-3" />
+                                        Notes
+                                    </h5>
+                                    <ul class="text-sm text-slate-700 space-y-1 pl-4">
+                                        <li v-for="note in aiCommunication.notes" :key="note" class="flex items-start gap-2">
+                                            <span class="text-slate-400 mt-1">•</span>
+                                            <span>{{ note }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Issues -->
+                                <div v-if="aiCommunication.problems?.length" class="pb-2">
+                                    <h5 class="text-xs font-semibold text-orange-800 mb-1 flex items-center gap-1">
+                                        <AlertTriangle class="h-3 w-3" />
+                                        Issues
+                                    </h5>
+                                    <ul class="text-sm text-slate-700 space-y-1 pl-4">
+                                        <li v-for="problem in aiCommunication.problems" :key="problem" class="flex items-start gap-2">
+                                            <AlertTriangle class="h-3 w-3 mt-0.5 text-orange-600 flex-shrink-0" />
+                                            <span>{{ problem }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Suggestions -->
+                                <div v-if="aiCommunication.suggestions?.length">
+                                    <h5 class="text-xs font-semibold text-green-800 mb-1 flex items-center gap-1">
+                                        <Lightbulb class="h-3 w-3" />
+                                        Suggestions
+                                    </h5>
+                                    <ul class="text-sm text-slate-700 space-y-1 pl-4">
+                                        <li v-for="suggestion in aiCommunication.suggestions" :key="suggestion" class="flex items-start gap-2">
+                                            <Lightbulb class="h-3 w-3 mt-0.5 text-green-600 flex-shrink-0" />
+                                            <span>{{ suggestion }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Generated Subtasks -->
@@ -233,6 +280,9 @@ import {
     TreePine,
     Leaf,
     GitBranch,
+    Info,
+    MessageSquare,
+    AlertTriangle,
     // Removed unused icons: CheckCircle, Clock, Circle
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
@@ -270,7 +320,12 @@ const isGenerating = ref(false);
 const isRegeneratingWithFeedback = ref(false);
 const isCreatingSubtasks = ref(false);
 const suggestedSubtasks = ref<any[]>([]);
-const aiNotes = ref<string[]>([]);
+const aiCommunication = ref<{
+    summary?: string;
+    notes?: string[];
+    problems?: string[];
+    suggestions?: string[];
+}>({});
 const hasGeneratedBreakdown = ref(false);
 
 // Modal state
@@ -325,7 +380,12 @@ const generateBreakdown = async () => {
 
         if (data.success) {
             suggestedSubtasks.value = data.subtasks || [];
-            aiNotes.value = data.notes || [];
+            aiCommunication.value = {
+                summary: data.summary,
+                notes: data.notes || [],
+                problems: data.problems || [],
+                suggestions: data.suggestions || [],
+            };
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to generate task breakdown. Please try again.');
@@ -363,7 +423,12 @@ const regenerateWithFeedback = async (feedback: string) => {
 
         if (data.success) {
             suggestedSubtasks.value = data.subtasks || [];
-            aiNotes.value = data.notes || [];
+            aiCommunication.value = {
+                summary: data.summary,
+                notes: data.notes || [],
+                problems: data.problems || [],
+                suggestions: data.suggestions || [],
+            };
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to regenerate task breakdown. Please try again.');
@@ -418,7 +483,7 @@ const createAllSubtasks = async () => {
 
 const clearResults = () => {
     suggestedSubtasks.value = [];
-    aiNotes.value = [];
+    aiCommunication.value = {};
     hasGeneratedBreakdown.value = false;
 };
 

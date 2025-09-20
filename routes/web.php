@@ -130,6 +130,10 @@ Route::delete('/dashboard/projects/{project}/tasks/{task}', [App\Http\Controller
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.destroy');
 
+Route::post('/dashboard/projects/{project}/tasks/{task}/reorder', [App\Http\Controllers\TasksController::class, 'reorder'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.reorder');
+
 Route::delete('/dashboard/projects/{project}', [App\Http\Controllers\ProjectsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('projects.destroy');

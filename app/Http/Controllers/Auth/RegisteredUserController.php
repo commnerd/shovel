@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Organization;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -70,12 +71,17 @@ class RegisteredUserController extends Controller
      */
     private function handleExistingOrganizationRegistration(Request $request, Organization $organization): RedirectResponse
     {
+        // Check if this is the first user in the system
+        $isFirstUser = User::count() === 0;
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'organization_id' => $organization->id,
-            'pending_approval' => true,
+            'pending_approval' => !$isFirstUser, // First user doesn't need approval
+            'approved_at' => $isFirstUser ? now() : null,
+            'is_super_admin' => $isFirstUser,
         ]);
 
         // Assign default user role (even for pending users)
@@ -143,7 +149,52 @@ class RegisteredUserController extends Controller
     private function createUserInDefaultOrganization(Request $request): RedirectResponse
     {
         $defaultOrg = Organization::getDefault();
+
+        // If no default organization exists, create it
+        if (!$defaultOrg) {
+            $defaultOrg = Organization::create([
+                'name' => 'None',
+                'domain' => null,
+                'address' => null,
+                'creator_id' => null,
+                'is_default' => true,
+            ]);
+
+            // Create the default 'Everyone' group
+            Group::create([
+                'name' => 'Everyone',
+                'description' => 'Default group for individual users',
+                'organization_id' => $defaultOrg->id,
+                'is_default' => true,
+            ]);
+
+            // Create default roles
+            Role::create([
+                'name' => 'admin',
+                'display_name' => 'Administrator',
+                'description' => 'Organization administrator with full management rights',
+                'organization_id' => $defaultOrg->id,
+                'permissions' => Role::getAdminPermissions(),
+            ]);
+
+            Role::create([
+                'name' => 'user',
+                'display_name' => 'User',
+                'description' => 'Standard organization member',
+                'organization_id' => $defaultOrg->id,
+                'permissions' => Role::getUserPermissions(),
+            ]);
+        }
+
         $defaultGroup = $defaultOrg->defaultGroup();
+
+        // Ensure default group exists
+        if (!$defaultGroup) {
+            throw new \Exception('Default organization exists but has no default group.');
+        }
+
+        // Check if this is the first user in the system
+        $isFirstUser = User::count() === 0;
 
         $user = User::create([
             'name' => $request->name,
@@ -152,6 +203,7 @@ class RegisteredUserController extends Controller
             'organization_id' => $defaultOrg->id,
             'pending_approval' => false,
             'approved_at' => now(),
+            'is_super_admin' => $isFirstUser,
         ]);
 
         // Add user to default group

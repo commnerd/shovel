@@ -99,7 +99,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                         id="title"
                         v-model="form.title"
                         type="text"
-                        placeholder="e.g., Task Management System"
+                        placeholder="e.g., Peanut Butter and Jelly Sandwich"
                         :disabled="form.processing || isGeneratingTasks"
                         class="w-full"
                         data-testid="project-title"
@@ -115,7 +115,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                     <textarea
                         id="description"
                         v-model="form.description"
-                        placeholder="e.g., Build a task management app with Vue.js and Laravel..."
+                        placeholder="e.g., Make a peanut butter and jelly sandwich..."
                         class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                         :disabled="form.processing || isGeneratingTasks"
                         @keydown="handleKeydown"

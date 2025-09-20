@@ -254,73 +254,66 @@ const createProject = () => {
                 </div>
             </div>
 
-            <!-- AI Communication -->
-            <div v-if="aiUsed && aiCommunication && (aiCommunication.summary || aiCommunication.notes?.length || aiCommunication.problems?.length || aiCommunication.suggestions?.length)" class="space-y-4">
-
-                <!-- AI Summary -->
-                <Card v-if="aiCommunication.summary" class="border-blue-200 bg-blue-50">
+            <!-- Consolidated AI Analysis Notes -->
+            <div v-if="aiUsed && aiCommunication && (aiCommunication.summary || aiCommunication.notes?.length || aiCommunication.problems?.length || aiCommunication.suggestions?.length)">
+                <Card class="border-slate-200 bg-slate-50">
                     <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-blue-800">
-                            <Info class="h-5 w-5" />
-                            AI Analysis Summary
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-blue-700">{{ aiCommunication.summary }}</p>
-                    </CardContent>
-                </Card>
-
-                <!-- AI Notes -->
-                <Card v-if="aiCommunication.notes?.length" class="border-gray-200 bg-gray-50">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-gray-800">
+                        <CardTitle class="flex items-center gap-2 text-slate-800">
                             <MessageSquare class="h-5 w-5" />
-                            AI Notes
+                            Notes & Analysis
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <ul class="space-y-2">
-                            <li v-for="note in aiCommunication.notes" :key="note" class="flex items-start gap-2 text-gray-700">
-                                <div class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 flex-shrink-0"></div>
-                                <span>{{ note }}</span>
-                            </li>
-                        </ul>
-                    </CardContent>
-                </Card>
+                    <CardContent class="space-y-4">
+                        <!-- AI Summary -->
+                        <div v-if="aiCommunication.summary" class="pb-3">
+                            <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                                <Info class="h-4 w-4" />
+                                Summary
+                            </h4>
+                            <p class="text-slate-700 pl-6">{{ aiCommunication.summary }}</p>
+                        </div>
 
-                <!-- AI Problems -->
-                <Card v-if="aiCommunication.problems?.length" class="border-orange-200 bg-orange-50">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-orange-800">
-                            <AlertTriangle class="h-5 w-5" />
-                            Issues Identified
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul class="space-y-2">
-                            <li v-for="problem in aiCommunication.problems" :key="problem" class="flex items-start gap-2 text-orange-700">
-                                <AlertTriangle class="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                <span>{{ problem }}</span>
-                            </li>
-                        </ul>
-                    </CardContent>
-                </Card>
+                        <!-- AI Notes -->
+                        <div v-if="aiCommunication.notes?.length" class="pb-3">
+                            <h4 class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                                <MessageSquare class="h-4 w-4" />
+                                Notes
+                            </h4>
+                            <ul class="space-y-1 pl-6">
+                                <li v-for="note in aiCommunication.notes" :key="note" class="flex items-start gap-2 text-slate-700">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-400 mt-2 flex-shrink-0"></div>
+                                    <span>{{ note }}</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                <!-- AI Suggestions -->
-                <Card v-if="aiCommunication.suggestions?.length" class="border-green-200 bg-green-50">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center gap-2 text-green-800">
-                            <Lightbulb class="h-5 w-5" />
-                            AI Suggestions
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul class="space-y-2">
-                            <li v-for="suggestion in aiCommunication.suggestions" :key="suggestion" class="flex items-start gap-2 text-green-700">
-                                <Lightbulb class="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                <span>{{ suggestion }}</span>
-                            </li>
-                        </ul>
+                        <!-- Issues Identified -->
+                        <div v-if="aiCommunication.problems?.length" class="pb-3">
+                            <h4 class="text-sm font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                                <AlertTriangle class="h-4 w-4" />
+                                Issues Identified
+                            </h4>
+                            <ul class="space-y-1 pl-6">
+                                <li v-for="problem in aiCommunication.problems" :key="problem" class="flex items-start gap-2 text-slate-700">
+                                    <AlertTriangle class="h-3 w-3 mt-1 flex-shrink-0 text-orange-600" />
+                                    <span>{{ problem }}</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- AI Suggestions -->
+                        <div v-if="aiCommunication.suggestions?.length">
+                            <h4 class="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                                <Lightbulb class="h-4 w-4" />
+                                Suggestions
+                            </h4>
+                            <ul class="space-y-1 pl-6">
+                                <li v-for="suggestion in aiCommunication.suggestions" :key="suggestion" class="flex items-start gap-2 text-slate-700">
+                                    <Lightbulb class="h-3 w-3 mt-1 flex-shrink-0 text-green-600" />
+                                    <span>{{ suggestion }}</span>
+                                </li>
+                            </ul>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

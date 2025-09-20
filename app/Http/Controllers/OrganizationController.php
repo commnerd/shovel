@@ -56,6 +56,9 @@ class OrganizationController extends Controller
             'is_default' => false,
         ]);
 
+        // Check if this is the first user in the system
+        $isFirstUser = User::count() === 0;
+
         // Create the user as the organization creator
         $user = User::create([
             'name' => $registrationData['name'],
@@ -64,6 +67,7 @@ class OrganizationController extends Controller
             'organization_id' => $organization->id,
             'pending_approval' => false,
             'approved_at' => now(),
+            'is_super_admin' => $isFirstUser,
         ]);
 
         // Update organization creator
@@ -133,12 +137,17 @@ class OrganizationController extends Controller
             $existingOrg = Organization::where('domain', substr(strrchr($registrationData['email'], '@'), 1))->first();
 
             if ($existingOrg) {
+                // Check if this is the first user in the system
+                $isFirstUser = User::count() === 0;
+
                 $user = User::create([
                     'name' => $registrationData['name'],
                     'email' => $registrationData['email'],
                     'password' => $registrationData['password'], // Already hashed
                     'organization_id' => $existingOrg->id,
-                    'pending_approval' => true,
+                    'pending_approval' => !$isFirstUser, // First user doesn't need approval
+                    'approved_at' => $isFirstUser ? now() : null,
+                    'is_super_admin' => $isFirstUser,
                 ]);
 
                 // Assign default user role
@@ -173,6 +182,9 @@ class OrganizationController extends Controller
         $defaultOrg = Organization::getDefault();
         $defaultGroup = $defaultOrg->defaultGroup();
 
+        // Check if this is the first user in the system
+        $isFirstUser = User::count() === 0;
+
         $user = User::create([
             'name' => $registrationData['name'],
             'email' => $registrationData['email'],
@@ -180,6 +192,7 @@ class OrganizationController extends Controller
             'organization_id' => $defaultOrg->id,
             'pending_approval' => false,
             'approved_at' => now(),
+            'is_super_admin' => $isFirstUser,
         ]);
 
         // Add user to default group

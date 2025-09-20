@@ -116,7 +116,11 @@ class User extends Authenticatable
      */
     public function getDefaultGroup()
     {
-        return $this->organization?->defaultGroup();
+        if (!$this->organization) {
+            return null;
+        }
+
+        return $this->organization->defaultGroup();
     }
 
     /**

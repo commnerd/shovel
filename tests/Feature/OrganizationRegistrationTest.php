@@ -96,6 +96,9 @@ class OrganizationRegistrationTest extends TestCase
             'organization_id' => $existingOrg->id,
         ]);
 
+        // Create a dummy user first so the new user isn't the first in the system
+        User::factory()->create();
+
         $response = $this->post('/register', [
             'name' => 'New Employee',
             'email' => 'employee@existing.com',
@@ -109,8 +112,9 @@ class OrganizationRegistrationTest extends TestCase
 
         $user = User::where('email', 'employee@existing.com')->first();
         $this->assertEquals($existingOrg->id, $user->organization_id);
-        $this->assertTrue($user->pending_approval);
+        $this->assertTrue($user->pending_approval); // Should need approval since not first user
         $this->assertNull($user->approved_at);
+        $this->assertFalse($user->isSuperAdmin()); // Should not be Super Admin
     }
 
     public function test_user_can_decline_organization_and_register_individually()
@@ -154,6 +158,9 @@ class OrganizationRegistrationTest extends TestCase
             'name' => 'Company Corp',
             'domain' => 'company.com',
         ]);
+
+        // Create a dummy user first so the new user isn't the first in the system
+        User::factory()->create();
 
         // Step 1: Register without organization email but with matching domain
         $response = $this->post('/register', [

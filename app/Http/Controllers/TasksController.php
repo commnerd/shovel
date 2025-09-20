@@ -35,13 +35,24 @@ class TasksController extends Controller
                 break;
             case 'all':
             default:
-                // For 'all' tasks, order hierarchically using path and sort_order
-                // This ensures parent tasks appear before their children
-                $tasksQuery->orderByRaw('COALESCE(path, CAST(id AS CHAR)) ASC, sort_order ASC');
+                // For 'all' tasks, we need to order hierarchically but respect sort_order within levels
+                // First get all tasks, then sort them properly in PHP to maintain hierarchy
+                $tasksQuery->orderBy('sort_order');
                 break;
         }
 
-        $tasks = $tasksQuery->get()->map(function ($task) {
+        $tasks = $tasksQuery->get();
+
+        // For 'all' filter, sort hierarchically while respecting sort_order within levels
+        if ($filter === 'all') {
+            $tasks = $this->sortTasksHierarchically($tasks);
+        }
+
+
+        $tasks = $tasks->map(function ($task) {
+            // Initialize order tracking if not set
+            $task->initializeOrderTracking();
+
             return [
                 'id' => $task->id,
                 'title' => $task->title,
@@ -54,6 +65,10 @@ class TasksController extends Controller
                 'depth' => $task->getDepth(),
                 'is_top_level' => $task->isTopLevel(),
                 'is_leaf' => $task->isLeaf(),
+                'sort_order' => $task->sort_order,
+                'initial_order_index' => $task->initial_order_index,
+                'move_count' => $task->move_count,
+                'current_order_index' => $task->current_order_index,
                 'created_at' => $task->created_at->toISOString(),
             ];
         });
@@ -436,6 +451,9 @@ class TasksController extends Controller
                 'success' => $aiResponse->isSuccessful(),
                 'subtasks' => $aiResponse->getTasks(),
                 'notes' => $aiResponse->getNotes(),
+                'summary' => $aiResponse->getSummary(),
+                'problems' => $aiResponse->getProblems(),
+                'suggestions' => $aiResponse->getSuggestions(),
                 'ai_used' => true,
             ]);
 
@@ -453,6 +471,155 @@ class TasksController extends Controller
                 'notes' => ['AI service temporarily unavailable'],
                 'ai_used' => false,
             ], 500);
+        }
+    }
+
+    /**
+     * Reorder a task within its sibling group.
+     */
+    public function reorder(Request $request, Project $project, Task $task)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        // Ensure the task belongs to the project
+        if ($task->project_id !== $project->id) {
+            abort(404, 'Task not found in this project.');
+        }
+
+        $validated = $request->validate([
+            'new_position' => 'required|integer|min:1',
+            'confirmed' => 'boolean',
+        ]);
+
+        try {
+            $result = $task->reorderTo(
+                $validated['new_position'],
+                $validated['confirmed'] ?? false
+            );
+        } catch (\Exception $e) {
+            \Log::error('Task reorder failed', [
+                'task_id' => $task->id,
+                'new_position' => $validated['new_position'],
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reorder task: ' . $e->getMessage(),
+                'old_position' => $task->sort_order,
+                'new_position' => $validated['new_position'],
+                'move_count' => $task->move_count ?? 0,
+            ], 500);
+        }
+
+        if (!$result['success'] && isset($result['requires_confirmation'])) {
+            return response()->json($result, 200);
+        }
+
+        if (!$result['success']) {
+            return response()->json($result, 400);
+        }
+
+        // Return updated task list for the project
+        $tasks = $this->getTasksForProject($project, $request->get('filter', 'all'));
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'],
+            'tasks' => $tasks,
+            'reorder_data' => [
+                'old_position' => $result['old_position'] ?? null,
+                'new_position' => $result['new_position'] ?? null,
+                'move_count' => $result['move_count'] ?? 0,
+            ],
+            'priority_changed' => $result['priority_changed'] ?? false,
+            'old_priority' => $result['old_priority'] ?? null,
+            'new_priority' => $result['new_priority'] ?? null,
+        ]);
+    }
+
+    /**
+     * Get tasks for a project with filtering (helper method).
+     */
+    private function getTasksForProject(Project $project, string $filter = 'all'): array
+    {
+        $tasksQuery = $project->tasks()->with(['parent', 'children']);
+
+        // Apply filters and ordering
+        switch ($filter) {
+            case 'top-level':
+                $tasksQuery->topLevel()->orderBy('sort_order');
+                break;
+            case 'leaf':
+                $tasksQuery->leaf()->orderBy('sort_order');
+                break;
+            case 'all':
+            default:
+                $tasksQuery->orderByRaw('COALESCE(path, CAST(id AS CHAR)) ASC, sort_order ASC');
+                break;
+        }
+
+        return $tasksQuery->get()->map(function ($task) {
+            return [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'parent_id' => $task->parent_id,
+                'due_date' => $task->due_date?->format('Y-m-d'),
+                'has_children' => $task->children->count() > 0,
+                'depth' => $task->getDepth(),
+                'is_top_level' => $task->isTopLevel(),
+                'is_leaf' => $task->isLeaf(),
+                'sort_order' => $task->sort_order,
+                'initial_order_index' => $task->initial_order_index,
+                'move_count' => $task->move_count,
+                'current_order_index' => $task->current_order_index,
+                'created_at' => $task->created_at->toISOString(),
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Sort tasks hierarchically while respecting sort_order within each level.
+     */
+    private function sortTasksHierarchically($tasks)
+    {
+        $result = collect();
+
+        // First, add all top-level tasks sorted by sort_order
+        $topLevelTasks = $tasks->where('parent_id', null)->sortBy('sort_order');
+
+        foreach ($topLevelTasks as $task) {
+            // Add the parent task
+            $result->push($task);
+
+            // Recursively add children
+            $this->addChildrenRecursively($task->id, $tasks, $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Recursively add children of a task, sorted by sort_order.
+     */
+    private function addChildrenRecursively($parentId, $allTasks, &$result)
+    {
+        // Find children of this parent, sorted by sort_order
+        $children = $allTasks
+            ->where('parent_id', $parentId)
+            ->sortBy('sort_order');
+
+        foreach ($children as $child) {
+            $result->push($child);
+
+            // Recursively add this child's children
+            $this->addChildrenRecursively($child->id, $allTasks, $result);
         }
     }
 }
