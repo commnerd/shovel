@@ -324,12 +324,7 @@ const initializeSortable = async () => {
                 },
             });
 
-            console.log('Sortable initialized successfully', {
-                taskCount: tasks.value.length,
-                filter: currentFilter.value,
-                dragHandles: document.querySelectorAll('.drag-handle').length,
-                timestamp: new Date().toISOString()
-            });
+            console.log('Sortable initialized successfully');
 
             // Add debug function to window for testing
             (window as any).debugSortable = () => {
@@ -355,7 +350,6 @@ const initializeSortable = async () => {
 
 // Force a complete sortable refresh (more aggressive than normal initialization)
 const forceSortableRefresh = async () => {
-    console.log('Forcing sortable refresh...');
     isRefreshingSortable.value = true;
 
     try {
@@ -379,7 +373,6 @@ const forceSortableRefresh = async () => {
         // Reinitialize
         await initializeSortable();
 
-        console.log('Sortable refresh completed');
     } finally {
         isRefreshingSortable.value = false;
     }
@@ -403,13 +396,6 @@ watch([tasks, currentFilter], (newValues, oldValues) => {
     const [newTasks, newFilter] = newValues;
     const [oldTasks, oldFilter] = oldValues || [[], ''];
 
-    // Log for debugging
-    console.log('Tasks/filter changed:', {
-        taskCount: newTasks.length,
-        filter: newFilter,
-        tasksChanged: newTasks !== oldTasks,
-        filterChanged: newFilter !== oldFilter
-    });
 
     debouncedInitialize();
 }, { immediate: false, deep: true }); // Deep watch to catch task array changes
@@ -487,7 +473,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Button>
                     <Separator orientation="vertical" class="h-6" />
                     <div>
-                        <Heading class="mb-1">Project Tasks</Heading>
+                        <Heading title="Project Tasks" class="mb-1" />
                         <p class="text-sm text-gray-600">{{ project.description }}</p>
                         <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-500 mt-1">
                             <Calendar class="h-4 w-4" />

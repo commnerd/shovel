@@ -14,7 +14,7 @@
                     </Button>
                     <Separator orientation="vertical" class="h-6" />
                     <div>
-                        <Heading class="mb-1">AI Task Breakdown</Heading>
+                        <Heading title="AI Task Breakdown" class="mb-1" />
                         <p class="text-sm text-gray-600">Let AI break down "{{ task.title }}" into manageable subtasks</p>
                     </div>
                 </div>
@@ -200,6 +200,7 @@
                                         <div class="flex items-center gap-4 text-sm">
                                             <span :class="getPriorityColor(subtask.priority)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
                                                 {{ subtask.priority }}
+                                                <span v-if="subtask.priority_adjusted" class="ml-1 text-blue-600" title="Priority adjusted to meet parent task requirements">*</span>
                                             </span>
                                             <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium text-gray-600">
                                                 {{ subtask.status }}
@@ -209,6 +210,9 @@
                                                 {{ subtask.due_date }}
                                             </span>
                                         </div>
+                                        <p v-if="subtask.priority_adjusted" class="text-xs text-blue-600 mt-2">
+                                            Priority adjusted from {{ subtask.original_priority }} to meet parent task requirements
+                                        </p>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -360,7 +364,7 @@ const getStatusColor = (status: string) => {
 const generateBreakdown = async () => {
     isGenerating.value = true;
     suggestedSubtasks.value = [];
-    aiNotes.value = [];
+    aiCommunication.value = {};
     hasGeneratedBreakdown.value = false;
 
     try {
@@ -373,6 +377,7 @@ const generateBreakdown = async () => {
             body: JSON.stringify({
                 title: props.task.title,
                 description: props.task.description || '',
+                parent_task_id: props.task.id, // Include parent task ID for priority validation
             }),
         });
 
@@ -386,6 +391,15 @@ const generateBreakdown = async () => {
                 problems: data.problems || [],
                 suggestions: data.suggestions || [],
             };
+
+            // Add priority adjustment message if any adjustments were made
+            if (data.priority_adjustments) {
+                aiCommunication.value.notes = [
+                    ...(aiCommunication.value.notes || []),
+                    data.priority_adjustments
+                ];
+            }
+
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to generate task breakdown. Please try again.');
@@ -402,7 +416,7 @@ const regenerateWithFeedback = async (feedback: string) => {
     isRegeneratingWithFeedback.value = true;
     showRegenerationModal.value = false;
     suggestedSubtasks.value = [];
-    aiNotes.value = [];
+    aiCommunication.value = {};
     hasGeneratedBreakdown.value = false;
 
     try {
@@ -416,6 +430,7 @@ const regenerateWithFeedback = async (feedback: string) => {
                 title: props.task.title,
                 description: props.task.description || '',
                 user_feedback: feedback,
+                parent_task_id: props.task.id, // Include parent task ID for priority validation
             }),
         });
 
@@ -429,6 +444,15 @@ const regenerateWithFeedback = async (feedback: string) => {
                 problems: data.problems || [],
                 suggestions: data.suggestions || [],
             };
+
+            // Add priority adjustment message if any adjustments were made
+            if (data.priority_adjustments) {
+                aiCommunication.value.notes = [
+                    ...(aiCommunication.value.notes || []),
+                    data.priority_adjustments
+                ];
+            }
+
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to regenerate task breakdown. Please try again.');

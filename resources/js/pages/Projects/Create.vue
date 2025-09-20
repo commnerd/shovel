@@ -42,8 +42,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     <Head title="Create Project" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div class="space-y-6">
+        <div class="flex h-full flex-1 flex-col justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
+            <div class="w-full max-w-2xl space-y-6">
                 <!-- Header with back button -->
                 <div class="flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
@@ -53,7 +53,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </Link>
                     </Button>
                     <div>
-                        <Heading>Create New Project</Heading>
+                        <Heading title="Create New Project" />
                         <p class="text-sm text-gray-600 mt-1">
                             Describe your project and let AI create an initial task layout
                         </p>
@@ -61,7 +61,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
 
                 <!-- Create form -->
-                <div class="max-w-2xl">
+                <div class="w-full">
                     <CreateProjectForm
                         :user-groups="userGroups"
                         :default-group-id="defaultGroupId"

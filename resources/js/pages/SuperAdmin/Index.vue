@@ -6,10 +6,7 @@
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <Heading class="mb-1 flex items-center gap-2">
-                        <Crown class="h-6 w-6 text-yellow-600" />
-                        Super Admin Dashboard
-                    </Heading>
+                    <Heading title="Super Admin Dashboard" class="mb-1 flex items-center gap-2" />
                     <p class="text-sm text-gray-600">System-wide administration and user management</p>
                 </div>
             </div>

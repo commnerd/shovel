@@ -106,6 +106,8 @@ class TasksController extends Controller
             return [
                 'id' => $task->id,
                 'title' => $task->title,
+                'priority' => $task->priority,
+                'priority_level' => $task->getPriorityLevel(),
             ];
         });
 
@@ -150,6 +152,15 @@ class TasksController extends Controller
             if (! $parentTask || $parentTask->project_id !== $project->id) {
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
             }
+
+            // Validate parent priority constraint
+            $tempTask = new Task(['parent_id' => $validated['parent_id']]);
+            $tempTask->setRelation('parent', $parentTask);
+            $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
+
+            if (!$priorityValidation['valid']) {
+                return back()->withErrors(['priority' => $priorityValidation['error']]);
+            }
         }
 
         // Determine sort order based on parent
@@ -174,6 +185,17 @@ class TasksController extends Controller
         // Create subtasks if provided
         if (! empty($validated['subtasks'])) {
             foreach ($validated['subtasks'] as $index => $subtaskData) {
+                // Validate subtask priority against parent
+                $tempSubtask = new Task(['parent_id' => $task->id]);
+                $tempSubtask->setRelation('parent', $task);
+                $subtaskPriorityValidation = $tempSubtask->validateParentPriorityConstraint($subtaskData['priority']);
+
+                if (!$subtaskPriorityValidation['valid']) {
+                    return back()->withErrors([
+                        "subtasks.{$index}.priority" => $subtaskPriorityValidation['error']
+                    ]);
+                }
+
                 $subtask = Task::create([
                     'project_id' => $project->id,
                     'parent_id' => $task->id,
@@ -222,6 +244,8 @@ class TasksController extends Controller
                 return [
                     'id' => $parentTask->id,
                     'title' => $parentTask->title,
+                    'priority' => $parentTask->priority,
+                    'priority_level' => $parentTask->getPriorityLevel(),
                 ];
             });
 
@@ -282,6 +306,32 @@ class TasksController extends Controller
                     return back()->withErrors(['parent_id' => 'Cannot create circular reference.']);
                 }
                 $current = $current->parent;
+            }
+
+            // Validate parent priority constraint
+            $tempTask = new Task(['parent_id' => $validated['parent_id']]);
+            $tempTask->setRelation('parent', $parentTask);
+            $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
+
+            if (!$priorityValidation['valid']) {
+                return back()->withErrors(['priority' => $priorityValidation['error']]);
+            }
+        }
+
+        // Also validate if we're changing an existing task's priority
+        if (!empty($validated['parent_id']) || $task->parent_id) {
+            $parentTask = !empty($validated['parent_id'])
+                ? Task::find($validated['parent_id'])
+                : $task->parent;
+
+            if ($parentTask) {
+                $tempTask = new Task(['parent_id' => $parentTask->id]);
+                $tempTask->setRelation('parent', $parentTask);
+                $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
+
+                if (!$priorityValidation['valid']) {
+                    return back()->withErrors(['priority' => $priorityValidation['error']]);
+                }
             }
         }
 
@@ -348,6 +398,8 @@ class TasksController extends Controller
             'parentTask' => [
                 'id' => $task->id,
                 'title' => $task->title,
+                'priority' => $task->priority,
+                'priority_level' => $task->getPriorityLevel(),
             ],
             'parentTasks' => [], // Empty since parent is pre-selected
         ]);
@@ -405,9 +457,22 @@ class TasksController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'user_feedback' => 'nullable|string|max:2000',
+            'parent_task_id' => 'nullable|exists:tasks,id',
         ]);
 
         try {
+            // Get parent task if provided
+            $parentTask = null;
+            if (!empty($validated['parent_task_id'])) {
+                $parentTask = Task::find($validated['parent_task_id']);
+                if (!$parentTask || $parentTask->project_id !== $project->id) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Invalid parent task.',
+                    ], 400);
+                }
+            }
+
             // Gather project context
             $existingTasks = $project->tasks()->get()->map(function ($task) {
                 return [
@@ -436,6 +501,11 @@ class TasksController extends Controller
                     'due_date' => $project->due_date?->format('Y-m-d'),
                     'status' => $project->status,
                 ],
+                'parent_task' => $parentTask ? [
+                    'title' => $parentTask->title,
+                    'priority' => $parentTask->priority,
+                    'priority_level' => $parentTask->getPriorityLevel(),
+                ] : null,
                 'existing_tasks' => $existingTasks,
                 'task_stats' => $taskStats,
                 'user_feedback' => $validated['user_feedback'] ?? null,
@@ -447,14 +517,21 @@ class TasksController extends Controller
                 $context
             );
 
+            // Validate and adjust subtask priorities if parent task exists
+            $subtasks = $aiResponse->getTasks();
+            if ($parentTask && !empty($subtasks)) {
+                $subtasks = $this->validateAndAdjustSubtaskPriorities($subtasks, $parentTask);
+            }
+
             return response()->json([
                 'success' => $aiResponse->isSuccessful(),
-                'subtasks' => $aiResponse->getTasks(),
+                'subtasks' => $subtasks,
                 'notes' => $aiResponse->getNotes(),
                 'summary' => $aiResponse->getSummary(),
                 'problems' => $aiResponse->getProblems(),
                 'suggestions' => $aiResponse->getSuggestions(),
                 'ai_used' => true,
+                'priority_adjustments' => $parentTask ? $this->getPriorityAdjustmentMessage($subtasks, $parentTask) : null,
             ]);
 
         } catch (\Exception $e) {
@@ -558,11 +635,19 @@ class TasksController extends Controller
                 break;
             case 'all':
             default:
-                $tasksQuery->orderByRaw('COALESCE(path, CAST(id AS CHAR)) ASC, sort_order ASC');
+                // Use the same logic as the main index method
+                $tasksQuery->orderBy('sort_order');
                 break;
         }
 
-        return $tasksQuery->get()->map(function ($task) {
+        $tasks = $tasksQuery->get();
+
+        // For 'all' filter, sort hierarchically while respecting sort_order within levels
+        if ($filter === 'all') {
+            $tasks = $this->sortTasksHierarchically($tasks);
+        }
+
+        return $tasks->map(function ($task) {
             return [
                 'id' => $task->id,
                 'title' => $task->title,
@@ -621,5 +706,59 @@ class TasksController extends Controller
             // Recursively add this child's children
             $this->addChildrenRecursively($child->id, $allTasks, $result);
         }
+    }
+
+    /**
+     * Validate and adjust AI-generated subtask priorities to respect parent constraints.
+     */
+    private function validateAndAdjustSubtaskPriorities(array $subtasks, Task $parentTask): array
+    {
+        $parentPriorityLevel = $parentTask->getPriorityLevel();
+        $adjustedSubtasks = [];
+
+        foreach ($subtasks as $subtask) {
+            $originalPriority = $subtask['priority'] ?? 'medium';
+            $priorityLevel = $this->getPriorityLevelFromString($originalPriority);
+
+            // If AI suggested priority is lower than parent, adjust it
+            if ($priorityLevel < $parentPriorityLevel) {
+                $subtask['priority'] = $parentTask->priority;
+                $subtask['priority_adjusted'] = true;
+                $subtask['original_priority'] = $originalPriority;
+            } else {
+                $subtask['priority_adjusted'] = false;
+            }
+
+            $adjustedSubtasks[] = $subtask;
+        }
+
+        return $adjustedSubtasks;
+    }
+
+    /**
+     * Get priority adjustment message for user feedback.
+     */
+    private function getPriorityAdjustmentMessage(array $subtasks, Task $parentTask): ?string
+    {
+        $adjustedCount = count(array_filter($subtasks, fn($s) => $s['priority_adjusted'] ?? false));
+
+        if ($adjustedCount > 0) {
+            return "Note: {$adjustedCount} subtask(s) had their priority adjusted to match the minimum required by the parent task ({$parentTask->priority}).";
+        }
+
+        return null;
+    }
+
+    /**
+     * Get priority level from string (helper for AI processing).
+     */
+    private function getPriorityLevelFromString(string $priority): int
+    {
+        return match($priority) {
+            'high' => 3,
+            'medium' => 2,
+            'low' => 1,
+            default => 1,
+        };
     }
 }

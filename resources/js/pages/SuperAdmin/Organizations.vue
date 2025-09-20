@@ -14,10 +14,7 @@
                     </Button>
                     <Separator orientation="vertical" class="h-6" />
                     <div>
-                        <Heading class="mb-1 flex items-center gap-2">
-                            <Building class="h-6 w-6 text-green-600" />
-                            Manage Organizations
-                        </Heading>
+                        <Heading title="Manage Organizations" class="mb-1 flex items-center gap-2" />
                         <p class="text-sm text-gray-600">System-wide organization management and oversight</p>
                     </div>
                 </div>

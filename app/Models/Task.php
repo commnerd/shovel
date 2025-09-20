@@ -282,6 +282,52 @@ class Task extends Model
     }
 
     /**
+     * Validate that task priority is not lower than its parent's priority.
+     */
+    public function validateParentPriorityConstraint(string $newPriority = null): array
+    {
+        $priority = $newPriority ?? $this->priority;
+        $priorityLevel = $this->getPriorityLevelFromString($priority);
+
+        if (!$this->parent_id) {
+            // Top-level tasks have no constraints
+            return ['valid' => true];
+        }
+
+        $parent = $this->parent;
+        if (!$parent) {
+            return ['valid' => true];
+        }
+
+        $parentPriorityLevel = $parent->getPriorityLevel();
+
+        if ($priorityLevel < $parentPriorityLevel) {
+            return [
+                'valid' => false,
+                'error' => "Child task cannot have lower priority ({$priority}) than its parent ({$parent->priority})",
+                'parent_priority' => $parent->priority,
+                'attempted_priority' => $priority,
+                'minimum_allowed_priority' => $parent->priority,
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Get priority level from string value.
+     */
+    private function getPriorityLevelFromString(string $priority): int
+    {
+        return match($priority) {
+            'high' => 3,
+            'medium' => 2,
+            'low' => 1,
+            default => 0,
+        };
+    }
+
+    /**
      * Check if moving this task to a new position requires confirmation.
      * Returns array with confirmation details or null if no confirmation needed.
      */
@@ -509,7 +555,7 @@ class Task extends Model
     }
 
     /**
-     * Calculate the optimal priority based on neighboring tasks.
+     * Calculate the optimal priority based on neighboring tasks and parent constraints.
      */
     private function calculateOptimalPriority(array $neighbors, array $confirmationData): string
     {
@@ -518,20 +564,26 @@ class Task extends Model
         }
 
         $neighborPriorities = array_map(fn($task) => $task->getPriorityLevel(), $neighbors);
+        $suggestedPriority = $this->priority;
 
-        // If moving to higher priority area, adopt the lowest high priority from neighbors
+        // Calculate suggested priority based on neighbors
         if ($confirmationData['type'] === 'moving_to_higher_priority') {
             $maxNeighborPriority = max($neighborPriorities);
-            return $this->getPriorityName($maxNeighborPriority);
-        }
-
-        // If moving to lower priority area, adopt the highest low priority from neighbors
-        if ($confirmationData['type'] === 'moving_to_lower_priority') {
+            $suggestedPriority = $this->getPriorityName($maxNeighborPriority);
+        } elseif ($confirmationData['type'] === 'moving_to_lower_priority') {
             $minNeighborPriority = min($neighborPriorities);
-            return $this->getPriorityName($minNeighborPriority);
+            $suggestedPriority = $this->getPriorityName($minNeighborPriority);
         }
 
-        return $this->priority;
+        // Validate against parent constraints
+        $validation = $this->validateParentPriorityConstraint($suggestedPriority);
+
+        if (!$validation['valid']) {
+            // If suggested priority violates parent constraint, use parent's priority instead
+            return $validation['minimum_allowed_priority'];
+        }
+
+        return $suggestedPriority;
     }
 
     /**

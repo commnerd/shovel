@@ -71,6 +71,7 @@ class TaskHierarchyFeatureTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
+            'priority' => 'low', // Specify parent priority so subtask can be medium
         ]);
 
         $response = $this->actingAs($this->user)
@@ -78,7 +79,7 @@ class TaskHierarchyFeatureTest extends TestCase
                 'title' => 'Subtask',
                 'description' => 'A subtask',
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is low
                 'status' => 'pending',
                 'due_date' => '2025-12-31',
             ]);
@@ -279,13 +280,14 @@ class TaskHierarchyFeatureTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
+            'priority' => 'low', // Specify parent priority so subtask can be medium
         ]);
 
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Subtask with Path',
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -301,17 +303,20 @@ class TaskHierarchyFeatureTest extends TestCase
         $parent1 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent 1',
+            'priority' => 'low', // Specify priority
         ]);
 
         $parent2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent 2',
+            'priority' => 'low', // Specify priority to allow medium child
         ]);
 
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parent1->id,
             'title' => 'Moving Task',
+            'priority' => 'medium', // Specify initial priority
         ]);
 
         // Move task from parent1 to parent2
@@ -319,7 +324,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->put("/dashboard/projects/{$this->project->id}/tasks/{$task->id}", [
                 'title' => 'Moving Task',
                 'parent_id' => $parent2->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since both parents are low
                 'status' => 'pending',
             ]);
 
@@ -420,13 +425,14 @@ class TaskHierarchyFeatureTest extends TestCase
         $level0 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Level 0',
+            'priority' => 'low', // Specify priority to allow medium children
         ]);
 
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Level 1',
                 'parent_id' => $level0->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -436,7 +442,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Level 2',
                 'parent_id' => $level1->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is medium
                 'status' => 'pending',
             ]);
 
@@ -457,6 +463,7 @@ class TaskHierarchyFeatureTest extends TestCase
         $parent = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent',
+            'priority' => 'low', // Specify priority to allow medium children
         ]);
 
         // Create first child
@@ -464,7 +471,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'First Child',
                 'parent_id' => $parent->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -473,7 +480,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Second Child',
                 'parent_id' => $parent->id,
-                'priority' => 'medium',
+                'priority' => 'medium', // Valid since parent is low
                 'status' => 'pending',
             ]);
 

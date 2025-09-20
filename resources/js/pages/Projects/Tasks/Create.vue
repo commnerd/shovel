@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ interface Project {
 interface ParentTask {
     id: number;
     title: string;
+    priority: 'low' | 'medium' | 'high';
+    priority_level: number;
 }
 
 const props = defineProps<{
@@ -47,16 +49,73 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+// Determine default priority based on parent task
+const getDefaultPriority = (): string => {
+    // If creating a subtask (parentTask provided), use parent's priority as minimum
+    if (props.parentTask) {
+        return props.parentTask.priority;
+    }
+    // For top-level tasks, use medium as default
+    return 'medium';
+};
+
 const form = useForm({
     title: '',
     description: '',
     parent_id: props.parentTask?.id?.toString() || '',
-    priority: 'medium',
+    priority: getDefaultPriority(),
     status: 'pending',
     due_date: '',
 });
 
 const isSubmitting = ref(false);
+
+// Compute available priority options based on parent task
+const availablePriorities = computed(() => {
+    const allPriorities = [
+        { value: 'low', label: 'Low', level: 1 },
+        { value: 'medium', label: 'Medium', level: 2 },
+        { value: 'high', label: 'High', level: 3 },
+    ];
+
+    // Check if we have a pre-selected parent (for subtask creation)
+    if (props.parentTask) {
+        const parentPriorityLevel = props.parentTask.priority_level;
+        return allPriorities.filter(p => p.level >= parentPriorityLevel);
+    }
+
+    // Check if user selected a parent from the dropdown
+    if (!form.parent_id) {
+        return allPriorities; // No parent, all priorities available
+    }
+
+    const parentTask = props.parentTasks.find(p => p.id.toString() === form.parent_id);
+    if (!parentTask) {
+        return allPriorities;
+    }
+
+    const parentPriorityLevel = parentTask.priority_level;
+
+    // Only allow priorities >= parent priority
+    return allPriorities.filter(p => p.level >= parentPriorityLevel);
+});
+
+// Watch for parent changes and adjust priority if needed
+watch(() => form.parent_id, (newParentId) => {
+    if (newParentId) {
+        const availableOptions = availablePriorities.value;
+        const currentPriorityAvailable = availableOptions.some(p => p.value === form.priority);
+
+        if (!currentPriorityAvailable && availableOptions.length > 0) {
+            // Set to the lowest available priority (which is the parent's priority)
+            form.priority = availableOptions[0].value;
+        }
+    } else {
+        // When parent is removed, reset to default medium priority
+        form.priority = 'medium';
+    }
+});
+
 const isGeneratingBreakdown = ref(false);
 const suggestedSubtasks = ref<any[]>([]);
 const aiNotes = ref<string[]>([]);
@@ -220,8 +279,8 @@ const handleKeydown = (event: KeyboardEvent) => {
     <Head title="Create Task" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div class="space-y-6">
+        <div class="flex h-full flex-1 flex-col justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
+            <div class="w-full max-w-2xl space-y-6">
                 <!-- Header with back button -->
                 <div class="flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
@@ -231,7 +290,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                         </Link>
                     </Button>
                     <div>
-                        <Heading>Create New Task</Heading>
+                        <Heading title="Create New Task" />
                         <p class="text-sm text-gray-600 mt-1">
                             Add a new task to {{ project.description }}
                         </p>
@@ -299,11 +358,21 @@ const handleKeydown = (event: KeyboardEvent) => {
                                             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             :disabled="form.processing"
                                         >
-                                            <option value="low">Low</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="high">High</option>
+                                            <option
+                                                v-for="priority in availablePriorities"
+                                                :key="priority.value"
+                                                :value="priority.value"
+                                            >
+                                                {{ priority.label }}
+                                            </option>
                                         </select>
                                         <InputError :message="form.errors.priority" />
+                                        <p v-if="props.parentTask" class="text-xs text-gray-500 mt-1">
+                                            Default: {{ props.parentTask.priority }} (minimum required by parent task)
+                                        </p>
+                                        <p v-else-if="form.parent_id" class="text-xs text-gray-500 mt-1">
+                                            Priority options limited by selected parent task
+                                        </p>
                                     </div>
 
                                     <div class="space-y-2">

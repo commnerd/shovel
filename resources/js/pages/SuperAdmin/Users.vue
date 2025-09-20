@@ -14,10 +14,7 @@
                     </Button>
                     <Separator orientation="vertical" class="h-6" />
                     <div>
-                        <Heading class="mb-1 flex items-center gap-2">
-                            <Users class="h-6 w-6 text-blue-600" />
-                            User Administration
-                        </Heading>
+                        <Heading title="User Administration" class="mb-1 flex items-center gap-2" />
                         <p class="text-sm text-gray-600">Search and manage users across all organizations</p>
                     </div>
                 </div>

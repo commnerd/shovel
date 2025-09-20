@@ -223,14 +223,14 @@ class AITaskBreakdownTest extends TestCase
                     [
                         'title' => 'Subtask 1',
                         'description' => 'First subtask',
-                        'priority' => 'medium',
+                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-15',
                     ],
                     [
                         'title' => 'Subtask 2',
                         'description' => 'Second subtask',
-                        'priority' => 'high',
+                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-20',
                     ],
@@ -415,7 +415,7 @@ class AITaskBreakdownTest extends TestCase
                     [
                         'title' => 'Testing Phase',
                         'description' => 'Test the implementation',
-                        'priority' => 'medium',
+                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-25',
                     ],

@@ -52,7 +52,7 @@ const totalUsers = computed(() => props.pendingUsers.length + props.approvedUser
             <Users class="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <Heading class="text-2xl font-bold">User Management</Heading>
+            <Heading title="User Management" class="text-2xl font-bold" />
             <p class="text-muted-foreground">Manage users in {{ organization.name }}</p>
           </div>
         </div>

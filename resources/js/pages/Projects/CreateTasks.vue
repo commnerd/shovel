@@ -223,10 +223,7 @@ const createProject = () => {
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <Heading class="flex items-center gap-2">
-                        <Sparkles class="h-6 w-6 text-blue-600" />
-                        AI Generated Tasks
-                    </Heading>
+                    <Heading title="AI Generated Tasks" class="flex items-center gap-2" />
                     <div v-if="projectData.title" class="mt-2">
                         <h2 class="text-xl font-semibold text-gray-900">{{ projectData.title }}</h2>
                     </div>

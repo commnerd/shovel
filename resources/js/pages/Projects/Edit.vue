@@ -96,8 +96,8 @@ const deleteProject = () => {
     <Head :title="`Edit ${project.title || 'Untitled Project'}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div class="space-y-6">
+        <div class="flex h-full flex-1 flex-col justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
+            <div class="w-full max-w-2xl space-y-6">
                 <!-- Header with back button -->
                 <div class="flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
@@ -107,7 +107,7 @@ const deleteProject = () => {
                         </Link>
                     </Button>
                     <div>
-                        <Heading>Edit {{ project.title || 'Untitled Project' }}</Heading>
+                        <Heading :title="`Edit ${project.title || 'Untitled Project'}`" />
                         <p class="text-sm text-gray-600 mt-1">
                             Update your project details and settings
                         </p>

@@ -61,7 +61,7 @@ const getStatusIcon = (status: string) => {
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
             <div class="space-y-6">
             <div class="flex items-center justify-between">
-                <Heading>Projects</Heading>
+                <Heading title="Projects" />
                 <Button v-if="hasProjects" class="flex items-center gap-2" as-child>
                     <Link href="/dashboard/projects/create">
                         <Plus class="h-4 w-4" />

@@ -80,7 +80,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <Card class="w-full max-w-lg mx-auto" data-testid="create-project-form">
+    <Card class="w-full" data-testid="create-project-form">
         <CardHeader class="text-center">
             <CardTitle class="flex items-center justify-center gap-2">
                 <Sparkles class="h-5 w-5 text-blue-600" />
