@@ -90,29 +90,10 @@ RUN php artisan migrate --force
 # Create storage link for public files
 RUN php artisan storage:link
 
-# Generate wayfinder files and build in single command with error isolation
-RUN set -e && \
-    echo "=== WAYFINDER GENERATION AND BUILD ===" && \
-    echo "Step 1: Clear caches" && \
-    php artisan config:clear && \
-    php artisan route:clear && \
-    echo "Step 2: Verify environment" && \
-    echo "Working dir: $(pwd)" && \
-    echo "Environment: $(php artisan env)" && \
-    echo "Step 3: Check routes" && \
-    WAYFINDER_BUILD=true APP_ENV=local php artisan route:list --name=register && \
-    echo "Step 4: Generate wayfinder files" && \
-    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local && \
-    echo "Step 5: Verify critical file exists" && \
-    test -f "resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" && \
-    ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
-    echo "Step 6: Set proper permissions" && \
-    chmod -R 755 resources/js/actions && \
-    echo "Step 7: Final verification before build" && \
-    find resources/js/actions -name "RegisteredUserController.ts" -exec ls -la {} \; && \
-    echo "Step 8: Start npm build" && \
-    npm run build && \
-    echo "=== ALL STEPS COMPLETED SUCCESSFULLY ==="
+# Copy and execute build script
+COPY build-wayfinder.sh /usr/local/bin/build-wayfinder.sh
+RUN chmod +x /usr/local/bin/build-wayfinder.sh && \
+    /usr/local/bin/build-wayfinder.sh
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
