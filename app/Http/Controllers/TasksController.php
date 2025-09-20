@@ -23,19 +23,21 @@ class TasksController extends Controller
         $filter = $request->get('filter', 'all');
 
         // Build base query
-        $tasksQuery = $project->tasks()->with(['parent', 'children'])->orderBy('sort_order');
+        $tasksQuery = $project->tasks()->with(['parent', 'children']);
 
-        // Apply filters
+        // Apply filters and ordering
         switch ($filter) {
             case 'top-level':
-                $tasksQuery->topLevel();
+                $tasksQuery->topLevel()->orderBy('sort_order');
                 break;
             case 'leaf':
-                $tasksQuery->leaf();
+                $tasksQuery->leaf()->orderBy('sort_order');
                 break;
             case 'all':
             default:
-                // Show all tasks
+                // For 'all' tasks, order hierarchically using path and sort_order
+                // This ensures parent tasks appear before their children
+                $tasksQuery->orderByRaw('COALESCE(path, CAST(id AS CHAR)) ASC, sort_order ASC');
                 break;
         }
 

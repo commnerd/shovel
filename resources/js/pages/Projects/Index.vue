@@ -95,15 +95,13 @@ const getStatusIcon = (status: string) => {
                                     <div
                                         v-for="task in newProject.tasks"
                                         :key="task.id"
-                                        class="flex items-center gap-3 p-3 rounded-lg border"
-                                        :class="getPriorityColor(task.priority)"
+                                        class="flex items-center gap-3 p-2 rounded-lg border bg-white/50"
                                     >
                                         <component :is="getStatusIcon(task.status)" class="h-4 w-4 flex-shrink-0" />
                                         <div class="flex-1 min-w-0">
-                                            <p class="font-medium text-sm">{{ task.title }}</p>
-                                            <p class="text-xs opacity-80">{{ task.description }}</p>
+                                            <p class="font-medium text-sm truncate">{{ task.title }}</p>
                                         </div>
-                                        <span class="text-xs font-medium px-2 py-1 rounded-full bg-white/50">
+                                        <span class="hidden sm:inline-flex text-xs font-medium px-2 py-1 rounded-full bg-white/50 flex-shrink-0">
                                             {{ task.priority }}
                                         </span>
                                     </div>

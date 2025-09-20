@@ -170,112 +170,86 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Tasks list -->
-            <div v-if="hasTasks" class="space-y-3">
-                <Card
+            <div v-if="hasTasks" class="space-y-2">
+                <div
                     v-for="task in tasks"
                     :key="task.id"
-                    class="hover:shadow-md transition-shadow"
+                    class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-md transition-shadow"
                     :class="{ 'ml-6': task.depth > 0 && currentFilter !== 'leaf' }"
                 >
-                    <CardHeader class="pb-3">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <CardTitle class="flex items-center gap-3 text-base">
-                                    <div class="flex items-center gap-2">
-                                        <component
-                                            :is="getStatusIcon(task.status)"
-                                            class="h-5 w-5 flex-shrink-0"
-                                            :class="getStatusColor(task.status).split(' ')[0]"
-                                        />
-                                        <component
-                                            :is="getTaskTypeIcon(task)"
-                                            class="h-4 w-4 flex-shrink-0 text-gray-400"
-                                        />
-                                    </div>
-                                    <span class="flex-1">{{ task.title }}</span>
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            :class="getPriorityColor(task.priority)"
-                                            class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium"
-                                        >
-                                            {{ task.priority }}
-                                        </span>
-                                        <span
-                                            :class="getStatusColor(task.status)"
-                                            class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium"
-                                        >
-                                            {{ task.status.replace('_', ' ') }}
-                                        </span>
-                                    </div>
-                                </CardTitle>
-                                <CardDescription v-if="task.description" class="mt-2">
-                                    {{ task.description }}
-                                </CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent class="pt-0">
-                        <div class="space-y-3">
-                            <div v-if="task.has_children || task.parent_id || task.depth > 0" class="flex items-center gap-4 text-xs text-gray-500">
-                                <div v-if="task.has_children" class="flex items-center gap-1">
-                                    <Users class="h-3 w-3" />
-                                    Has subtasks
-                                </div>
-                                <div v-if="task.parent_id" class="flex items-center gap-1">
-                                    <ArrowLeft class="h-3 w-3" />
-                                    Subtask
-                                </div>
-                                <div v-if="task.depth > 0" class="flex items-center gap-1">
-                                    <Layers class="h-3 w-3" />
-                                    Depth: {{ task.depth }}
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span>{{ task.is_top_level ? 'Top-level' : task.is_leaf ? 'Leaf' : 'Branch' }}</span>
-                                </div>
-                            </div>
+                    <!-- Status and type icons -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <component
+                            :is="getStatusIcon(task.status)"
+                            class="h-4 w-4"
+                            :class="getStatusColor(task.status).split(' ')[0]"
+                        />
+                        <component
+                            :is="getTaskTypeIcon(task)"
+                            class="h-3 w-3 text-gray-400"
+                        />
+                    </div>
 
-                            <!-- Action buttons -->
-                            <div class="flex gap-2 pt-2">
-                                <Button size="sm" variant="outline" as-child class="flex-1">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" class="flex items-center gap-2">
-                                        <Edit class="h-4 w-4" />
-                                        Edit
+                    <!-- Task title -->
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm font-medium text-gray-900 truncate block">{{ task.title }}</span>
+                    </div>
+
+                    <!-- Priority badge - hidden on small screens -->
+                    <span
+                        :class="getPriorityColor(task.priority)"
+                        class="hidden sm:inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium flex-shrink-0"
+                    >
+                        {{ task.priority }}
+                    </span>
+
+                    <!-- Status badge - hidden on small screens -->
+                    <span
+                        :class="getStatusColor(task.status)"
+                        class="hidden sm:inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium flex-shrink-0"
+                    >
+                        {{ task.status.replace('_', ' ') }}
+                    </span>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <!-- Subtasks group -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 font-medium">Subtasks:</span>
+                            <div class="flex items-center border rounded-md">
+                                <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-r-none border-r">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-1">
+                                        <Plus class="h-3 w-3" />
+                                        <span class="text-xs hidden sm:inline">Add</span>
                                     </Link>
                                 </Button>
-
-                                <!-- Split Add Subtask and AI Breakdown buttons -->
-                                <div class="flex gap-1 flex-1">
-                                    <Button size="sm" variant="outline" as-child class="flex-1">
-                                        <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-2">
-                                            <Plus class="h-4 w-4" />
-                                            Add Subtask
-                                        </Link>
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        class="flex-1 flex items-center gap-2"
-                                        as-child
-                                    >
-                                        <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`">
-                                            <Sparkles class="h-4 w-4" />
-                                            AI Breakdown
-                                        </Link>
-                                    </Button>
-                                </div>
-
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    class="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    @click="deleteTask(task.id)"
-                                >
-                                    <Trash2 class="h-4 w-4" />
+                                <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-l-none">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" class="flex items-center gap-1">
+                                        <Sparkles class="h-3 w-3" />
+                                        <span class="text-xs hidden sm:inline">Generate</span>
+                                    </Link>
                                 </Button>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+
+                        <!-- Edit and Delete buttons -->
+                        <div class="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" as-child class="h-8 w-8 p-0">
+                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
+                                    <Edit class="h-3 w-3" />
+                                </Link>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                class="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                @click="deleteTask(task.id)"
+                            >
+                                <Trash2 class="h-3 w-3" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Empty state -->
