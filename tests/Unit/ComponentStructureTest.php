@@ -24,18 +24,25 @@ class ComponentStructureTest extends TestCase
             'Badge component should not extend HTMLAttributes directly'
         );
 
-        // Test that the vue-ignore comment is present for VariantProps
+        // Test that the interface is properly defined without VariantProps extension
         $this->assertStringContainsString(
-            '/* @vue-ignore */ VariantProps<typeof badgeVariants>',
+            'interface BadgeProps {',
             $content,
-            'Badge component should use vue-ignore comment for VariantProps'
+            'Badge component should have a proper interface definition'
         );
 
-        // Test that the interface is properly defined
+        // Test that variant prop is properly typed
         $this->assertStringContainsString(
-            'interface BadgeProps extends',
+            "variant?: 'default' | 'secondary' | 'destructive' | 'outline';",
             $content,
-            'Badge component should have BadgeProps interface'
+            'Badge component should have properly typed variant prop'
+        );
+
+        // Test that withDefaults is used properly
+        $this->assertStringContainsString(
+            'const props = withDefaults(defineProps<BadgeProps>(),',
+            $content,
+            'Badge component should use withDefaults for prop defaults'
         );
 
         // Test that class prop is defined
@@ -104,9 +111,9 @@ class ComponentStructureTest extends TestCase
 
         // Test that the template uses the correct class binding
         $this->assertStringContainsString(
-            ':class="cn(badgeVariants({ variant }), $attrs.class ?? \'\')"',
+            ':class="cn(badgeVariants({ variant: props.variant }), props.class)"',
             $content,
-            'Badge template should use proper class binding with cn utility'
+            'Badge template should use proper class binding with cn utility and props'
         );
 
         // Test that slot is used

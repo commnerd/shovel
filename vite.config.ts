@@ -5,17 +5,14 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 import path from 'path';
 
-export default defineConfig({
-    plugins: [
+export default defineConfig(({ mode }) => {
+    const plugins = [
         laravel({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
         tailwindcss(),
-        // wayfinder({
-        //     formVariants: true,
-        // }),
         vue({
             template: {
                 transformAssetUrls: {
@@ -24,10 +21,22 @@ export default defineConfig({
                 },
             },
         }),
-    ],
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, 'resources/js'),
+    ];
+
+    // Only add wayfinder plugin in development mode
+    // In production/Docker, we use 'php artisan wayfinder:generate' instead
+    if (mode === 'development') {
+        plugins.splice(2, 0, wayfinder({
+            formVariants: true,
+        }));
+    }
+
+    return {
+        plugins,
+        resolve: {
+            alias: {
+                '@': path.resolve(__dirname, 'resources/js'),
+            },
         },
-    },
+    };
 });

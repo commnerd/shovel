@@ -12,7 +12,7 @@ use App\Http\Controllers\OrganizationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // Only allow registration when not in production, or during wayfinder build
+    // Allow registration in development and during wayfinder build process
     if (! app()->environment('production') || env('WAYFINDER_BUILD', false)) {
         Route::get('register', [RegisteredUserController::class, 'create'])
             ->name('register');

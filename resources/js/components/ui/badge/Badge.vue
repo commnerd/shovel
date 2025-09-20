@@ -22,15 +22,18 @@ const badgeVariants = cva(
   },
 );
 
-interface BadgeProps extends /* @vue-ignore */ VariantProps<typeof badgeVariants> {
+interface BadgeProps {
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline';
   class?: string;
 }
 
-defineProps<BadgeProps>();
+const props = withDefaults(defineProps<BadgeProps>(), {
+  variant: 'default',
+});
 </script>
 
 <template>
-  <div :class="cn(badgeVariants({ variant }), $attrs.class ?? '')">
+  <div :class="cn(badgeVariants({ variant: props.variant }), props.class)">
     <slot />
   </div>
 </template>

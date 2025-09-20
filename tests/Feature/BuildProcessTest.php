@@ -127,11 +127,11 @@ class BuildProcessTest extends TestCase
         // Check that the problematic HTMLAttributes extension is removed
         $this->assertStringNotContainsString('extends HTMLAttributes', $content);
 
-        // Check that the vue-ignore comment is present
-        $this->assertStringContainsString('/* @vue-ignore */', $content);
+        // Check that the interface is properly defined
+        $this->assertStringContainsString('interface BadgeProps {', $content);
 
-        // Check that VariantProps is still used
-        $this->assertStringContainsString('VariantProps<typeof badgeVariants>', $content);
+        // Check that variant prop is properly typed
+        $this->assertStringContainsString("variant?: 'default' | 'secondary' | 'destructive' | 'outline';", $content);
 
         // Check that the component has proper props interface
         $this->assertStringContainsString('interface BadgeProps', $content);
