@@ -124,7 +124,16 @@ RUN echo "=== WAYFINDER GENERATION START ===" && \
     echo "=== WAYFINDER GENERATION COMPLETE ==="
 
 # Now build the frontend assets with the generated files
-RUN npm run build
+RUN echo "=== PRE-BUILD FILE VERIFICATION ===" && \
+    echo "Checking if RegisteredUserController.ts still exists before npm build:" && \
+    ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
+    echo "File contents preview:" && \
+    head -5 resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
+    echo "Working directory: $(pwd)" && \
+    echo "Full actions directory structure:" && \
+    find resources/js/actions -name "*.ts" | grep -E "(Auth|RegisteredUser)" && \
+    echo "=== STARTING NPM BUILD ===" && \
+    npm run build
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
