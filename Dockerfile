@@ -90,48 +90,29 @@ RUN php artisan migrate --force
 # Create storage link for public files
 RUN php artisan storage:link
 
-# Generate wayfinder files and build frontend assets in single layer
-RUN echo "=== WAYFINDER GENERATION START ===" && \
-    echo "Working directory: $(pwd)" && \
-    echo "Laravel version: $(php artisan --version)" && \
-    echo "Environment check: $(php artisan env)" && \
-    echo "Route list before generation:" && \
-    WAYFINDER_BUILD=true APP_ENV=local php artisan route:list --name=register && \
-    echo "=== RUNNING WAYFINDER GENERATION ===" && \
+# Generate wayfinder files and build in single command with error isolation
+RUN set -e && \
+    echo "=== WAYFINDER GENERATION AND BUILD ===" && \
+    echo "Step 1: Clear caches" && \
     php artisan config:clear && \
     php artisan route:clear && \
-    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local || (echo "WAYFINDER GENERATION FAILED!" && exit 1) && \
-    echo "=== CHECKING GENERATION RESULTS ===" && \
-    ls -la resources/js/ && \
-    if [ -d "resources/js/actions" ]; then \
-        echo "✓ Actions directory exists" && \
-        echo "Actions structure:" && \
-        find resources/js/actions -type f -name "*.ts" | sort && \
-        echo "=== CRITICAL FILE CHECK ===" && \
-        if [ -f "resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" ]; then \
-            echo "✓ SUCCESS: RegisteredUserController.ts found!" && \
-            ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts; \
-        else \
-            echo "✗ CRITICAL ERROR: RegisteredUserController.ts NOT FOUND!" && \
-            echo "Auth directory contents:" && \
-            ls -la resources/js/actions/App/Http/Controllers/Auth/ || echo "Auth directory doesn't exist" && \
-            exit 1; \
-        fi; \
-    else \
-        echo "✗ FATAL ERROR: Actions directory was not created!" && \
-        exit 1; \
-    fi && \
-    echo "=== WAYFINDER GENERATION COMPLETE ===" && \
-    echo "=== PRE-BUILD FILE VERIFICATION ===" && \
-    echo "Checking if RegisteredUserController.ts still exists before npm build:" && \
+    echo "Step 2: Verify environment" && \
+    echo "Working dir: $(pwd)" && \
+    echo "Environment: $(php artisan env)" && \
+    echo "Step 3: Check routes" && \
+    WAYFINDER_BUILD=true APP_ENV=local php artisan route:list --name=register && \
+    echo "Step 4: Generate wayfinder files" && \
+    WAYFINDER_BUILD=true APP_ENV=local php artisan wayfinder:generate --verbose --env=local && \
+    echo "Step 5: Verify critical file exists" && \
+    test -f "resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" && \
     ls -la resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
-    echo "File contents preview:" && \
-    head -5 resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
-    echo "Working directory: $(pwd)" && \
-    echo "Full actions directory structure:" && \
-    find resources/js/actions -name "*.ts" | grep -E "(Auth|RegisteredUser)" && \
-    echo "=== STARTING NPM BUILD ===" && \
-    npm run build
+    echo "Step 6: Set proper permissions" && \
+    chmod -R 755 resources/js/actions && \
+    echo "Step 7: Final verification before build" && \
+    find resources/js/actions -name "RegisteredUserController.ts" -exec ls -la {} \; && \
+    echo "Step 8: Start npm build" && \
+    npm run build && \
+    echo "=== ALL STEPS COMPLETED SUCCESSFULLY ==="
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
