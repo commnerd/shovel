@@ -104,7 +104,7 @@ const showRegenerationModal = ref(false);
 const isRegeneratingWithFeedback = ref(false);
 
 // Priority colors
-const getPriorityColor = (priority: string) => {
+const getPriorityColor = (priority: string | undefined) => {
     switch (priority) {
         case 'high': return 'destructive';
         case 'medium': return 'default';
@@ -156,14 +156,16 @@ const addNewTask = () => {
 const toggleTaskStatus = (index: number) => {
     const task = form.tasks[index];
     const statuses = ['pending', 'in_progress', 'completed'];
-    const currentIndex = statuses.indexOf(task.status);
+    const currentStatus = task.status || 'pending';
+    const currentIndex = statuses.indexOf(currentStatus);
     task.status = statuses[(currentIndex + 1) % statuses.length] as any;
 };
 
 const changePriority = (index: number) => {
     const task = form.tasks[index];
     const priorities = ['low', 'medium', 'high'];
-    const currentIndex = priorities.indexOf(task.priority);
+    const currentPriority = task.priority || 'medium';
+    const currentIndex = priorities.indexOf(currentPriority);
     task.priority = priorities[(currentIndex + 1) % priorities.length] as any;
 };
 
@@ -383,10 +385,10 @@ const createProject = () => {
                                                 @click="changePriority(index)"
                                                 :data-testid="`task-priority-${index}`"
                                             >
-                                                {{ task.priority.toUpperCase() }} PRIORITY
+                                                {{ (task.priority || 'medium').toUpperCase() }} PRIORITY
                                             </Badge>
                                             <Badge variant="outline" class="px-3 py-1">
-                                                {{ task.status.replace('_', ' ').toUpperCase() }}
+                                                {{ (task.status || 'pending').replace('_', ' ').toUpperCase() }}
                                             </Badge>
                                         </div>
                                     </div>

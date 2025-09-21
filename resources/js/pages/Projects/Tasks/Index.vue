@@ -965,7 +965,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     :title="task.is_leaf ? '' : 'Status determined by child tasks'"
                                 >
                                     <span class="hidden sm:inline">{{ task.status }}</span>
-                                    <span class="sm:hidden">{{ task.status.charAt(0).toUpperCase() }}</span>
+                                    <span class="sm:hidden">{{ (task.status || 'pending').charAt(0).toUpperCase() }}</span>
                                 </span>
 
                                 <!-- Child task progress for parents -->
