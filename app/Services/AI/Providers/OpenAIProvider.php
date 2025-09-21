@@ -3,6 +3,7 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\Contracts\{AIProviderInterface, AIResponse, AITaskResponse};
+use App\Services\AI\AIUsageService;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -464,12 +465,25 @@ class OpenAIProvider implements AIProviderInterface
 
     protected function logRequest(string $operation, array $input, string $output, int $tokens = 0, ?string $model = null): void
     {
+        // Calculate estimated cost (rough calculation for gpt-3.5-turbo)
+        $estimatedCost = $tokens * 0.0000015; // $0.0015 per 1K tokens
+
+        // Log to AI Usage Service
+        try {
+            $aiUsageService = new AIUsageService();
+            $aiUsageService->logUsage('openai', $model ?? $this->defaultOptions['model'], $tokens, $estimatedCost);
+        } catch (\Exception $e) {
+            // Don't fail if usage logging fails
+            Log::warning('Failed to log AI usage', ['error' => $e->getMessage()]);
+        }
+
         if (config('ai.logging.enabled') && config('ai.logging.log_requests')) {
             Log::channel(config('ai.logging.channel', 'daily'))->info('OpenAI API Request', [
                 'provider' => 'openai',
                 'operation' => $operation,
                 'model' => $model ?? $this->defaultOptions['model'],
                 'tokens' => $tokens,
+                'cost_estimated' => $estimatedCost,
                 'input_length' => strlen(json_encode($input)),
                 'output_length' => strlen($output),
             ]);
@@ -478,6 +492,15 @@ class OpenAIProvider implements AIProviderInterface
 
     protected function logError(string $operation, string $error, ?int $statusCode = null): void
     {
+        // Log error to AI Usage Service
+        try {
+            $aiUsageService = new AIUsageService();
+            $aiUsageService->logError('openai', $this->defaultOptions['model'], $error);
+        } catch (\Exception $e) {
+            // Don't fail if usage logging fails
+            Log::warning('Failed to log AI error', ['error' => $e->getMessage()]);
+        }
+
         if (config('ai.logging.enabled') && config('ai.logging.log_errors')) {
             Log::channel(config('ai.logging.channel', 'daily'))->error('OpenAI API Error', [
                 'provider' => 'openai',

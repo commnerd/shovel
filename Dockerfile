@@ -97,6 +97,18 @@ RUN echo "Setting up deployment..." && \
 # Generate Wayfinder files for production build
 RUN echo "Generating Wayfinder files for production..." && \
     WAYFINDER_BUILD=true php artisan wayfinder:generate --with-form && \
+    echo "Checking if RegisteredUserController.ts exists..." && \
+    if [ ! -f "/var/www/html/resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" ]; then \
+        echo "RegisteredUserController.ts missing, copying from build context..." && \
+        cp /var/www/html/RegisteredUserController.ts /var/www/html/resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
+        echo "Created RegisteredUserController.ts from build context"; \
+    fi && \
+    echo "Checking if routes/index.ts has register export..." && \
+    if ! grep -q "export const register" /var/www/html/resources/js/routes/index.ts; then \
+        echo "Routes missing register export, copying from build context..." && \
+        cp /var/www/html/routes_index.ts /var/www/html/resources/js/routes/index.ts && \
+        echo "Created routes/index.ts from build context"; \
+    fi && \
     echo "Building assets..." && \
     npm run build
 

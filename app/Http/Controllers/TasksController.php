@@ -573,8 +573,14 @@ class TasksController extends Controller
             $provider = $aiConfig['provider'] ?? config('ai.default');
             $model = $aiConfig['model'] ?? null;
 
-        // Use project-specific AI configuration for breakdown
-        $aiResponse = \App\Services\AI\Facades\AI::driver($provider)->breakdownTask(
+            // Validate that the AI provider is available BEFORE trying to use it
+            $availableProviders = array_keys(\App\Services\AI\Facades\AI::getAvailableProviders());
+            if (!in_array($provider, $availableProviders)) {
+                throw new \InvalidArgumentException("AI provider '{$provider}' is not available. Available providers: " . implode(', ', $availableProviders));
+            }
+
+            // Use project-specific AI configuration for breakdown
+            $aiResponse = \App\Services\AI\Facades\AI::driver($provider)->breakdownTask(
             $validated['title'],
             $validated['description'] ?? '',
             $context,
@@ -602,6 +608,21 @@ class TasksController extends Controller
                 'full_prompt_text' => $fullPromptText,
             ]);
 
+        } catch (\InvalidArgumentException $e) {
+            \Log::error('Task breakdown failed - Invalid AI provider', [
+                'error' => $e->getMessage(),
+                'project_id' => $project->id,
+                'task_title' => $validated['title'],
+                'provider' => $provider ?? 'unknown',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid AI provider configured. Please check your project settings.',
+                'subtasks' => [],
+                'notes' => ['AI provider configuration error'],
+                'ai_used' => false,
+            ], 400);
         } catch (\Exception $e) {
             \Log::error('Task breakdown failed', [
                 'error' => $e->getMessage(),
