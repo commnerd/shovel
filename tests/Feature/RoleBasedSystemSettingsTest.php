@@ -110,7 +110,6 @@ class RoleBasedSystemSettingsTest extends TestCase
                 'provider' => 'openai',
                 'openai_api_key' => 'test-api-key',
                 'openai_base_url' => 'https://api.openai.com/v1',
-                'openai_model' => 'gpt-4',
             ]);
 
         $response->assertRedirect('/settings/system');
@@ -118,7 +117,8 @@ class RoleBasedSystemSettingsTest extends TestCase
 
         $this->assertEquals('test-api-key', Setting::get('ai.openai.api_key'));
         $this->assertEquals('https://api.openai.com/v1', Setting::get('ai.openai.base_url'));
-        $this->assertEquals('gpt-4', Setting::get('ai.openai.model'));
+        // Model is no longer stored in system-wide provider configuration
+        $this->assertNull(Setting::get('ai.openai.model'));
     }
 
     public function test_admin_cannot_update_provider_specific_settings()

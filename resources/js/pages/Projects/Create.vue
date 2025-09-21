@@ -15,9 +15,32 @@ interface Group {
     organization_name: string;
 }
 
+interface DefaultAISettings {
+    provider: string;
+    model: string;
+}
+
+interface ProviderInfo {
+    name: string;
+    description: string;
+    models: Record<string, string>;
+}
+
+interface FormData {
+    title: string;
+    description: string;
+    due_date: string;
+    group_id?: number;
+    ai_provider: string;
+    ai_model: string;
+}
+
 interface Props {
     userGroups: Group[];
     defaultGroupId?: number;
+    defaultAISettings: DefaultAISettings;
+    availableProviders: Record<string, ProviderInfo>;
+    formData?: FormData;
 }
 
 defineProps<Props>();
@@ -63,8 +86,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <!-- Create form -->
                 <div class="w-full">
                     <CreateProjectForm
-                        :user-groups="userGroups"
-                        :default-group-id="defaultGroupId"
+                        :userGroups="userGroups"
+                        :defaultGroupId="defaultGroupId"
+                        :defaultAISettings="defaultAISettings"
+                        :availableProviders="availableProviders"
+                        :formData="formData"
                     />
                 </div>
             </div>

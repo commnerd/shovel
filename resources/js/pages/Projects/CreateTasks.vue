@@ -54,6 +54,8 @@ interface Props {
         description: string;
         due_date?: string;
         group_id?: number;
+        ai_provider?: string;
+        ai_model?: string;
     };
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
@@ -88,6 +90,8 @@ const form = useForm({
     description: props.projectData.description,
     due_date: props.projectData.due_date || '',
     group_id: props.projectData.group_id || props.defaultGroupId,
+    ai_provider: props.projectData.ai_provider || null,
+    ai_model: props.projectData.ai_model || null,
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
 });
 
@@ -178,6 +182,8 @@ const regenerateTasksWithFeedback = (feedback: string) => {
             description: form.description,
             due_date: form.due_date,
             group_id: form.group_id,
+            ai_provider: form.ai_provider,
+            ai_model: form.ai_model,
             regenerate: true,
             user_feedback: feedback,
         },
@@ -199,6 +205,8 @@ const goBackToEdit = () => {
             description: form.description,
             due_date: form.due_date,
             group_id: form.group_id,
+            ai_provider: form.ai_provider,
+            ai_model: form.ai_model,
         }
     });
 };

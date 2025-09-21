@@ -60,8 +60,9 @@ class CerebrusProvider implements AIProviderInterface
     {
         $prompts = config('ai.prompts.task_generation');
 
-        // Build enhanced prompt with schema
-        $systemPrompt = $prompts['system']."\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
+        // Build enhanced prompt with schema and temporal context
+        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
+        $systemPrompt = $prompts['system']."\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
         $userPrompt = str_replace('{description}', $projectDescription, $prompts['user']);
 
         // Add user feedback if provided in options
@@ -454,9 +455,13 @@ class CerebrusProvider implements AIProviderInterface
      */
     protected function buildTaskBreakdownSystemPrompt(): string
     {
-        return config('ai.prompts.task_breakdown.system',
+        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
+
+        $basePrompt = config('ai.prompts.task_breakdown.system',
             'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.'
         );
+
+        return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
 
     /**
@@ -468,7 +473,10 @@ class CerebrusProvider implements AIProviderInterface
             'Please break down the following task into smaller, actionable subtasks:'
         );
 
+        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
         $prompt = $basePrompt."\n\n";
+        $prompt .= "**Current Context:**\n";
+        $prompt .= "Date and time: {$currentDateTime}\n\n";
         $prompt .= "**Task to Break Down:**\n";
         $prompt .= "Title: {$taskTitle}\n";
         $prompt .= "Description: {$taskDescription}\n\n";

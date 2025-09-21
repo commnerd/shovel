@@ -67,10 +67,34 @@ const kanbanDraggedTask = ref<Task | null>(null);
 const kanbanDragOverColumn = ref<string | null>(null);
 
 const tabOptions = [
-    { value: 'top-level', label: 'List', icon: List, count: taskCounts.value.top_level, description: 'Reorderable top-level tasks' },
-    { value: 'all', label: 'Breakdown', icon: BarChart3, count: taskCounts.value.all, description: 'Hierarchical task structure' },
-    { value: 'leaf', label: 'Todo', icon: CheckSquare, count: taskCounts.value.leaf, description: 'Actionable tasks only' },
-    { value: 'board', label: 'Board', icon: Kanban, count: taskCounts.value.all, description: 'Kanban workflow board' },
+    {
+        value: 'top-level',
+        label: 'List',
+        icon: List,
+        count: taskCounts.value.top_level,
+        description: 'Drag & drop reorderable view of top-level tasks only. Use this for organizing your main project structure.'
+    },
+    {
+        value: 'all',
+        label: 'Breakdown',
+        icon: BarChart3,
+        count: taskCounts.value.all,
+        description: 'Complete hierarchical view showing all tasks and subtasks with visual indentation. Only leaf tasks can be marked complete.'
+    },
+    {
+        value: 'leaf',
+        label: 'Todo',
+        icon: CheckSquare,
+        count: taskCounts.value.leaf,
+        description: 'Simplified list of actionable tasks only (no parent tasks). Perfect for focusing on work that can be completed today.'
+    },
+    {
+        value: 'board',
+        label: 'Board',
+        icon: Kanban,
+        count: taskCounts.value.all,
+        description: 'Kanban-style board with To Do, In Progress, and Done columns. Drag tasks between columns to update their status.'
+    },
 ];
 
 const getStatusIcon = (status: string) => {
@@ -699,6 +723,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         ]"
                         :aria-current="currentFilter === tab.value ? 'page' : undefined"
+                        :title="tab.description"
                     >
                         <component
                             :is="tab.icon"

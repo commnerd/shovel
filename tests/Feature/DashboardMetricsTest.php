@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -156,7 +157,10 @@ class DashboardMetricsTest extends TestCase
 
     public function test_dashboard_correctly_identifies_overdue_projects(): void
     {
-        $user = User::factory()->create();
+        $organization = Organization::factory()->create([
+            'domain' => 'overdue-test-' . uniqid() . '.com'
+        ]);
+        $user = User::factory()->create(['organization_id' => $organization->id]);
 
         // Create overdue active project
         Project::factory()->create([

@@ -76,17 +76,16 @@ class SettingsTest extends TestCase
                 'provider' => 'openai',
                 'openai_api_key' => 'test-openai-key',
                 'openai_base_url' => 'https://api.openai.com/v1',
-                'openai_model' => 'gpt-4',
             ]);
 
         $response->assertRedirect('/settings/system');
         $response->assertSessionHas('message', 'AI settings updated successfully!');
 
-        // Verify settings were saved
+        // Verify settings were saved (model is no longer stored in system-wide config)
         $this->assertEquals('openai', Setting::get('ai.provider'));
         $this->assertEquals('test-openai-key', Setting::get('ai.openai.api_key'));
         $this->assertEquals('https://api.openai.com/v1', Setting::get('ai.openai.base_url'));
-        $this->assertEquals('gpt-4', Setting::get('ai.openai.model'));
+        $this->assertNull(Setting::get('ai.openai.model')); // Model not stored in system config
     }
 
     public function test_ai_settings_validation()
@@ -164,11 +163,10 @@ class SettingsTest extends TestCase
                 'provider' => 'invalid',
                 'api_key' => '',
                 'base_url' => 'not-a-url',
-                'model' => '',
             ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['provider', 'api_key', 'base_url', 'model']);
+        $response->assertJsonValidationErrors(['provider', 'api_key', 'base_url']); // Model removed from system config
     }
 
     public function test_settings_model_basic_operations()

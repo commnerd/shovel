@@ -3,7 +3,7 @@
 namespace App\Services\AI;
 
 use App\Services\AI\Contracts\AIProviderInterface;
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\{CerebrusProvider, OpenAIProvider};
 use Illuminate\Support\Manager;
 
 class AIManager extends Manager
@@ -33,8 +33,7 @@ class AIManager extends Manager
     {
         $config = $this->config->get('ai.providers.openai');
 
-        // This would be implemented when adding OpenAI support
-        throw new \InvalidArgumentException('OpenAI provider not yet implemented');
+        return new OpenAIProvider($config);
     }
 
     /**

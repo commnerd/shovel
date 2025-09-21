@@ -38,69 +38,23 @@ class SettingsController extends Controller
             ];
         }
 
-        // Get provider-specific configurations
+        // Get provider-specific configurations (API keys and base URLs only)
         $providerConfigs = [
             'cerebrus' => [
                 'api_key' => Setting::get('ai.cerebrus.api_key', ''),
                 'base_url' => Setting::get('ai.cerebrus.base_url', 'https://api.cerebras.ai/v1'),
-                'model' => Setting::get('ai.cerebrus.model', 'llama3.1-8b'),
             ],
             'openai' => [
                 'api_key' => Setting::get('ai.openai.api_key', ''),
                 'base_url' => Setting::get('ai.openai.base_url', 'https://api.openai.com/v1'),
-                'model' => Setting::get('ai.openai.model', 'gpt-4'),
             ],
             'anthropic' => [
                 'api_key' => Setting::get('ai.anthropic.api_key', ''),
                 'base_url' => Setting::get('ai.anthropic.base_url', 'https://api.anthropic.com/v1'),
-                'model' => Setting::get('ai.anthropic.model', 'claude-3-sonnet-20240229'),
             ],
         ];
 
-        $availableProviders = [
-            'cerebrus' => [
-                'name' => 'Cerebras',
-                'description' => 'Fast and efficient AI models',
-                'models' => [
-                    'llama3.1-8b' => 'Llama 3.1 8B',
-                    'llama3.1-70b' => 'Llama 3.1 70B',
-                ],
-                'fields' => [
-                    'api_key' => 'API Key',
-                    'base_url' => 'Base URL',
-                    'model' => 'Model',
-                ],
-            ],
-            'openai' => [
-                'name' => 'OpenAI',
-                'description' => 'GPT models from OpenAI',
-                'models' => [
-                    'gpt-5' => 'GPT-5',
-                    'gpt-4' => 'GPT-4',
-                    'gpt-4-turbo' => 'GPT-4 Turbo',
-                    'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
-                ],
-                'fields' => [
-                    'api_key' => 'API Key',
-                    'base_url' => 'Base URL',
-                    'model' => 'Model',
-                ],
-            ],
-            'anthropic' => [
-                'name' => 'Anthropic',
-                'description' => 'Claude models from Anthropic',
-                'models' => [
-                    'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
-                    'claude-3-opus-20240229' => 'Claude 3 Opus',
-                    'claude-3-haiku-20240307' => 'Claude 3 Haiku',
-                ],
-                'fields' => [
-                    'api_key' => 'API Key',
-                    'base_url' => 'Base URL',
-                    'model' => 'Model',
-                ],
-            ],
-        ];
+        $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
 
         return Inertia::render('settings/System', [
             'defaultAISettings' => $defaultAISettings,
@@ -137,13 +91,10 @@ class SettingsController extends Controller
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'cerebrus_api_key' => 'nullable|string|max:255',
             'cerebrus_base_url' => 'nullable|url|max:255',
-            'cerebrus_model' => 'nullable|string|max:100',
             'openai_api_key' => 'nullable|string|max:255',
             'openai_base_url' => 'nullable|url|max:255',
-            'openai_model' => 'nullable|string|max:100',
             'anthropic_api_key' => 'nullable|string|max:255',
             'anthropic_base_url' => 'nullable|url|max:255',
-            'anthropic_model' => 'nullable|string|max:100',
         ]);
 
         // Update AI provider setting
@@ -156,9 +107,6 @@ class SettingsController extends Controller
             }
             if (! empty($validated["{$provider}_base_url"])) {
                 Setting::set("ai.{$provider}.base_url", $validated["{$provider}_base_url"], 'string', "{$provider} base URL");
-            }
-            if (! empty($validated["{$provider}_model"])) {
-                Setting::set("ai.{$provider}.model", $validated["{$provider}_model"], 'string', "{$provider} model");
             }
         }
 
@@ -238,7 +186,6 @@ class SettingsController extends Controller
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'api_key' => 'required|string',
             'base_url' => 'required|url',
-            'model' => 'required|string',
         ]);
 
         try {
@@ -246,7 +193,6 @@ class SettingsController extends Controller
             config([
                 "ai.providers.{$validated['provider']}.api_key" => $validated['api_key'],
                 "ai.providers.{$validated['provider']}.base_url" => $validated['base_url'],
-                "ai.providers.{$validated['provider']}.model" => $validated['model'],
                 'ai.default_provider' => $validated['provider'],
             ]);
 

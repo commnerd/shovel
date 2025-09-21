@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class RegenerationFeedbackTest extends TestCase
+class RegenerationFeedbackTestSimplified extends TestCase
 {
     use RefreshDatabase;
 

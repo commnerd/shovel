@@ -10,9 +10,32 @@ interface Group {
     organization_name: string;
 }
 
+interface DefaultAISettings {
+    provider: string;
+    model: string;
+}
+
+interface ProviderInfo {
+    name: string;
+    description: string;
+    models: Record<string, string>;
+}
+
+interface FormData {
+    title: string;
+    description: string;
+    due_date: string;
+    group_id?: number;
+    ai_provider: string;
+    ai_model: string;
+}
+
 interface Props {
     userGroups: Group[];
     defaultGroupId?: number;
+    defaultAISettings: DefaultAISettings;
+    availableProviders: Record<string, ProviderInfo>;
+    formData?: FormData;
 }
 
 const props = defineProps<Props>();
@@ -27,7 +50,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
-import { Sparkles, Calendar, Wand2, Users } from 'lucide-vue-next';
+import { Sparkles, Calendar, Wand2, Users, Bot } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 
 export interface TaskSuggestion {
@@ -39,10 +62,12 @@ export interface TaskSuggestion {
 }
 
 const form = useForm({
-    title: '',
-    description: '',
-    due_date: '',
-    group_id: props.defaultGroupId || null,
+    title: props.formData?.title || '',
+    description: props.formData?.description || '',
+    due_date: props.formData?.due_date || '',
+    group_id: props.formData?.group_id || props.defaultGroupId || null,
+    ai_provider: props.formData?.ai_provider || props.defaultAISettings.provider || 'cerebrus',
+    ai_model: props.formData?.ai_model || props.defaultAISettings.model || '',
 });
 
 const isGeneratingTasks = ref(false);
@@ -60,6 +85,8 @@ const generateTasks = () => {
             description: form.description,
             due_date: form.due_date,
             group_id: form.group_id,
+            ai_provider: form.ai_provider,
+            ai_model: form.ai_model,
         },
         onFinish: () => {
             isGeneratingTasks.value = false;
@@ -163,6 +190,56 @@ const handleKeydown = (event: KeyboardEvent) => {
                     <InputError :message="form.errors.group_id" />
                     <p class="text-xs text-gray-500">
                         Choose which group this project belongs to
+                    </p>
+                </div>
+
+                <!-- AI Configuration -->
+                <div class="space-y-4 p-4 border rounded-lg bg-gray-50">
+                    <h3 class="font-medium text-gray-900 flex items-center gap-2">
+                        <Bot class="h-4 w-4 text-blue-600" />
+                        AI Configuration
+                    </h3>
+
+                    <!-- AI Provider Selection -->
+                    <div class="space-y-2">
+                        <Label for="ai_provider">AI Provider</Label>
+                        <select
+                            id="ai_provider"
+                            v-model="form.ai_provider"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="form.processing || isGeneratingTasks"
+                        >
+                            <option v-for="(provider, key) in availableProviders" :key="key" :value="key">
+                                {{ provider.name }} - {{ provider.description }}
+                            </option>
+                        </select>
+                        <InputError :message="form.errors.ai_provider" />
+                    </div>
+
+                    <!-- AI Model Selection -->
+                    <div v-if="form.ai_provider && availableProviders[form.ai_provider]?.models" class="space-y-2">
+                        <Label for="ai_model">AI Model</Label>
+                        <select
+                            id="ai_model"
+                            v-model="form.ai_model"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="form.processing || isGeneratingTasks"
+                        >
+                            <option value="">Select a model...</option>
+                            <option
+                                v-for="(modelName, modelKey) in availableProviders[form.ai_provider].models"
+                                :key="modelKey"
+                                :value="modelKey"
+                            >
+                                {{ modelName }}
+                            </option>
+                        </select>
+                        <InputError :message="form.errors.ai_model" />
+                    </div>
+
+                    <p class="text-xs text-gray-500">
+                        Configure which AI provider and model to use for generating tasks for this project.
+                        This will be used for task generation and breakdown features.
                     </p>
                 </div>
 

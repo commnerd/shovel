@@ -252,7 +252,14 @@ class AITaskBreakdownTest extends TestCase
 
         $prompt = $method->invoke($provider);
 
-        $this->assertEquals('Custom system prompt for testing', $prompt);
+        // Verify the custom prompt is included
+        $this->assertStringContainsString('Custom system prompt for testing', $prompt);
+        
+        // Verify date/time context is appended
+        $this->assertStringContainsString('Current date and time:', $prompt);
+        $this->assertStringContainsString('temporal context', $prompt);
+        $this->assertStringContainsString('deadlines', $prompt);
+        $this->assertStringContainsString('timeframes', $prompt);
     }
 
     public function test_task_breakdown_user_prompt_configuration()

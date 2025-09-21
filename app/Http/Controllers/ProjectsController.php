@@ -61,7 +61,7 @@ class ProjectsController extends Controller
     /**
      * Show the form for creating a new project.
      */
-    public function create()
+    public function create(Request $request)
     {
         // Get user's available groups (within their organization)
         $userGroups = auth()->user()->getOrganizationGroups()->map(function ($group) {
@@ -76,9 +76,46 @@ class ProjectsController extends Controller
 
         $defaultGroup = $userGroups->where('is_default', true)->first();
 
+        // Get AI configuration data
+        $user = auth()->user();
+        $orgId = $user->organization?->id;
+
+        // Get default AI settings (system-wide or organization-specific)
+        $defaultAISettings = [
+            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebrus'),
+            'model' => \App\Models\Setting::get('ai.default.model', ''),
+        ];
+
+        // Override with organization-specific settings if available
+        if ($orgId) {
+            $orgProvider = \App\Models\Setting::get("ai.organization.{$orgId}.provider");
+            $orgModel = \App\Models\Setting::get("ai.organization.{$orgId}.model");
+
+            if ($orgProvider) {
+                $defaultAISettings['provider'] = $orgProvider;
+                $defaultAISettings['model'] = $orgModel ?? '';
+            }
+        }
+
+        // Get available providers and models (centralized configuration)
+        $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
+
+        // Pre-populate form data if coming from task generation page
+        $formData = [
+            'title' => $request->input('title', ''),
+            'description' => $request->input('description', ''),
+            'due_date' => $request->input('due_date', ''),
+            'group_id' => $request->input('group_id', $defaultGroup['id'] ?? null),
+            'ai_provider' => $request->input('ai_provider', $defaultAISettings['provider']),
+            'ai_model' => $request->input('ai_model', $defaultAISettings['model']),
+        ];
+
         return Inertia::render('Projects/Create', [
             'userGroups' => $userGroups,
             'defaultGroupId' => $defaultGroup['id'] ?? null,
+            'defaultAISettings' => $defaultAISettings,
+            'availableProviders' => $availableProviders,
+            'formData' => $formData,
         ]);
     }
 
@@ -92,36 +129,8 @@ class ProjectsController extends Controller
             abort(403, 'You do not have permission to access this project.');
         }
 
-        // Get available AI providers for the dropdown
-        $availableProviders = [
-            'cerebrus' => [
-                'name' => 'Cerebras',
-                'description' => 'Fast and efficient AI models',
-                'models' => [
-                    'llama3.1-8b' => 'Llama 3.1 8B',
-                    'llama3.1-70b' => 'Llama 3.1 70B',
-                ],
-            ],
-            'openai' => [
-                'name' => 'OpenAI',
-                'description' => 'GPT models from OpenAI',
-                'models' => [
-                    'gpt-5' => 'GPT-5',
-                    'gpt-4' => 'GPT-4',
-                    'gpt-4-turbo' => 'GPT-4 Turbo',
-                    'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
-                ],
-            ],
-            'anthropic' => [
-                'name' => 'Anthropic',
-                'description' => 'Claude models from Anthropic',
-                'models' => [
-                    'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
-                    'claude-3-opus-20240229' => 'Claude 3 Opus',
-                    'claude-3-haiku-20240307' => 'Claude 3 Haiku',
-                ],
-            ],
-        ];
+        // Get available AI providers for the dropdown (centralized configuration)
+        $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
 
         return Inertia::render('Projects/Edit', [
             'project' => [
@@ -228,6 +237,8 @@ class ProjectsController extends Controller
             'group_id' => 'nullable|exists:groups,id',
             'regenerate' => 'nullable|boolean',
             'user_feedback' => 'nullable|string|max:2000',
+            'ai_provider' => 'nullable|string|in:cerebrus,openai,anthropic',
+            'ai_model' => 'nullable|string|max:100',
         ]);
 
         $aiUsed = false;
@@ -261,7 +272,20 @@ class ProjectsController extends Controller
                 $aiOptions['user_feedback'] = $validated['user_feedback'];
             }
 
-            $aiResponse = AI::generateTasks($validated['description'], $taskSchema, $aiOptions);
+            // Use selected AI provider and model
+            if (!empty($validated['ai_provider'])) {
+                $aiOptions['provider'] = $validated['ai_provider'];
+            }
+            if (!empty($validated['ai_model'])) {
+                $aiOptions['model'] = $validated['ai_model'];
+            }
+
+            // Use specific provider if selected
+            if (!empty($validated['ai_provider'])) {
+                $aiResponse = AI::driver($validated['ai_provider'])->generateTasks($validated['description'], $taskSchema, $aiOptions);
+            } else {
+                $aiResponse = AI::generateTasks($validated['description'], $taskSchema, $aiOptions);
+            }
             $aiUsed = $aiResponse->isSuccessful();
 
             if ($aiResponse->isSuccessful()) {
@@ -355,6 +379,8 @@ class ProjectsController extends Controller
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
                 'group_id' => $validated['group_id'] ?? ($defaultGroup['id'] ?? null),
+                'ai_provider' => $validated['ai_provider'] ?? null,
+                'ai_model' => $validated['ai_model'] ?? null,
             ],
             'suggestedTasks' => $suggestedTasks,
             'aiUsed' => $aiUsed,
@@ -374,6 +400,8 @@ class ProjectsController extends Controller
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'group_id' => 'nullable|exists:groups,id',
+            'ai_provider' => 'nullable|string|in:cerebrus,openai,anthropic',
+            'ai_model' => 'nullable|string|max:100',
             'tasks' => 'nullable|array',
             'tasks.*.title' => 'required|string|max:255',
             'tasks.*.description' => 'nullable|string|max:1000',
@@ -432,10 +460,14 @@ class ProjectsController extends Controller
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
                 'status' => 'active',
+                'ai_provider' => $validated['ai_provider'] ?? null,
+                'ai_model' => $validated['ai_model'] ?? null,
             ]);
 
-            // Apply default AI configuration to the new project
-            $project->applyDefaultAIConfiguration();
+            // Apply default AI configuration if not explicitly set
+            if (empty($validated['ai_provider'])) {
+                $project->applyDefaultAIConfiguration();
+            }
 
             // Create tasks if provided
             if (! empty($validated['tasks'])) {
