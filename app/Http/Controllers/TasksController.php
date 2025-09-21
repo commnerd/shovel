@@ -389,7 +389,22 @@ class TasksController extends Controller
             'status' => 'required|in:pending,in_progress,completed',
         ]);
 
+        // Prevent parent tasks from being marked completed directly
+        if (!$task->isLeaf() && $validated['status'] === 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parent tasks cannot be marked completed directly. Complete all child tasks instead.',
+            ], 400);
+        }
+
+        $oldStatus = $task->status;
         $task->update(['status' => $validated['status']]);
+
+        // Manually trigger parent status update if this task has a parent
+        // This ensures the parent status is recalculated even if the boot event doesn't fire
+        if ($task->parent_id && $oldStatus !== $validated['status']) {
+            $task->updateParentStatus();
+        }
 
         return response()->json([
             'success' => true,
@@ -561,11 +576,21 @@ class TasksController extends Controller
                 'user_feedback' => $validated['user_feedback'] ?? null,
             ];
 
-            $aiResponse = \App\Services\AI\Facades\AI::breakdownTask(
-                $validated['title'],
-                $validated['description'] ?? '',
-                $context
-            );
+            // Get project-specific AI configuration
+            $aiConfig = $project->getAIConfiguration();
+            $provider = $aiConfig['provider'] ?? config('ai.default');
+            $model = $aiConfig['model'] ?? null;
+
+        // Use project-specific AI configuration for breakdown
+        $aiResponse = \App\Services\AI\Facades\AI::driver($provider)->breakdownTask(
+            $validated['title'],
+            $validated['description'] ?? '',
+            $context,
+            $model ? ['model' => $model] : []
+        );
+
+        // Capture the full prompt text for transparency
+        $fullPromptText = $this->generateFullPromptText($validated, $context, $provider, $model);
 
             // Validate and adjust subtask priorities if parent task exists
             $subtasks = $aiResponse->getTasks();
@@ -582,6 +607,8 @@ class TasksController extends Controller
                 'suggestions' => $aiResponse->getSuggestions(),
                 'ai_used' => true,
                 'priority_adjustments' => $parentTask ? $this->getPriorityAdjustmentMessage($subtasks, $parentTask) : null,
+                'prompt_used' => $this->generatePromptForViewing($validated, $context, $provider, $model),
+                'full_prompt_text' => $fullPromptText,
             ]);
 
         } catch (\Exception $e) {
@@ -815,5 +842,90 @@ class TasksController extends Controller
             'low' => 1,
             default => 1,
         };
+    }
+
+    /**
+     * Generate a readable version of the prompt used for AI task breakdown.
+     */
+    private function generatePromptForViewing(array $validated, array $context, string $provider, ?string $model): array
+    {
+        $prompt = [
+            'provider' => $provider,
+            'model' => $model ?? 'default',
+            'task_title' => $validated['title'],
+            'task_description' => $validated['description'] ?? 'No description provided',
+            'user_feedback' => $validated['user_feedback'] ?? 'No specific feedback provided',
+            'project_context' => [
+                'title' => $context['project']['title'],
+                'description' => $context['project']['description'],
+                'total_tasks' => $context['task_stats']['total'],
+                'completed_tasks' => $context['task_stats']['completed'],
+            ],
+        ];
+
+        if (!empty($context['parent_task'])) {
+            $prompt['parent_task'] = [
+                'title' => $context['parent_task']['title'],
+                'priority' => $context['parent_task']['priority'],
+            ];
+        }
+
+        if (!empty($context['existing_tasks'])) {
+            $prompt['existing_tasks_count'] = count($context['existing_tasks']);
+            $prompt['sample_existing_tasks'] = array_slice($context['existing_tasks'], 0, 3);
+        }
+
+        return $prompt;
+    }
+
+    /**
+     * Generate the full prompt text that would be sent to the AI service.
+     */
+    private function generateFullPromptText(array $validated, array $context, string $provider, ?string $model): array
+    {
+        try {
+            // Get the AI provider instance to access its prompt building methods
+            $aiProvider = \App\Services\AI\Facades\AI::provider($provider);
+
+            // For CerebrusProvider, we can call the protected methods via reflection
+            if ($aiProvider instanceof \App\Services\AI\Providers\CerebrusProvider) {
+                $reflection = new \ReflectionClass($aiProvider);
+
+                // Get system prompt
+                $systemPromptMethod = $reflection->getMethod('buildTaskBreakdownSystemPrompt');
+                $systemPromptMethod->setAccessible(true);
+                $systemPrompt = $systemPromptMethod->invoke($aiProvider);
+
+                // Get user prompt
+                $userPromptMethod = $reflection->getMethod('buildTaskBreakdownUserPrompt');
+                $userPromptMethod->setAccessible(true);
+                $userPrompt = $userPromptMethod->invoke($aiProvider, $validated['title'], $validated['description'] ?? '', $context);
+
+                return [
+                    'system_prompt' => $systemPrompt,
+                    'user_prompt' => $userPrompt,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userPrompt],
+                    ],
+                ];
+            }
+
+            // Fallback for other providers - return a generic representation
+            return [
+                'system_prompt' => 'System prompt not available for this provider',
+                'user_prompt' => 'User prompt not available for this provider',
+                'messages' => [],
+                'note' => 'Full prompt text is only available for supported AI providers',
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'system_prompt' => 'Error retrieving system prompt',
+                'user_prompt' => 'Error retrieving user prompt',
+                'messages' => [],
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 }

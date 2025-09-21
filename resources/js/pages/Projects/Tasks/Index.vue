@@ -669,7 +669,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <Separator orientation="vertical" class="h-6" />
                     <div>
                         <Heading title="Project Tasks" class="mb-1" />
-                        <p class="text-sm text-gray-600">{{ project.description }}</p>
+                        <p class="text-sm text-gray-600 hidden sm:block">{{ project.description }}</p>
                         <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-500 mt-1">
                             <Calendar class="h-4 w-4" />
                             Due: {{ new Date(project.due_date).toLocaleDateString() }}
@@ -774,7 +774,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                     <!-- Status checkbox and type icons -->
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Interactive status button for leaf tasks only -->
                         <button
+                            v-if="task.is_leaf"
                             @click="toggleTaskStatus(task)"
                             class="flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                             :class="task.status === 'completed'
@@ -787,9 +789,28 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 class="h-3 w-3"
                             />
                         </button>
+
+                        <!-- Read-only status indicator for parent tasks -->
+                        <div
+                            v-else
+                            class="flex items-center justify-center w-5 h-5 rounded-full border-2 cursor-not-allowed"
+                            :class="task.status === 'completed'
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : task.status === 'in_progress'
+                                ? 'bg-blue-500 border-blue-500 text-white'
+                                : 'border-gray-300 bg-gray-100'"
+                            :title="`Parent task status (${task.status}) - determined by child tasks`"
+                        >
+                            <CheckCircle v-if="task.status === 'completed'" class="h-3 w-3 text-white" />
+                            <Clock v-else-if="task.status === 'in_progress'" class="h-3 w-3 text-white" />
+                            <Circle v-else class="h-3 w-3 text-gray-400" />
+                        </div>
                                         <component
                                             :is="getTaskTypeIcon(task)"
-                            class="h-3 w-3 text-gray-400"
+                            :class="[
+                                'h-3 w-3',
+                                task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                            ]"
                                         />
                                     </div>
 
@@ -906,7 +927,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 </div>
 
                             <!-- Task hierarchy indicator -->
-                            <component :is="getTaskTypeIcon(task)" class="h-3 w-3 text-gray-400 flex-shrink-0" />
+                            <component :is="getTaskTypeIcon(task)"
+                                :class="[
+                                    'h-3 w-3 flex-shrink-0',
+                                    task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                                ]" />
 
                             <!-- Task title with hierarchy styling -->
                             <span
@@ -986,7 +1011,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         :key="task.id"
                         class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-sm transition-all duration-200"
                     >
-                        <!-- Status checkbox -->
+                        <!-- Status checkbox - Todo view only shows leaf tasks anyway -->
                         <button
                             @click="toggleTaskStatus(task)"
                             class="flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
@@ -1071,7 +1096,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     {{ task.description }}
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <component :is="getTaskTypeIcon(task)" class="h-3 w-3 text-gray-400" />
+                                    <component :is="getTaskTypeIcon(task)"
+                                        :class="[
+                                            'h-3 w-3',
+                                            task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                                        ]" />
                                     <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
                                         <Calendar class="h-3 w-3" />
                                         {{ new Date(task.due_date).toLocaleDateString() }}
@@ -1122,7 +1151,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     {{ task.description }}
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <component :is="getTaskTypeIcon(task)" class="h-3 w-3 text-gray-400" />
+                                    <component :is="getTaskTypeIcon(task)"
+                                        :class="[
+                                            'h-3 w-3',
+                                            task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                                        ]" />
                                     <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
                                         <Calendar class="h-3 w-3" />
                                         {{ new Date(task.due_date).toLocaleDateString() }}
@@ -1173,7 +1206,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     {{ task.description }}
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <component :is="getTaskTypeIcon(task)" class="h-3 w-3 text-gray-400" />
+                                    <component :is="getTaskTypeIcon(task)"
+                                        :class="[
+                                            'h-3 w-3',
+                                            task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                                        ]" />
                                     <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
                                         <Calendar class="h-3 w-3" />
                                         {{ new Date(task.due_date).toLocaleDateString() }}

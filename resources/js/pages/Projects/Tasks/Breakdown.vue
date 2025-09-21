@@ -231,6 +231,17 @@
                                 {{ isCreatingSubtasks ? 'Creating Subtasks...' : `Create All ${suggestedSubtasks.length} Subtasks` }}
                             </Button>
                             <Button
+                                v-if="promptData"
+                                @click="showPromptModal = true"
+                                variant="outline"
+                                size="lg"
+                                :disabled="isCreatingSubtasks"
+                                class="flex items-center gap-2"
+                            >
+                                <Eye class="h-4 w-4" />
+                                View Prompt
+                            </Button>
+                            <Button
                                 variant="outline"
                                 as-child
                                 size="lg"
@@ -261,6 +272,173 @@
             @regenerate="regenerateWithFeedback"
             @cancel="cancelRegeneration"
         />
+
+        <!-- Prompt Viewing Modal -->
+        <div v-if="showPromptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">AI Prompt Details</h3>
+                    <Button
+                        @click="closePromptModal"
+                        variant="ghost"
+                        size="sm"
+                        class="h-8 w-8 p-0"
+                    >
+                        <X class="h-4 w-4" />
+                    </Button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[60vh]">
+                    <div v-if="promptData" class="space-y-6">
+                        <!-- AI Configuration -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">AI Configuration</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="font-medium text-gray-600">Provider:</span>
+                                        <span class="ml-2 text-gray-900">{{ promptData.provider }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-600">Model:</span>
+                                        <span class="ml-2 text-gray-900">{{ promptData.model }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Task Information -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Task Information</h4>
+                            <div class="bg-blue-50 p-4 rounded-lg space-y-2">
+                                <div>
+                                    <span class="font-medium text-blue-800">Title:</span>
+                                    <span class="ml-2 text-blue-900">{{ promptData.task_title }}</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-blue-800">Description:</span>
+                                    <span class="ml-2 text-blue-900">{{ promptData.task_description }}</span>
+                                </div>
+                                <div v-if="promptData.user_feedback !== 'No specific feedback provided'">
+                                    <span class="font-medium text-blue-800">User Feedback:</span>
+                                    <span class="ml-2 text-blue-900">{{ promptData.user_feedback }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Context -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Project Context</h4>
+                            <div class="bg-green-50 p-4 rounded-lg space-y-2">
+                                <div>
+                                    <span class="font-medium text-green-800">Project:</span>
+                                    <span class="ml-2 text-green-900">{{ promptData.project_context.title }}</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-green-800">Description:</span>
+                                    <span class="ml-2 text-green-900">{{ promptData.project_context.description }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span class="font-medium text-green-800">Total Tasks:</span>
+                                        <span class="ml-2 text-green-900">{{ promptData.project_context.total_tasks }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-green-800">Completed:</span>
+                                        <span class="ml-2 text-green-900">{{ promptData.project_context.completed_tasks }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parent Task (if applicable) -->
+                        <div v-if="promptData.parent_task">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Parent Task Context</h4>
+                            <div class="bg-purple-50 p-4 rounded-lg space-y-2">
+                                <div>
+                                    <span class="font-medium text-purple-800">Title:</span>
+                                    <span class="ml-2 text-purple-900">{{ promptData.parent_task.title }}</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-purple-800">Priority:</span>
+                                    <span class="ml-2 text-purple-900">{{ promptData.parent_task.priority }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Tasks Sample -->
+                        <div v-if="promptData.sample_existing_tasks?.length">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">
+                                Sample Existing Tasks ({{ promptData.existing_tasks_count }} total)
+                            </h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <ul class="space-y-2">
+                                    <li v-for="task in promptData.sample_existing_tasks" :key="task.title" class="text-sm">
+                                        <span class="font-medium">{{ task.title }}</span>
+                                        <span class="ml-2 text-gray-600">({{ task.priority }}, {{ task.status }})</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Full Prompt Section -->
+                        <div v-if="fullPromptText" class="border-t pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-semibold text-gray-800">Full AI Prompt</h4>
+                                <Button
+                                    @click="showFullPrompt = !showFullPrompt"
+                                    variant="outline"
+                                    size="sm"
+                                    class="flex items-center gap-2"
+                                >
+                                    <Eye class="h-3 w-3" />
+                                    {{ showFullPrompt ? 'Hide' : 'Show' }} Full Prompt
+                                </Button>
+                            </div>
+
+                            <div v-if="showFullPrompt" class="space-y-4">
+                                <!-- System Prompt -->
+                                <div v-if="fullPromptText.system_prompt">
+                                    <h5 class="text-xs font-semibold text-red-800 mb-2 flex items-center gap-1">
+                                        <MessageSquare class="h-3 w-3" />
+                                        System Prompt
+                                    </h5>
+                                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                        <pre class="text-xs text-red-900 whitespace-pre-wrap font-mono leading-relaxed">{{ fullPromptText.system_prompt }}</pre>
+                                    </div>
+                                </div>
+
+                                <!-- User Prompt -->
+                                <div v-if="fullPromptText.user_prompt">
+                                    <h5 class="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                                        <MessageSquare class="h-3 w-3" />
+                                        User Prompt
+                                    </h5>
+                                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <pre class="text-xs text-blue-900 whitespace-pre-wrap font-mono leading-relaxed">{{ fullPromptText.user_prompt }}</pre>
+                                    </div>
+                                </div>
+
+                                <!-- Messages Format (for developers) -->
+                                <div v-if="fullPromptText.messages?.length" class="bg-gray-100 p-4 rounded-lg">
+                                    <h5 class="text-xs font-semibold text-gray-800 mb-2">API Messages Format</h5>
+                                    <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{{ JSON.stringify(fullPromptText.messages, null, 2) }}</pre>
+                                </div>
+
+                                <!-- Error or Note -->
+                                <div v-if="fullPromptText.error || fullPromptText.note" class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <p class="text-xs text-yellow-800">
+                                        {{ fullPromptText.error || fullPromptText.note }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8 text-gray-500">
+                        No prompt data available
+                    </div>
+                </div>
+            </div>
+        </div>
     </AppLayout>
 </template>
 
@@ -287,6 +465,8 @@ import {
     Info,
     MessageSquare,
     AlertTriangle,
+    Eye,
+    X,
     // Removed unused icons: CheckCircle, Clock, Circle
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
@@ -334,6 +514,10 @@ const hasGeneratedBreakdown = ref(false);
 
 // Modal state
 const showRegenerationModal = ref(false);
+const showPromptModal = ref(false);
+const promptData = ref<any>(null);
+const fullPromptText = ref<any>(null);
+const showFullPrompt = ref(false);
 
 // Helper functions for task display
 const getTaskTypeIcon = (task: Task) => {
@@ -400,6 +584,10 @@ const generateBreakdown = async () => {
                 ];
             }
 
+            // Store prompt data for viewing
+            promptData.value = data.prompt_used || null;
+            fullPromptText.value = data.full_prompt_text || null;
+
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to generate task breakdown. Please try again.');
@@ -453,6 +641,10 @@ const regenerateWithFeedback = async (feedback: string) => {
                 ];
             }
 
+            // Store prompt data for viewing
+            promptData.value = data.prompt_used || null;
+            fullPromptText.value = data.full_prompt_text || null;
+
             hasGeneratedBreakdown.value = true;
         } else {
             alert(data.error || 'Failed to regenerate task breakdown. Please try again.');
@@ -473,7 +665,7 @@ const createAllSubtasks = async () => {
     try {
         // Create each subtask individually
         for (const subtask of suggestedSubtasks.value) {
-            await fetch(`/dashboard/projects/${props.project.id}/tasks`, {
+            const response = await fetch(`/dashboard/projects/${props.project.id}/tasks`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -488,6 +680,11 @@ const createAllSubtasks = async () => {
                     due_date: subtask.due_date || null,
                 }),
             });
+
+            // Check if the request was successful (redirect or success status)
+            if (!response.ok && response.status !== 302) {
+                throw new Error(`Failed to create subtask "${subtask.title}". Status: ${response.status}`);
+            }
         }
 
         // Redirect back to tasks with success message
@@ -513,6 +710,11 @@ const clearResults = () => {
 
 const cancelRegeneration = () => {
     showRegenerationModal.value = false;
+};
+
+const closePromptModal = () => {
+    showPromptModal.value = false;
+    showFullPrompt.value = false; // Reset full prompt visibility when modal closes
 };
 
 const breadcrumbs: BreadcrumbItem[] = [

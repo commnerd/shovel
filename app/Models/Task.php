@@ -289,7 +289,7 @@ class Task extends Model
     /**
      * Validate that task priority is not lower than its parent's priority.
      */
-    public function validateParentPriorityConstraint(string $newPriority = null): array
+    public function validateParentPriorityConstraint(?string $newPriority = null): array
     {
         $priority = $newPriority ?? $this->priority;
         $priorityLevel = $this->getPriorityLevelFromString($priority);
