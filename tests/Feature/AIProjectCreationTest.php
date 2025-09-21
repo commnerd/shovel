@@ -57,19 +57,16 @@ class AIProjectCreationTest extends TestCase
             [
                 'title' => 'Setup Development Environment',
                 'description' => 'Configure development tools and dependencies',
-                'priority' => 'high',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Design Database Schema',
                 'description' => 'Create database tables and relationships',
-                'priority' => 'high',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Implement Authentication',
                 'description' => 'Add user registration and login functionality',
-                'priority' => 'medium',
                 'status' => 'pending',
             ],
         ]);
@@ -98,7 +95,6 @@ class AIProjectCreationTest extends TestCase
                 ->whereType('suggestedTasks', 'array')
                 ->has('suggestedTasks', 3)
                 ->where('suggestedTasks.0.title', 'Setup Development Environment')
-                ->where('suggestedTasks.0.priority', 'high')
             );
     }
 
@@ -141,21 +137,18 @@ class AIProjectCreationTest extends TestCase
                 [
                     'title' => 'Project Setup',
                     'description' => 'Initialize project structure',
-                    'priority' => 'high',
                     'status' => 'pending',
                     'sort_order' => 1,
                 ],
                 [
                     'title' => 'UI Design',
                     'description' => 'Create user interface mockups',
-                    'priority' => 'medium',
                     'status' => 'pending',
                     'sort_order' => 2,
                 ],
                 [
                     'title' => 'Backend API',
                     'description' => 'Develop REST API endpoints',
-                    'priority' => 'high',
                     'status' => 'pending',
                     'sort_order' => 3,
                 ],
@@ -184,7 +177,6 @@ class AIProjectCreationTest extends TestCase
             'project_id' => $project->id,
             'title' => 'Project Setup',
             'description' => 'Initialize project structure',
-            'priority' => 'high',
             'status' => 'pending',
             'sort_order' => 1,
         ]);
@@ -193,7 +185,6 @@ class AIProjectCreationTest extends TestCase
             'project_id' => $project->id,
             'title' => 'UI Design',
             'description' => 'Create user interface mockups',
-            'priority' => 'medium',
             'status' => 'pending',
             'sort_order' => 2,
         ]);
@@ -202,7 +193,6 @@ class AIProjectCreationTest extends TestCase
             'project_id' => $project->id,
             'title' => 'Backend API',
             'description' => 'Develop REST API endpoints',
-            'priority' => 'high',
             'status' => 'pending',
             'sort_order' => 3,
         ]);
@@ -273,21 +263,18 @@ class AIProjectCreationTest extends TestCase
                 [
                     'title' => '', // Empty title
                     'description' => 'Valid description',
-                    'priority' => 'high',
                     'status' => 'pending',
                     'sort_order' => 1,
                 ],
                 [
                     'title' => 'Valid title',
                     'description' => 'Valid description',
-                    'priority' => 'invalid_priority', // Invalid priority
                     'status' => 'pending',
                     'sort_order' => 2,
                 ],
                 [
                     'title' => 'Valid title',
                     'description' => 'Valid description',
-                    'priority' => 'high',
                     'status' => 'invalid_status', // Invalid status
                     'sort_order' => 3,
                 ],
@@ -299,7 +286,6 @@ class AIProjectCreationTest extends TestCase
 
         $response->assertSessionHasErrors([
             'tasks.0.title',
-            'tasks.1.priority',
             'tasks.2.status',
         ]);
     }
@@ -355,7 +341,6 @@ class AIProjectCreationTest extends TestCase
                 [
                     'title' => str_repeat('a', 300), // Too long for database field
                     'description' => 'Valid description',
-                    'priority' => 'high',
                     'status' => 'pending',
                     'sort_order' => 1,
                 ],

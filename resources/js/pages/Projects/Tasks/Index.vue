@@ -16,7 +16,6 @@ interface Task {
     title: string;
     description?: string;
     status: 'pending' | 'in_progress' | 'completed';
-    priority: 'low' | 'medium' | 'high';
     parent_id?: number;
     due_date?: string;
     has_children: boolean;
@@ -59,7 +58,6 @@ const confirmationData = ref<any>(null);
 const pendingReorder = ref<{ taskId: number; newPosition: number } | null>(null);
 const errorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
-const priorityChangedTaskId = ref<number | null>(null);
 const isRefreshingSortable = ref(false);
 
 // Kanban board state
@@ -120,14 +118,6 @@ const getStatusColor = (status: string) => {
     }
 };
 
-const getPriorityColor = (priority: string) => {
-    switch (priority) {
-        case 'high': return 'text-red-600 bg-red-50 border-red-200';
-        case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-        case 'low': return 'text-green-600 bg-green-50 border-green-200';
-        default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-};
 
 // Drag and drop functions
 const handleReorder = async (taskId: number, newPosition: number, confirmed = false) => {
@@ -162,66 +152,23 @@ const handleReorder = async (taskId: number, newPosition: number, confirmed = fa
         }
 
         if (result.success) {
-            // Handle priority change messaging
             let message = result.message || 'Task reordered successfully!';
-            if (result.priority_changed) {
-                message += ` Priority was automatically adjusted from ${result.old_priority} to ${result.new_priority}.`;
-
-                // Track which task had priority changed for visual feedback
-                priorityChangedTaskId.value = taskId;
-
-                // Clear the highlight after a few seconds
-                setTimeout(() => {
-                    priorityChangedTaskId.value = null;
-                }, 3000);
-
-                // Priority change successfully detected and UI will update
-            }
 
             successMessage.value = message;
             errorMessage.value = null;
 
             // Update the local tasks array with the new data from the server
             if (result.tasks) {
-                // If priority changed, we need to ensure complete re-render
-                if (result.priority_changed) {
-                    // Force complete DOM refresh for priority changes
-                    forceTaskListRefresh();
-                    await nextTick();
+                // Normal reorder - create new array reference for consistency
+                tasks.value = [...result.tasks];
+                await nextTick();
 
-                    // Create a completely new array reference to trigger reactivity
-                    tasks.value = [...result.tasks];
-                    await nextTick();
+                forceTaskListRefresh();
+                await nextTick();
 
-                    // Additional wait for priority color updates
-                    setTimeout(async () => {
-                        await forceSortableRefresh();
-
-                        // If UI still doesn't reflect changes after 1 second, force page refresh
-                        setTimeout(() => {
-                            const updatedTask = tasks.value.find(t => t.id === taskId);
-                            if (updatedTask && updatedTask.priority !== result.new_priority) {
-                                console.warn('Priority change not reflected in UI, forcing page refresh');
-                                router.visit(window.location.href, {
-                                    preserveScroll: true,
-                                    only: ['tasks'],
-                                });
-                            }
-                        }, 1000);
-                    }, 400);
-                } else {
-                    // Normal reorder without priority change
-                    // Still create new array reference for consistency
-                    tasks.value = [...result.tasks];
-                    await nextTick();
-
-                    forceTaskListRefresh();
-                    await nextTick();
-
-                    setTimeout(async () => {
-                        await forceSortableRefresh();
-                    }, 200);
-                }
+                setTimeout(async () => {
+                    await forceSortableRefresh();
+                }, 200);
             } else {
                 // Fallback: Force a page reload if no tasks data provided
                 router.visit(window.location.href, {
@@ -785,7 +732,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                         'opacity-50': shouldHideChildren(task),
                         'cursor-grabbing': isDragging && draggedTaskId === task.id,
                         'cursor-grab': !isDragging && currentFilter === 'top-level',
-                        'ring-2 ring-blue-500 ring-opacity-50 bg-blue-50': priorityChangedTaskId === task.id,
                     }"
                     v-show="!shouldHideChildren(task)"
                 >
@@ -844,13 +790,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <span class="text-sm font-medium text-gray-900 truncate block">{{ task.title }}</span>
                     </div>
 
-                    <!-- Priority badge - hidden on small screens -->
-                                        <span
-                                            :class="getPriorityColor(task.priority)"
-                        class="hidden sm:inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium flex-shrink-0"
-                                        >
-                                            {{ task.priority }}
-                                        </span>
 
                     <!-- Status badge - hidden on small screens -->
                                         <span
@@ -977,13 +916,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     {{ new Date(task.due_date).toLocaleDateString() }}
                                 </div>
 
-                                <!-- Priority badge -->
-                                <span
-                                    :class="getPriorityColor(task.priority)"
-                                    class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
-                                >
-                                    {{ task.priority }}
-                                </span>
 
                                 <!-- Status badge with different styling for parents -->
                                 <span
@@ -1014,14 +946,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <!-- Add subtask button for parent tasks -->
                                 <Button v-if="!task.is_leaf" size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
                                     <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`">
-                                        <Plus class="h-2.5 w-2.5" />
+                                        <Plus class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
                                     </Link>
                                 </Button>
 
                                 <!-- AI breakdown button for tasks without children -->
                                 <Button v-if="task.is_leaf" size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
                                     <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`">
-                                        <Sparkles class="h-2.5 w-2.5" />
+                                        <Sparkles class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
                                     </Link>
                                 </Button>
                             </div>
@@ -1053,13 +985,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <span class="text-sm font-medium text-gray-900 truncate block">{{ task.title }}</span>
                         </div>
 
-                        <!-- Priority badge -->
-                        <span
-                            :class="getPriorityColor(task.priority)"
-                            class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium flex-shrink-0"
-                        >
-                            {{ task.priority }}
-                        </span>
 
                         <!-- Due date if exists -->
                         <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
@@ -1110,12 +1035,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
-                                    <span
-                                        :class="getPriorityColor(task.priority)"
-                                        class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-medium ml-2"
-                                    >
-                                        {{ task.priority }}
-                                    </span>
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}
@@ -1165,12 +1084,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
-                                    <span
-                                        :class="getPriorityColor(task.priority)"
-                                        class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-medium ml-2"
-                                    >
-                                        {{ task.priority }}
-                                    </span>
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}
@@ -1220,12 +1133,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1 line-through">{{ task.title }}</h4>
-                                    <span
-                                        :class="getPriorityColor(task.priority)"
-                                        class="inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-medium ml-2"
-                                    >
-                                        {{ task.priority }}
-                                    </span>
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}
@@ -1288,20 +1195,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </DialogHeader>
 
                     <div v-if="confirmationData" class="py-4">
-                        <div class="space-y-2">
-                            <p class="text-sm">
-                                <strong>Task Priority:</strong>
-                                <span :class="getPriorityColor(confirmationData.task_priority)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ml-2">
-                                    {{ confirmationData.task_priority }}
-                                </span>
-                            </p>
-                            <p class="text-sm">
-                                <strong>Neighbor Priorities:</strong>
-                                <span v-for="priority in confirmationData.neighbor_priorities" :key="priority" :class="getPriorityColor(priority)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ml-2">
-                                    {{ priority }}
-                                </span>
-                            </p>
-                        </div>
                     </div>
 
                     <DialogFooter>

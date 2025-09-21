@@ -67,5 +67,5 @@ it('creates fallback tasks when needed', function () {
 
     expect($tasks)->toBeArray();
     expect($tasks)->toHaveCount(4);
-    expect($tasks[0])->toHaveKeys(['title', 'description', 'priority', 'status', 'subtasks']);
+    expect($tasks[0])->toHaveKeys(['title', 'description', 'status', 'subtasks']);
 });

@@ -34,7 +34,7 @@ class TasksController extends Controller
                 $tasksQuery->leaf()->orderBy('sort_order');
                 break;
             case 'board':
-                // For board view, get all tasks ordered by status then priority for Kanban
+                // For board view, get all tasks ordered by status for Kanban
                 // Use CASE statements for SQLite compatibility
                 $tasksQuery->orderByRaw("CASE
                                            WHEN status = 'pending' THEN 1
@@ -42,12 +42,6 @@ class TasksController extends Controller
                                            WHEN status = 'completed' THEN 3
                                            ELSE 4
                                          END")
-                          ->orderByRaw("CASE
-                                         WHEN priority = 'high' THEN 1
-                                         WHEN priority = 'medium' THEN 2
-                                         WHEN priority = 'low' THEN 3
-                                         ELSE 4
-                                       END")
                           ->orderBy('sort_order');
                 break;
             case 'all':
@@ -75,7 +69,6 @@ class TasksController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'status' => $task->status,
-                'priority' => $task->priority,
                 'parent_id' => $task->parent_id,
                 'due_date' => $task->due_date?->format('Y-m-d'),
                 'has_children' => $task->children->count() > 0,
@@ -124,8 +117,6 @@ class TasksController extends Controller
             return [
                 'id' => $task->id,
                 'title' => $task->title,
-                'priority' => $task->priority,
-                'priority_level' => $task->getPriorityLevel(),
             ];
         });
 
@@ -153,13 +144,11 @@ class TasksController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'parent_id' => 'nullable|exists:tasks,id',
-            'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date|after_or_equal:today',
             'subtasks' => 'nullable|array',
             'subtasks.*.title' => 'required|string|max:255',
             'subtasks.*.description' => 'nullable|string|max:1000',
-            'subtasks.*.priority' => 'required|in:low,medium,high',
             'subtasks.*.status' => 'required|in:pending,in_progress,completed',
             'subtasks.*.due_date' => 'nullable|date|after_or_equal:today',
         ]);
@@ -171,14 +160,6 @@ class TasksController extends Controller
                 return back()->withErrors(['parent_id' => 'Invalid parent task.']);
             }
 
-            // Validate parent priority constraint
-            $tempTask = new Task(['parent_id' => $validated['parent_id']]);
-            $tempTask->setRelation('parent', $parentTask);
-            $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
-
-            if (!$priorityValidation['valid']) {
-                return back()->withErrors(['priority' => $priorityValidation['error']]);
-            }
         }
 
         // Determine sort order based on parent
@@ -191,7 +172,6 @@ class TasksController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
-            'priority' => $validated['priority'],
             'status' => $validated['status'],
             'due_date' => $validated['due_date'] ?? null,
             'sort_order' => $sortOrder,
@@ -203,23 +183,12 @@ class TasksController extends Controller
         // Create subtasks if provided
         if (! empty($validated['subtasks'])) {
             foreach ($validated['subtasks'] as $index => $subtaskData) {
-                // Validate subtask priority against parent
-                $tempSubtask = new Task(['parent_id' => $task->id]);
-                $tempSubtask->setRelation('parent', $task);
-                $subtaskPriorityValidation = $tempSubtask->validateParentPriorityConstraint($subtaskData['priority']);
-
-                if (!$subtaskPriorityValidation['valid']) {
-                    return back()->withErrors([
-                        "subtasks.{$index}.priority" => $subtaskPriorityValidation['error']
-                    ]);
-                }
 
                 $subtask = Task::create([
                     'project_id' => $project->id,
                     'parent_id' => $task->id,
                     'title' => $subtaskData['title'],
                     'description' => $subtaskData['description'] ?? null,
-                    'priority' => $subtaskData['priority'],
                     'status' => $subtaskData['status'],
                     'due_date' => $subtaskData['due_date'] ?? null,
                     'sort_order' => $index + 1,
@@ -262,8 +231,6 @@ class TasksController extends Controller
                 return [
                     'id' => $parentTask->id,
                     'title' => $parentTask->title,
-                    'priority' => $parentTask->priority,
-                    'priority_level' => $parentTask->getPriorityLevel(),
                 ];
             });
 
@@ -278,7 +245,6 @@ class TasksController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'parent_id' => $task->parent_id,
-                'priority' => $task->priority,
                 'status' => $task->status,
                 'due_date' => $task->due_date?->format('Y-m-d'),
             ],
@@ -305,7 +271,6 @@ class TasksController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'parent_id' => 'nullable|exists:tasks,id',
-            'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date|after_or_equal:today',
         ]);
@@ -326,38 +291,13 @@ class TasksController extends Controller
                 $current = $current->parent;
             }
 
-            // Validate parent priority constraint
-            $tempTask = new Task(['parent_id' => $validated['parent_id']]);
-            $tempTask->setRelation('parent', $parentTask);
-            $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
-
-            if (!$priorityValidation['valid']) {
-                return back()->withErrors(['priority' => $priorityValidation['error']]);
-            }
         }
 
-        // Also validate if we're changing an existing task's priority
-        if (!empty($validated['parent_id']) || $task->parent_id) {
-            $parentTask = !empty($validated['parent_id'])
-                ? Task::find($validated['parent_id'])
-                : $task->parent;
-
-            if ($parentTask) {
-                $tempTask = new Task(['parent_id' => $parentTask->id]);
-                $tempTask->setRelation('parent', $parentTask);
-                $priorityValidation = $tempTask->validateParentPriorityConstraint($validated['priority']);
-
-                if (!$priorityValidation['valid']) {
-                    return back()->withErrors(['priority' => $priorityValidation['error']]);
-                }
-            }
-        }
 
         $task->update([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'parent_id' => $validated['parent_id'] ?? null,
-            'priority' => $validated['priority'],
             'status' => $validated['status'],
             'due_date' => $validated['due_date'] ?? null,
         ]);
@@ -463,8 +403,6 @@ class TasksController extends Controller
             'parentTask' => [
                 'id' => $task->id,
                 'title' => $task->title,
-                'priority' => $task->priority,
-                'priority_level' => $task->getPriorityLevel(),
             ],
             'parentTasks' => [], // Empty since parent is pre-selected
         ]);
@@ -496,7 +434,6 @@ class TasksController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'status' => $task->status,
-                'priority' => $task->priority,
                 'due_date' => $task->due_date?->format('Y-m-d'),
                 'parent_id' => $task->parent_id,
                 'has_children' => $task->children->count() > 0,
@@ -543,7 +480,6 @@ class TasksController extends Controller
                 return [
                     'title' => $task->title,
                     'status' => $task->status,
-                    'priority' => $task->priority,
                     'is_leaf' => $task->isLeaf(),
                     'has_children' => $task->children->count() > 0,
                 ];
@@ -568,8 +504,6 @@ class TasksController extends Controller
                 ],
                 'parent_task' => $parentTask ? [
                     'title' => $parentTask->title,
-                    'priority' => $parentTask->priority,
-                    'priority_level' => $parentTask->getPriorityLevel(),
                 ] : null,
                 'existing_tasks' => $existingTasks,
                 'task_stats' => $taskStats,
@@ -594,9 +528,9 @@ class TasksController extends Controller
 
             // Validate and adjust subtask priorities if parent task exists
             $subtasks = $aiResponse->getTasks();
-            if ($parentTask && !empty($subtasks)) {
-                $subtasks = $this->validateAndAdjustSubtaskPriorities($subtasks, $parentTask);
-            }
+
+            // Add due dates to subtasks based on parent task or project due date
+            $subtasks = $this->addDueDatesToSubtasks($subtasks, $parentTask, $project);
 
             return response()->json([
                 'success' => $aiResponse->isSuccessful(),
@@ -606,7 +540,6 @@ class TasksController extends Controller
                 'problems' => $aiResponse->getProblems(),
                 'suggestions' => $aiResponse->getSuggestions(),
                 'ai_used' => true,
-                'priority_adjustments' => $parentTask ? $this->getPriorityAdjustmentMessage($subtasks, $parentTask) : null,
                 'prompt_used' => $this->generatePromptForViewing($validated, $context, $provider, $model),
                 'full_prompt_text' => $fullPromptText,
             ]);
@@ -693,9 +626,6 @@ class TasksController extends Controller
                 'new_position' => $result['new_position'] ?? null,
                 'move_count' => $result['move_count'] ?? 0,
             ],
-            'priority_changed' => $result['priority_changed'] ?? false,
-            'old_priority' => $result['old_priority'] ?? null,
-            'new_priority' => $result['new_priority'] ?? null,
         ]);
     }
 
@@ -734,7 +664,6 @@ class TasksController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'status' => $task->status,
-                'priority' => $task->priority,
                 'parent_id' => $task->parent_id,
                 'due_date' => $task->due_date?->format('Y-m-d'),
                 'has_children' => $task->children->count() > 0,
@@ -790,58 +719,69 @@ class TasksController extends Controller
         }
     }
 
+
+
     /**
-     * Validate and adjust AI-generated subtask priorities to respect parent constraints.
+     * Add due dates to subtasks based on parent task or project due date.
      */
-    private function validateAndAdjustSubtaskPriorities(array $subtasks, Task $parentTask): array
+    private function addDueDatesToSubtasks(array $subtasks, ?Task $parentTask, Project $project): array
     {
-        $parentPriorityLevel = $parentTask->getPriorityLevel();
-        $adjustedSubtasks = [];
+        // Determine the reference due date (parent task or project)
+        $referenceDueDate = null;
+        if ($parentTask && $parentTask->due_date) {
+            $referenceDueDate = $parentTask->due_date->format('Y-m-d');
+        } elseif ($project->due_date) {
+            $referenceDueDate = $project->due_date->format('Y-m-d');
+        }
 
+        if (!$referenceDueDate) {
+            return $subtasks; // No reference due date, return as-is
+        }
+
+        $updatedSubtasks = [];
         foreach ($subtasks as $subtask) {
-            $originalPriority = $subtask['priority'] ?? 'medium';
-            $priorityLevel = $this->getPriorityLevelFromString($originalPriority);
+            // Only add due date if subtask doesn't already have one
+            if (empty($subtask['due_date'])) {
+                $subtask['due_date'] = $this->calculateSubtaskDueDate($referenceDueDate, $subtask);
+            }
+            $updatedSubtasks[] = $subtask;
+        }
 
-            // If AI suggested priority is lower than parent, adjust it
-            if ($priorityLevel < $parentPriorityLevel) {
-                $subtask['priority'] = $parentTask->priority;
-                $subtask['priority_adjusted'] = true;
-                $subtask['original_priority'] = $originalPriority;
-            } else {
-                $subtask['priority_adjusted'] = false;
+        return $updatedSubtasks;
+    }
+
+    /**
+     * Calculate a reasonable due date for a subtask based on parent due date.
+     */
+    private function calculateSubtaskDueDate(string $parentDueDate, array $subtask): ?string
+    {
+        try {
+            $parentDate = \Carbon\Carbon::parse($parentDueDate);
+            $now = now();
+
+            // If parent due date is in the past, don't set a due date
+            if ($parentDate->isPast()) {
+                return null;
             }
 
-            $adjustedSubtasks[] = $subtask;
+            // Calculate subtask due date - subtasks should be due before parent (40% into timeline)
+            $daysFromNow = $parentDate->diffInDays($now);
+            $dueDateOffset = $daysFromNow * 0.4;
+
+            // Ensure minimum 1 day and maximum is parent due date minus 1 day
+            $dueDateOffset = max(1, min($dueDateOffset, $daysFromNow - 1));
+            $subtaskDueDate = $now->copy()->addDays(round($dueDateOffset));
+
+            // Don't exceed parent due date minus 1 day
+            if ($subtaskDueDate->gte($parentDate)) {
+                $subtaskDueDate = $parentDate->copy()->subDay();
+            }
+
+            return $subtaskDueDate->format('Y-m-d');
+        } catch (\Exception $e) {
+            // If date parsing fails, return null
+            return null;
         }
-
-        return $adjustedSubtasks;
-    }
-
-    /**
-     * Get priority adjustment message for user feedback.
-     */
-    private function getPriorityAdjustmentMessage(array $subtasks, Task $parentTask): ?string
-    {
-        $adjustedCount = count(array_filter($subtasks, fn($s) => $s['priority_adjusted'] ?? false));
-
-        if ($adjustedCount > 0) {
-            return "Note: {$adjustedCount} subtask(s) had their priority adjusted to match the minimum required by the parent task ({$parentTask->priority}).";
-        }
-
-        return null;
-    }
-
-    /**
-     * Get priority level from string (helper for AI processing).
-     */
-    private function getPriorityLevelFromString(string $priority): int
-    {
-        return match($priority) {
-            'high' => 3,
-            'medium' => 2,
-            'low' => 1,
-            default => 1,
-        };
     }
 
     /**

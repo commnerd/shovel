@@ -255,8 +255,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                     :disabled="form.processing || isGeneratingTasks || !form.description.trim()"
                     data-testid="generate-tasks-button"
                 >
-                    <Wand2 v-if="!isGeneratingTasks" class="h-4 w-4" />
-                    <div v-else class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <Wand2 v-if="!isGeneratingTasks" class="h-4 w-4 sm:h-4 sm:w-4" />
+                    <div v-else class="h-4 w-4 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                     {{ isGeneratingTasks ? 'Generating Tasks...' : 'Generate Tasks with AI' }}
                 </Button>
             </CardFooter>

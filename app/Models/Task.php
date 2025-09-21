@@ -41,7 +41,6 @@ class Task extends Model
         'title',
         'description',
         'status',
-        'priority',
         'depth',
         'path',
         'sort_order',
@@ -273,64 +272,6 @@ class Task extends Model
         }
     }
 
-    /**
-     * Get priority level as numeric value for comparison.
-     */
-    public function getPriorityLevel(): int
-    {
-        return match($this->priority) {
-            'high' => 3,
-            'medium' => 2,
-            'low' => 1,
-            default => 0,
-        };
-    }
-
-    /**
-     * Validate that task priority is not lower than its parent's priority.
-     */
-    public function validateParentPriorityConstraint(?string $newPriority = null): array
-    {
-        $priority = $newPriority ?? $this->priority;
-        $priorityLevel = $this->getPriorityLevelFromString($priority);
-
-        if (!$this->parent_id) {
-            // Top-level tasks have no constraints
-            return ['valid' => true];
-        }
-
-        $parent = $this->parent;
-        if (!$parent) {
-            return ['valid' => true];
-        }
-
-        $parentPriorityLevel = $parent->getPriorityLevel();
-
-        if ($priorityLevel < $parentPriorityLevel) {
-            return [
-                'valid' => false,
-                'error' => "Child task cannot have lower priority ({$priority}) than its parent ({$parent->priority})",
-                'parent_priority' => $parent->priority,
-                'attempted_priority' => $priority,
-                'minimum_allowed_priority' => $parent->priority,
-            ];
-        }
-
-        return ['valid' => true];
-    }
-
-    /**
-     * Get priority level from string value.
-     */
-    private function getPriorityLevelFromString(string $priority): int
-    {
-        return match($priority) {
-            'high' => 3,
-            'medium' => 2,
-            'low' => 1,
-            default => 0,
-        };
-    }
 
     /**
      * Check if moving this task to a new position requires confirmation.
@@ -338,38 +279,7 @@ class Task extends Model
      */
     public function checkReorderConfirmation(int $newPosition): ?array
     {
-        $siblings = $this->getSiblings();
-        $currentPriority = $this->getPriorityLevel();
-
-        // Get neighbors at the new position
-        $neighbors = $this->getNeighborsAtPosition($siblings, $newPosition);
-
-        if (empty($neighbors)) {
-            return null;
-        }
-
-        $neighborPriorities = array_map(fn($task) => $task->getPriorityLevel(), $neighbors);
-        $higherPriorityNeighbors = array_filter($neighborPriorities, fn($p) => $p > $currentPriority);
-        $lowerPriorityNeighbors = array_filter($neighborPriorities, fn($p) => $p < $currentPriority);
-
-        if (!empty($higherPriorityNeighbors)) {
-            return [
-                'type' => 'moving_to_higher_priority',
-                'message' => 'You are moving a ' . $this->priority . ' priority task near higher priority tasks. Continue?',
-                'task_priority' => $this->priority,
-                'neighbor_priorities' => array_unique(array_map(fn($p) => $this->getPriorityName($p), $higherPriorityNeighbors)),
-            ];
-        }
-
-        if (!empty($lowerPriorityNeighbors)) {
-            return [
-                'type' => 'moving_to_lower_priority',
-                'message' => 'You are moving a ' . $this->priority . ' priority task near lower priority tasks. Continue?',
-                'task_priority' => $this->priority,
-                'neighbor_priorities' => array_unique(array_map(fn($p) => $this->getPriorityName($p), $lowerPriorityNeighbors)),
-            ];
-        }
-
+        // No priority-based confirmation needed anymore
         return null;
     }
 
@@ -385,42 +295,6 @@ class Task extends Model
             ->get();
     }
 
-    /**
-     * Get neighboring tasks at a specific position.
-     */
-    private function getNeighborsAtPosition($siblings, int $newPosition): array
-    {
-        $neighbors = [];
-
-        // Get task before new position
-        if ($newPosition > 1) {
-            $beforeTask = $siblings->firstWhere('sort_order', $newPosition - 1);
-            if ($beforeTask) {
-                $neighbors[] = $beforeTask;
-            }
-        }
-
-        // Get task after new position
-        $afterTask = $siblings->firstWhere('sort_order', $newPosition);
-        if ($afterTask) {
-            $neighbors[] = $afterTask;
-        }
-
-        return $neighbors;
-    }
-
-    /**
-     * Get priority name from numeric level.
-     */
-    private function getPriorityName(int $level): string
-    {
-        return match($level) {
-            3 => 'high',
-            2 => 'medium',
-            1 => 'low',
-            default => 'unknown',
-        };
-    }
 
     /**
      * Execute task reordering with tracking.
@@ -474,7 +348,7 @@ class Task extends Model
             }
         }
 
-        // Check if confirmation is needed
+        // Check if confirmation is needed (none needed anymore)
         $confirmationCheck = $this->checkReorderConfirmation($newPosition);
         if ($confirmationCheck && !$confirmed) {
             return [
@@ -487,27 +361,13 @@ class Task extends Model
             ];
         }
 
-        // Determine if priority should be adjusted after confirmation
-        $priorityAdjustment = null;
-        if ($confirmationCheck && $confirmed) {
-            $priorityAdjustment = $this->determinePriorityAdjustment($newPosition, $confirmationCheck);
-        }
-
         // Use database transaction to ensure all updates are atomic
-        DB::transaction(function () use ($oldPosition, $newPosition, $priorityAdjustment) {
+        DB::transaction(function () use ($oldPosition, $newPosition) {
             // Update siblings' sort orders first
             $this->updateSiblingOrders($oldPosition, $newPosition);
 
-            // Prepare update data
-            $updateData = ['sort_order' => $newPosition];
-
-            // Add priority adjustment if needed
-            if ($priorityAdjustment) {
-                $updateData['priority'] = $priorityAdjustment['new_priority'];
-            }
-
-            // Update the main sort_order and potentially priority
-            $this->update($updateData);
+            // Update the main sort_order
+            $this->update(['sort_order' => $newPosition]);
 
             // Try to update tracking fields if they exist (these are optional)
             try {
@@ -536,20 +396,12 @@ class Task extends Model
             }
         });
 
-        $message = 'Task reordered successfully!';
-        if ($priorityAdjustment) {
-            $message .= " Priority changed from {$priorityAdjustment['old_priority']} to {$priorityAdjustment['new_priority']}.";
-        }
-
         return [
             'success' => true,
-            'message' => $message,
+            'message' => 'Task reordered successfully!',
             'old_position' => $oldPosition,
             'new_position' => $newPosition,
             'move_count' => $this->move_count ?? 0,
-            'priority_changed' => $priorityAdjustment !== null,
-            'old_priority' => $priorityAdjustment['old_priority'] ?? null,
-            'new_priority' => $priorityAdjustment['new_priority'] ?? null,
         ];
     }
 
@@ -600,39 +452,6 @@ class Task extends Model
         }
     }
 
-    /**
-     * Determine if priority should be adjusted and what the new priority should be.
-     */
-    private function determinePriorityAdjustment(int $newPosition, array $confirmationData): ?array
-    {
-        $neighborPriorities = $confirmationData['neighbor_priorities'] ?? [];
-
-        if (empty($neighborPriorities)) {
-            return null;
-        }
-
-        // Get the most common priority among neighbors
-        $priorityCounts = array_count_values($neighborPriorities);
-        arsort($priorityCounts);
-        $suggestedPriority = array_key_first($priorityCounts);
-
-        // Only suggest change if it's different from current
-        if ($suggestedPriority && $suggestedPriority !== $this->priority) {
-            // Validate the suggested priority respects parent constraints
-            $validationResult = $this->validateParentPriorityConstraint($suggestedPriority);
-            if (!$validationResult['valid']) {
-                // If suggested priority violates parent constraint, use parent's priority
-                $suggestedPriority = $this->parent ? $this->parent->priority : $this->priority;
-            }
-
-            return [
-                'old_priority' => $this->priority,
-                'new_priority' => $suggestedPriority,
-            ];
-        }
-
-        return null;
-    }
 
     /**
      * Update sibling sort orders when a task is moved.

@@ -66,28 +66,24 @@ class DashboardMetricsTest extends TestCase
         $completedLeafTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'completed',
-            'priority' => 'medium',
             'parent_id' => null,
         ]);
 
         $inProgressLeafTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'in_progress',
-            'priority' => 'high',
             'parent_id' => null,
         ]);
 
         $pendingLeafTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'pending',
-            'priority' => 'low',
             'parent_id' => null,
         ]);
 
-        $highPriorityLeafTask = Task::factory()->create([
+        $anotherPendingLeafTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'pending',
-            'priority' => 'high',
             'parent_id' => null,
         ]);
 
@@ -95,7 +91,6 @@ class DashboardMetricsTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'pending',
-            'priority' => 'high',
             'parent_id' => null,
         ]);
 
@@ -104,7 +99,6 @@ class DashboardMetricsTest extends TestCase
             'project_id' => $project->id,
             'parent_id' => $parentTask->id,
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         // Create task for another user's project (should not be counted)
@@ -113,7 +107,6 @@ class DashboardMetricsTest extends TestCase
         Task::factory()->create([
             'project_id' => $otherProject->id,
             'status' => 'completed',
-            'priority' => 'high',
         ]);
 
         $response = $this->actingAs($user)->get('/dashboard');
@@ -126,7 +119,6 @@ class DashboardMetricsTest extends TestCase
             ->where('taskMetrics.completed', 2) // 2 completed leaf tasks (completedLeafTask + childTask)
             ->where('taskMetrics.pending', 2) // 2 pending leaf tasks
             ->where('taskMetrics.inProgress', 1) // 1 in progress leaf task
-            ->where('taskMetrics.highPriority', 2) // 2 high priority leaf tasks
         );
     }
 
@@ -151,7 +143,6 @@ class DashboardMetricsTest extends TestCase
             ->where('taskMetrics.completed', 0)
             ->where('taskMetrics.pending', 0)
             ->where('taskMetrics.inProgress', 0)
-            ->where('taskMetrics.highPriority', 0)
         );
     }
 
@@ -203,7 +194,6 @@ class DashboardMetricsTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $project->id,
             'status' => 'completed',
-            'priority' => 'high',
             'parent_id' => null,
         ]);
 
@@ -212,14 +202,12 @@ class DashboardMetricsTest extends TestCase
             'project_id' => $project->id,
             'parent_id' => $parentTask->id,
             'status' => 'completed',
-            'priority' => 'high',
         ]);
 
         $childTask2 = Task::factory()->create([
             'project_id' => $project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Create a grandchild task
@@ -227,7 +215,6 @@ class DashboardMetricsTest extends TestCase
             'project_id' => $project->id,
             'parent_id' => $childTask1->id,
             'status' => 'in_progress',
-            'priority' => 'low',
         ]);
 
         // Now childTask1 is no longer a leaf, but childTask2 and grandchild are leafs
@@ -241,7 +228,6 @@ class DashboardMetricsTest extends TestCase
             ->where('taskMetrics.completed', 0) // grandchild is in_progress, childTask2 is pending
             ->where('taskMetrics.pending', 1) // childTask2
             ->where('taskMetrics.inProgress', 1) // grandchild
-            ->where('taskMetrics.highPriority', 0) // neither leaf task is high priority
         );
     }
 

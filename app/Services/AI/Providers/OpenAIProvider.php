@@ -291,15 +291,13 @@ class OpenAIProvider implements AIProviderInterface
             $parent = $context['parent_task'];
             $prompt .= "**Parent Task:**\n";
             $prompt .= "Title: {$parent['title']}\n";
-            $prompt .= "Priority: {$parent['priority']}\n\n";
-            $prompt .= "Note: All subtasks must have priority equal to or higher than the parent task priority.\n\n";
         }
 
         // Add existing tasks context
         if (!empty($context['existing_tasks'])) {
             $prompt .= "**Existing Project Tasks (for context):**\n";
             foreach (array_slice($context['existing_tasks'], 0, 5) as $task) {
-                $prompt .= "- {$task['title']} ({$task['priority']}, {$task['status']})\n";
+                $prompt .= "- {$task['title']} ({$task['status']})\n";
             }
             $prompt .= "\n";
         }
@@ -403,7 +401,6 @@ class OpenAIProvider implements AIProviderInterface
                     $tasks[] = [
                         'title' => $title,
                         'description' => '',
-                        'priority' => 'medium',
                         'status' => 'pending',
                     ];
                 }
@@ -419,13 +416,11 @@ class OpenAIProvider implements AIProviderInterface
             [
                 'title' => 'Project Planning',
                 'description' => 'Define project requirements, scope, and timeline',
-                'priority' => 'high',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Initial Setup',
                 'description' => 'Set up development environment and basic project structure',
-                'priority' => 'high',
                 'status' => 'pending',
             ],
         ];

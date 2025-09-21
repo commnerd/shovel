@@ -86,7 +86,7 @@ class CerebrusProvider implements AIProviderInterface
 
             $response = $this->chat($messages, $jsonOptions);
 
-            return $this->parseTaskResponse($response, $projectDescription);
+            return $this->parseTaskResponse($response, $projectDescription, $options);
         } catch (\Exception $e) {
             $this->logError('generateTasks', $e->getMessage());
 
@@ -289,7 +289,7 @@ class CerebrusProvider implements AIProviderInterface
     /**
      * Parse AI response into structured task response.
      */
-    protected function parseTaskResponse(AIResponse $response, string $projectDescription): AITaskResponse
+    protected function parseTaskResponse(AIResponse $response, string $projectDescription, array $options = []): AITaskResponse
     {
         try {
             // Clean the response content first
@@ -322,7 +322,8 @@ class CerebrusProvider implements AIProviderInterface
             }
 
             // Validate tasks structure
-            $validatedTasks = $this->validateTasks($tasks);
+            $projectDueDate = $options['project_due_date'] ?? null;
+            $validatedTasks = $this->validateTasks($tasks, $projectDueDate);
 
             // Add AI service and model information to notes
             $enhancedNotes = $this->addServiceInfoToNotes($notes, $response);
@@ -363,25 +364,27 @@ class CerebrusProvider implements AIProviderInterface
     /**
      * Validate and clean task structure.
      */
-    protected function validateTasks(array $tasks): array
+    protected function validateTasks(array $tasks, ?string $projectDueDate = null): array
     {
         $validatedTasks = [];
 
         foreach ($tasks as $task) {
             if (is_array($task) && isset($task['title'])) {
-                $priority = $task['priority'] ?? 'medium';
                 $status = $task['status'] ?? 'pending';
+
+                // If task doesn't have a due date but project does, calculate a reasonable due date
+                $dueDate = $task['due_date'] ?? null;
+                if (!$dueDate && $projectDueDate) {
+                    $dueDate = $this->calculateTaskDueDateFromProject($projectDueDate, $task);
+                }
 
                 $validatedTasks[] = [
                     'title' => $task['title'] ?? 'Untitled Task',
                     'description' => $task['description'] ?? '',
-                    'priority' => in_array($priority, ['low', 'medium', 'high'])
-                        ? $priority
-                        : 'medium',
                     'status' => in_array($status, ['pending', 'in_progress', 'completed'])
                         ? $status
                         : 'pending',
-                    'due_date' => $task['due_date'] ?? null,
+                    'due_date' => $dueDate,
                     'subtasks' => $task['subtasks'] ?? [],
                 ];
             }
@@ -439,7 +442,9 @@ class CerebrusProvider implements AIProviderInterface
             $content = $this->cleanResponseContent($response->getContent());
             $this->logRequest('task_breakdown', [$taskTitle, $taskDescription], $content, 0, null);
 
-            $parsedResponse = $this->parseTaskResponse($response, $taskTitle);
+            // Extract project due date from context if available
+            $breakdownOptions = ['project_due_date' => $context['project']['due_date'] ?? null];
+            $parsedResponse = $this->parseTaskResponse($response, $taskTitle, $breakdownOptions);
 
             return $parsedResponse ?: $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
 
@@ -523,7 +528,7 @@ class CerebrusProvider implements AIProviderInterface
         $prompt .= "1. Break down the task into 3-7 practical subtasks\n";
         $prompt .= "2. Each subtask should be specific and actionable\n";
         $prompt .= "3. Consider the project context and existing tasks\n";
-        $prompt .= "4. Assign appropriate priority (high/medium/low) and status (pending)\n";
+        $prompt .= "4. Assign appropriate status (pending)\n";
         $prompt .= "5. Include estimated due dates relative to the project timeline\n\n";
 
         $prompt .= "**Response Format:**\n";
@@ -533,7 +538,6 @@ class CerebrusProvider implements AIProviderInterface
         $prompt .= '    {'."\n";
         $prompt .= '      "title": "Specific subtask title",'."\n";
         $prompt .= '      "description": "Detailed description of what needs to be done",'."\n";
-        $prompt .= '      "priority": "high|medium|low",'."\n";
         $prompt .= '      "status": "pending",'."\n";
         $prompt .= '      "due_date": "YYYY-MM-DD"'."\n";
         $prompt .= '    }'."\n";
@@ -555,21 +559,18 @@ class CerebrusProvider implements AIProviderInterface
             [
                 'title' => 'Research & Planning',
                 'description' => "Research requirements and plan approach for: {$taskTitle}",
-                'priority' => 'high',
                 'status' => 'pending',
                 'due_date' => now()->addDays(2)->format('Y-m-d'),
             ],
             [
                 'title' => 'Implementation',
                 'description' => "Implement the main functionality for: {$taskTitle}",
-                'priority' => 'high',
                 'status' => 'pending',
                 'due_date' => now()->addDays(5)->format('Y-m-d'),
             ],
             [
                 'title' => 'Testing & Validation',
                 'description' => 'Test and validate the implementation',
-                'priority' => 'medium',
                 'status' => 'pending',
                 'due_date' => now()->addDays(7)->format('Y-m-d'),
             ],
@@ -591,32 +592,63 @@ class CerebrusProvider implements AIProviderInterface
             [
                 'title' => 'Project Planning & Setup',
                 'description' => 'Set up project structure and define requirements based on: '.$projectDescription,
-                'priority' => 'high',
                 'status' => 'pending',
                 'subtasks' => [],
             ],
             [
                 'title' => 'Core Development',
                 'description' => 'Implement main functionality and features',
-                'priority' => 'high',
                 'status' => 'pending',
                 'subtasks' => [],
             ],
             [
                 'title' => 'Testing & Quality Assurance',
                 'description' => 'Write tests and ensure code quality',
-                'priority' => 'medium',
                 'status' => 'pending',
                 'subtasks' => [],
             ],
             [
                 'title' => 'Documentation & Deployment',
                 'description' => 'Create documentation and deploy the project',
-                'priority' => 'low',
                 'status' => 'pending',
                 'subtasks' => [],
             ],
         ];
+    }
+
+    /**
+     * Calculate a reasonable due date for a task based on project due date.
+     */
+    protected function calculateTaskDueDateFromProject(string $projectDueDate, array $task): ?string
+    {
+        try {
+            $projectDate = \Carbon\Carbon::parse($projectDueDate);
+            $now = now();
+
+            // If project due date is in the past, don't set a due date
+            if ($projectDate->isPast()) {
+                return null;
+            }
+
+            // Calculate task due date based on project timeline (60% into timeline)
+            $daysFromNow = $now->diffInDays($projectDate);
+            $dueDateOffset = $daysFromNow * 0.6;
+
+            // Ensure minimum 1 day and maximum is project due date
+            $dueDateOffset = max(1, min($dueDateOffset, $daysFromNow));
+            $taskDueDate = $now->copy()->addDays(round($dueDateOffset));
+
+            // Don't exceed project due date
+            if ($taskDueDate->gt($projectDate)) {
+                $taskDueDate = $projectDate->copy()->subDay(); // Due day before project
+            }
+
+
+            return $taskDueDate->format('Y-m-d');
+        } catch (\Exception $e) {
+            // If date parsing fails, return null
+            return null;
+        }
     }
 
     /**

@@ -304,6 +304,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                             <option value="completed">Completed</option>
                                         </select>
                                         <InputError :message="form.errors.status" />
+                                    </div>
                                 </div>
 
                                 <!-- Parent Task Selection -->

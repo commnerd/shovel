@@ -43,9 +43,10 @@ class DashboardController extends Controller
             $query->where('user_id', $user->id);
         })->leaf()->where('status', 'in_progress')->count();
 
-        $highPriorityLeafTasks = Task::whereHas('project', function ($query) use ($user) {
+        // Priority tracking removed - using total leaf tasks instead
+        $totalLeafTasks = Task::whereHas('project', function ($query) use ($user) {
             $query->where('user_id', $user->id);
-        })->leaf()->where('priority', 'high')->count();
+        })->leaf()->count();
 
         return Inertia::render('Dashboard', [
             'waitlistCount' => $waitlistCount,
@@ -60,7 +61,7 @@ class DashboardController extends Controller
                 'completed' => $completedLeafTasks,
                 'pending' => $pendingLeafTasks,
                 'inProgress' => $inProgressLeafTasks,
-                'highPriority' => $highPriorityLeafTasks,
+                'highPriority' => $totalLeafTasks, // Priority removed - showing total instead
             ],
         ]);
     }

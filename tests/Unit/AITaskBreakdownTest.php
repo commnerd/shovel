@@ -189,7 +189,6 @@ class AITaskBreakdownTest extends TestCase
         foreach ($tasks as $task) {
             $this->assertArrayHasKey('title', $task);
             $this->assertArrayHasKey('description', $task);
-            $this->assertArrayHasKey('priority', $task);
             $this->assertArrayHasKey('status', $task);
             $this->assertArrayHasKey('due_date', $task);
             $this->assertEquals('pending', $task['status']);
@@ -254,7 +253,7 @@ class AITaskBreakdownTest extends TestCase
 
         // Verify the custom prompt is included
         $this->assertStringContainsString('Custom system prompt for testing', $prompt);
-        
+
         // Verify date/time context is appended
         $this->assertStringContainsString('Current date and time:', $prompt);
         $this->assertStringContainsString('temporal context', $prompt);
@@ -321,7 +320,6 @@ class AITaskBreakdownTest extends TestCase
         foreach ($tasks as $task) {
             $this->assertArrayHasKey('title', $task);
             $this->assertArrayHasKey('description', $task);
-            $this->assertArrayHasKey('priority', $task);
             $this->assertArrayHasKey('status', $task);
             $this->assertArrayHasKey('due_date', $task);
         }

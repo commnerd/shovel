@@ -279,7 +279,6 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->has('suggestedTasks', 2) // Should have 2 valid tasks after filtering
             ->where('suggestedTasks.0.title', 'Valid Task')
             ->where('suggestedTasks.1.title', 'Partial Task')
-            ->where('suggestedTasks.1.priority', 'medium') // Default priority
             ->where('suggestedTasks.1.status', 'pending') // Default status
         );
     }

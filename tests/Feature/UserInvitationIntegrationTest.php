@@ -66,7 +66,7 @@ class UserInvitationIntegrationTest extends TestCase
 
         $setPasswordResponse->assertStatus(200);
         $setPasswordResponse->assertInertia(fn ($page) =>
-            $page->component('Auth/SetPassword')
+            $page->component('auth/SetPassword')
                  ->where('email', 'newuser@testcorp.com')
                  ->where('organization.name', 'Test Corp')
         );

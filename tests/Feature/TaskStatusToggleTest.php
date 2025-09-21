@@ -26,7 +26,6 @@ class TaskStatusToggleTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -55,7 +54,6 @@ class TaskStatusToggleTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -84,7 +82,6 @@ class TaskStatusToggleTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -180,14 +177,12 @@ class TaskStatusToggleTest extends TestCase
     {
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
-            'priority' => 'medium',
         ]);
 
         $subtask = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -214,7 +209,6 @@ class TaskStatusToggleTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Toggle to completed

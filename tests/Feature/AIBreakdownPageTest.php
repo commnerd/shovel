@@ -48,7 +48,6 @@ class AIBreakdownPageTest extends TestCase
             'title' => 'Complex Feature Implementation',
             'description' => 'Build a complex feature that needs breakdown',
             'status' => 'pending',
-            'priority' => 'high',
         ]);
     }
 
@@ -65,7 +64,6 @@ class AIBreakdownPageTest extends TestCase
             ->where('task.title', $this->task->title)
             ->where('task.description', $this->task->description)
             ->where('task.status', $this->task->status)
-            ->where('task.priority', $this->task->priority)
             ->has('projectTaskCount')
         );
     }

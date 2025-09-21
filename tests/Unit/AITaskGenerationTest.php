@@ -92,9 +92,7 @@ class AITaskGenerationTest extends TestCase
         foreach ($fallbackTasks as $task) {
             $this->assertArrayHasKey('title', $task);
             $this->assertArrayHasKey('description', $task);
-            $this->assertArrayHasKey('priority', $task);
             $this->assertArrayHasKey('status', $task);
-            $this->assertContains($task['priority'], ['low', 'medium', 'high']);
             $this->assertEquals('pending', $task['status']);
         }
 
@@ -161,15 +159,12 @@ class AITaskGenerationTest extends TestCase
             // Required fields
             $this->assertArrayHasKey('title', $task);
             $this->assertArrayHasKey('description', $task);
-            $this->assertArrayHasKey('priority', $task);
             $this->assertArrayHasKey('status', $task);
 
             // Validate field types and values
             $this->assertIsString($task['title']);
             $this->assertIsString($task['description']);
             $this->assertNotEmpty($task['title']);
-
-            $this->assertContains($task['priority'], ['low', 'medium', 'high']);
             $this->assertEquals('pending', $task['status']);
         }
     }

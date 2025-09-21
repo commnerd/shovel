@@ -32,7 +32,7 @@ class SetPasswordController extends Controller
                 ->with('message', 'This invitation has already been used.');
         }
 
-        return Inertia::render('Auth/SetPassword', [
+        return Inertia::render('auth/SetPassword', [
             'token' => $token,
             'email' => $invitation->email,
             'organization' => $invitation->organization ? [

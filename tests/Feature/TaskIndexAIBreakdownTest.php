@@ -50,7 +50,6 @@ class TaskIndexAIBreakdownTest extends TestCase
             'title' => 'Test Task',
             'description' => 'A task that needs breakdown',
             'status' => 'pending',
-            'priority' => 'high',
         ]);
 
         $response = $this->actingAs($this->user)

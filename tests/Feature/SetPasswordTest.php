@@ -74,7 +74,7 @@ class SetPasswordTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->component('Auth/SetPassword')
+            $page->component('auth/SetPassword')
                  ->where('token', $this->validInvitation->token)
                  ->where('email', $this->validInvitation->email)
                  ->has('organization')

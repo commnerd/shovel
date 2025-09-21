@@ -216,7 +216,6 @@ class CerebrusProviderTest extends TestCase
         $this->assertCount(2, $validatedTasks); // Only valid tasks
         $this->assertEquals('Valid Task', $validatedTasks[0]['title']);
         $this->assertEquals('Partial Task', $validatedTasks[1]['title']);
-        $this->assertEquals('medium', $validatedTasks[1]['priority']); // Default
         $this->assertEquals('pending', $validatedTasks[1]['status']); // Default
     }
 
@@ -232,7 +231,6 @@ class CerebrusProviderTest extends TestCase
         foreach ($fallbackTasks as $task) {
             $this->assertArrayHasKey('title', $task);
             $this->assertArrayHasKey('description', $task);
-            $this->assertArrayHasKey('priority', $task);
             $this->assertArrayHasKey('status', $task);
             $this->assertArrayHasKey('subtasks', $task);
         }

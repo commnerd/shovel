@@ -458,7 +458,6 @@ class TaskHierarchyTest extends TestCase
             'title',
             'description',
             'status',
-            'priority',
             'depth',
             'path',
             'sort_order',

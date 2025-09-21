@@ -75,7 +75,6 @@ class TaskTabsTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         // Create subtask
@@ -83,7 +82,6 @@ class TaskTabsTest extends TestCase
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'title' => 'Subtask',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -103,7 +101,6 @@ class TaskTabsTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         // Create subtask
@@ -111,7 +108,6 @@ class TaskTabsTest extends TestCase
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'title' => 'Subtask',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -130,21 +126,18 @@ class TaskTabsTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         $subtask = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'title' => 'Subtask',
-            'priority' => 'medium',
         ]);
 
         // Create standalone task (is leaf)
         $standaloneTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Standalone Task',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -163,19 +156,16 @@ class TaskTabsTest extends TestCase
         $pendingTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'high',
         ]);
 
         $inProgressTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'in_progress',
-            'priority' => 'medium',
         ]);
 
         $completedTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'completed',
-            'priority' => 'low',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -195,14 +185,12 @@ class TaskTabsTest extends TestCase
         $topLevelTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Top Level',
-            'priority' => 'medium',
         ]);
 
         $subtask = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $topLevelTask->id,
             'title' => 'Subtask',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)

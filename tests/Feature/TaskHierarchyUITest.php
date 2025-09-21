@@ -146,7 +146,6 @@ class TaskHierarchyUITest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Standalone Task',
             'status' => 'completed',
-            'priority' => 'low',
             'due_date' => '2025-11-30',
         ]);
 
@@ -154,7 +153,6 @@ class TaskHierarchyUITest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
             'status' => 'in_progress',
-            'priority' => 'high',
             'due_date' => '2025-12-31',
         ]);
 
@@ -163,7 +161,6 @@ class TaskHierarchyUITest extends TestCase
             'parent_id' => $parent->id,
             'title' => 'Child Task',
             'status' => 'pending',
-            'priority' => 'medium',
             'due_date' => '2025-12-15',
         ]);
 
@@ -212,30 +209,17 @@ class TaskHierarchyUITest extends TestCase
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium',
                 'status' => 'pending',
                 // Missing title
             ]);
 
         $response->assertSessionHasErrors(['title']);
 
-        // Test invalid priority
-        $response = $this->actingAs($this->user)
-            ->post("/dashboard/projects/{$this->project->id}/tasks", [
-                'title' => 'Task with Invalid Priority',
-                'parent_id' => $parentTask->id,
-                'priority' => 'urgent', // Invalid priority
-                'status' => 'pending',
-            ]);
-
-        $response->assertSessionHasErrors(['priority']);
-
         // Test invalid status
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Task with Invalid Status',
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium',
                 'status' => 'on_hold', // Invalid status
             ]);
 
@@ -266,7 +250,6 @@ class TaskHierarchyUITest extends TestCase
                 'title' => 'Updated Child',
                 'description' => 'Updated description',
                 'parent_id' => $newParent->id,
-                'priority' => 'high',
                 'status' => 'in_progress',
                 'due_date' => '2025-12-31',
             ]);

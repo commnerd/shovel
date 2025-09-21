@@ -256,7 +256,6 @@ class ProjectsController extends Controller
                     [
                         'title' => 'string',
                         'description' => 'string',
-                        'priority' => 'high|medium|low',
                         'status' => 'pending|in_progress|completed',
                         'subtasks' => [],
                     ],
@@ -280,6 +279,11 @@ class ProjectsController extends Controller
                 $aiOptions['model'] = $validated['ai_model'];
             }
 
+            // Add project due date to AI options for due date calculation
+            if (!empty($validated['due_date'])) {
+                $aiOptions['project_due_date'] = $validated['due_date'];
+            }
+
             // Use specific provider if selected
             if (!empty($validated['ai_provider'])) {
                 $aiResponse = AI::driver($validated['ai_provider'])->generateTasks($validated['description'], $taskSchema, $aiOptions);
@@ -295,7 +299,7 @@ class ProjectsController extends Controller
                         'title' => $task['title'] ?? 'Generated Task',
                         'description' => $task['description'] ?? '',
                         'status' => $task['status'] ?? 'pending',
-                        'priority' => $task['priority'] ?? 'medium',
+                        'due_date' => $task['due_date'] ?? null,
                         'sort_order' => $index + 1,
                     ];
                 })->toArray();
@@ -326,35 +330,30 @@ class ProjectsController extends Controller
                     'title' => 'Project Setup & Planning',
                     'description' => 'Set up project structure and define requirements based on: '.$validated['description'],
                     'status' => 'pending',
-                    'priority' => 'high',
                     'sort_order' => 1,
                 ],
                 [
                     'title' => 'Design System Creation',
                     'description' => 'Create design system and component library',
                     'status' => 'pending',
-                    'priority' => 'medium',
                     'sort_order' => 2,
                 ],
                 [
                     'title' => 'Core Feature Development',
                     'description' => 'Implement main functionality based on project description',
                     'status' => 'pending',
-                    'priority' => 'high',
                     'sort_order' => 3,
                 ],
                 [
                     'title' => 'Testing & Quality Assurance',
                     'description' => 'Write tests and ensure code quality',
                     'status' => 'pending',
-                    'priority' => 'medium',
                     'sort_order' => 4,
                 ],
                 [
                     'title' => 'Documentation & Deployment',
                     'description' => 'Create documentation and deploy the project',
                     'status' => 'pending',
-                    'priority' => 'low',
                     'sort_order' => 5,
                 ],
             ];
@@ -406,7 +405,7 @@ class ProjectsController extends Controller
             'tasks.*.title' => 'required|string|max:255',
             'tasks.*.description' => 'nullable|string|max:1000',
             'tasks.*.status' => 'nullable|string|in:pending,in_progress,completed',
-            'tasks.*.priority' => 'nullable|string|in:low,medium,high',
+            'tasks.*.due_date' => 'nullable|date|after_or_equal:today',
             'tasks.*.sort_order' => 'nullable|integer|min:1',
         ]);
 
@@ -476,7 +475,7 @@ class ProjectsController extends Controller
                         'title' => $taskData['title'],
                         'description' => $taskData['description'] ?? '',
                         'status' => $taskData['status'] ?? 'pending',
-                        'priority' => $taskData['priority'] ?? 'medium',
+                        'due_date' => $taskData['due_date'] ?? null,
                         'sort_order' => $taskData['sort_order'] ?? 1,
                     ]);
                 }

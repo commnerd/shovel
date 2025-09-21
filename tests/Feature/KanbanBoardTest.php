@@ -28,21 +28,18 @@ class KanbanBoardTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Pending Task',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $inProgressTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'In Progress Task',
             'status' => 'in_progress',
-            'priority' => 'medium',
         ]);
 
         $completedTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Completed Task',
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -61,7 +58,6 @@ class KanbanBoardTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Move task from pending to in_progress
@@ -89,7 +85,6 @@ class KanbanBoardTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Test all valid transitions
@@ -136,7 +131,6 @@ class KanbanBoardTest extends TestCase
         Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -152,18 +146,16 @@ class KanbanBoardTest extends TestCase
 
     public function test_board_view_task_ordering()
     {
-        // Create tasks with different priorities
-        $highPriorityTask = Task::factory()->create([
+        // Create tasks with different sort orders
+        $task1 = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'high',
             'sort_order' => 2,
         ]);
 
-        $lowPriorityTask = Task::factory()->create([
+        $task2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'low',
             'sort_order' => 1,
         ]);
 
@@ -172,13 +164,11 @@ class KanbanBoardTest extends TestCase
 
         $response->assertStatus(200);
 
-        // Verify tasks are ordered by priority (high first) then sort_order
+        // Verify tasks are ordered by sort_order
         $response->assertInertia(fn ($page) =>
             $page->component('Projects/Tasks/Index')
                  ->where('filter', 'board')
                  ->has('tasks', 2)
-                 ->where('tasks.0.priority', 'high') // High priority should come first
-                 ->where('tasks.1.priority', 'low')
         );
     }
 
@@ -189,7 +179,6 @@ class KanbanBoardTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($otherUser)
@@ -209,7 +198,6 @@ class KanbanBoardTest extends TestCase
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Test invalid status

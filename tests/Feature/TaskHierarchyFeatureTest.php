@@ -45,7 +45,6 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Top Level Task',
                 'description' => 'A top level task',
-                'priority' => 'high',
                 'status' => 'pending',
                 'due_date' => '2025-12-31',
             ]);
@@ -56,7 +55,6 @@ class TaskHierarchyFeatureTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Top Level Task',
             'parent_id' => null,
-            'priority' => 'high',
             'status' => 'pending',
         ]);
 
@@ -71,7 +69,7 @@ class TaskHierarchyFeatureTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'low', // Specify parent priority so subtask can be medium
+ // Specify parent priority so subtask can be medium
         ]);
 
         $response = $this->actingAs($this->user)
@@ -79,7 +77,7 @@ class TaskHierarchyFeatureTest extends TestCase
                 'title' => 'Subtask',
                 'description' => 'A subtask',
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium', // Valid since parent is low
+ // Valid since parent is low
                 'status' => 'pending',
                 'due_date' => '2025-12-31',
             ]);
@@ -90,7 +88,6 @@ class TaskHierarchyFeatureTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Subtask',
             'parent_id' => $parentTask->id,
-            'priority' => 'medium',
             'status' => 'pending',
         ]);
 
@@ -138,7 +135,6 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Invalid Subtask',
                 'parent_id' => $taskFromOtherProject->id,
-                'priority' => 'medium',
                 'status' => 'pending',
             ]);
 
@@ -160,7 +156,6 @@ class TaskHierarchyFeatureTest extends TestCase
             ->put("/dashboard/projects/{$this->project->id}/tasks/{$task->id}", [
                 'title' => 'Updated Task',
                 'parent_id' => $task->id, // Try to set self as parent
-                'priority' => 'medium',
                 'status' => 'pending',
             ]);
 
@@ -280,14 +275,14 @@ class TaskHierarchyFeatureTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'low', // Specify parent priority so subtask can be medium
+ // Specify parent priority so subtask can be medium
         ]);
 
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Subtask with Path',
                 'parent_id' => $parentTask->id,
-                'priority' => 'medium', // Valid since parent is low
+ // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -303,20 +298,20 @@ class TaskHierarchyFeatureTest extends TestCase
         $parent1 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent 1',
-            'priority' => 'low', // Specify priority
+ // Specify priority
         ]);
 
         $parent2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent 2',
-            'priority' => 'low', // Specify priority to allow medium child
+ // Specify priority to allow medium child
         ]);
 
         $task = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parent1->id,
             'title' => 'Moving Task',
-            'priority' => 'medium', // Specify initial priority
+ // Specify initial priority
         ]);
 
         // Move task from parent1 to parent2
@@ -324,7 +319,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->put("/dashboard/projects/{$this->project->id}/tasks/{$task->id}", [
                 'title' => 'Moving Task',
                 'parent_id' => $parent2->id,
-                'priority' => 'medium', // Valid since both parents are low
+ // Valid since both parents are low
                 'status' => 'pending',
             ]);
 
@@ -408,7 +403,6 @@ class TaskHierarchyFeatureTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Task with Past Due Date',
-                'priority' => 'medium',
                 'status' => 'pending',
                 'due_date' => '2020-01-01', // Past date
             ]);
@@ -425,14 +419,14 @@ class TaskHierarchyFeatureTest extends TestCase
         $level0 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Level 0',
-            'priority' => 'low', // Specify priority to allow medium children
+ // Specify priority to allow medium children
         ]);
 
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Level 1',
                 'parent_id' => $level0->id,
-                'priority' => 'medium', // Valid since parent is low
+ // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -442,7 +436,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Level 2',
                 'parent_id' => $level1->id,
-                'priority' => 'medium', // Valid since parent is medium
+ // Valid since parent is medium
                 'status' => 'pending',
             ]);
 
@@ -463,7 +457,7 @@ class TaskHierarchyFeatureTest extends TestCase
         $parent = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent',
-            'priority' => 'low', // Specify priority to allow medium children
+ // Specify priority to allow medium children
         ]);
 
         // Create first child
@@ -471,7 +465,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'First Child',
                 'parent_id' => $parent->id,
-                'priority' => 'medium', // Valid since parent is low
+ // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -480,7 +474,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Second Child',
                 'parent_id' => $parent->id,
-                'priority' => 'medium', // Valid since parent is low
+ // Valid since parent is low
                 'status' => 'pending',
             ]);
 
@@ -509,7 +503,6 @@ class TaskHierarchyFeatureTest extends TestCase
             ->put("/dashboard/projects/{$this->project->id}/tasks/{$parent->id}", [
                 'title' => 'Parent',
                 'parent_id' => $child->id, // This should be invalid
-                'priority' => 'medium',
                 'status' => 'pending',
             ]);
 
@@ -536,7 +529,6 @@ class TaskHierarchyFeatureTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post("/dashboard/projects/{$otherProject->id}/tasks", [
                 'title' => 'Unauthorized Task',
-                'priority' => 'medium',
                 'status' => 'pending',
             ]);
 
@@ -561,7 +553,6 @@ class TaskHierarchyFeatureTest extends TestCase
             ->post("/dashboard/projects/{$project2->id}/tasks", [
                 'title' => 'Child in Project B',
                 'parent_id' => $parentTask->id, // Parent from different project
-                'priority' => 'medium',
                 'status' => 'pending',
             ]);
 

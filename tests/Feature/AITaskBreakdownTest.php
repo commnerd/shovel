@@ -71,14 +71,12 @@ class AITaskBreakdownTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Database Setup',
             'status' => 'completed',
-            'priority' => 'high',
         ]);
 
         $existingTask2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'API Development',
             'status' => 'in_progress',
-            'priority' => 'medium',
         ]);
 
         // AI service will use fallback when not properly configured
@@ -164,21 +162,18 @@ class AITaskBreakdownTest extends TestCase
             ->postJson("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Main Task',
                 'description' => 'A main task with AI subtasks',
-                'priority' => 'high',
                 'status' => 'pending',
                 'due_date' => '2025-12-31',
                 'subtasks' => [
                     [
                         'title' => 'Subtask 1',
                         'description' => 'First subtask',
-                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-15',
                     ],
                     [
                         'title' => 'Subtask 2',
                         'description' => 'Second subtask',
-                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-20',
                     ],
@@ -225,13 +220,11 @@ class AITaskBreakdownTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Main Task',
-                'priority' => 'high',
                 'status' => 'pending',
                 'subtasks' => [
                     [
                         // Missing required title
                         'description' => 'Subtask without title',
-                        'priority' => 'medium',
                         'status' => 'pending',
                     ],
                 ],
@@ -310,27 +303,23 @@ class AITaskBreakdownTest extends TestCase
             ->postJson("/dashboard/projects/{$this->project->id}/tasks", [
                 'title' => 'Complex Task',
                 'description' => 'A task with multiple subtasks',
-                'priority' => 'high',
                 'status' => 'pending',
                 'subtasks' => [
                     [
                         'title' => 'Research Phase',
                         'description' => 'Research requirements',
-                        'priority' => 'high',
                         'status' => 'pending',
                         'due_date' => '2025-12-10',
                     ],
                     [
                         'title' => 'Development Phase',
                         'description' => 'Implement the solution',
-                        'priority' => 'high',
                         'status' => 'pending',
                         'due_date' => '2025-12-20',
                     ],
                     [
                         'title' => 'Testing Phase',
                         'description' => 'Test the implementation',
-                        'priority' => 'high', // Must be >= parent priority (high)
                         'status' => 'pending',
                         'due_date' => '2025-12-25',
                     ],

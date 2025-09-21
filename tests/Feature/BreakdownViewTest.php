@@ -27,7 +27,6 @@ class BreakdownViewTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         // Create subtasks
@@ -35,14 +34,12 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'title' => 'Subtask 1',
-            'priority' => 'medium',
         ]);
 
         $subtask2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'title' => 'Subtask 2',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -63,7 +60,6 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Create subtasks
@@ -71,14 +67,12 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $subtask2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Complete first subtask
@@ -99,7 +93,6 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Create subtasks
@@ -107,14 +100,12 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $subtask2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Set first subtask to in_progress
@@ -130,21 +121,18 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $subtask1 = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $subtask2 = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         // Revert one subtask to pending
@@ -165,7 +153,6 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Grandparent',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $parent = Task::factory()->create([
@@ -173,7 +160,6 @@ class BreakdownViewTest extends TestCase
             'parent_id' => $grandparent->id,
             'title' => 'Parent',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $child = Task::factory()->create([
@@ -181,7 +167,6 @@ class BreakdownViewTest extends TestCase
             'parent_id' => $parent->id,
             'title' => 'Child',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Complete the leaf task
@@ -201,7 +186,6 @@ class BreakdownViewTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         // Create 4 subtasks
@@ -212,7 +196,6 @@ class BreakdownViewTest extends TestCase
                 'parent_id' => $parentTask->id,
                 'title' => "Subtask {$i}",
                 'status' => 'pending',
-                'priority' => 'medium',
             ]);
         }
 
@@ -231,14 +214,12 @@ class BreakdownViewTest extends TestCase
         $parentTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
-            'priority' => 'medium',
         ]);
 
         $subtask = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -260,7 +241,6 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Leaf Task',
             'status' => 'completed',
-            'priority' => 'medium',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -284,14 +264,12 @@ class BreakdownViewTest extends TestCase
             'project_id' => $this->project->id,
             'title' => 'Parent Task',
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         $leafTask = Task::factory()->create([
             'project_id' => $this->project->id,
             'parent_id' => $parentTask->id,
             'status' => 'pending',
-            'priority' => 'medium',
         ]);
 
         // Update leaf task status
