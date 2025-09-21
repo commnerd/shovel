@@ -90,6 +90,10 @@ RUN php artisan migrate --force
 # Create storage link for public files
 RUN php artisan storage:link
 
+# Generate deployment version and clear caches
+RUN echo "Setting up deployment..." && \
+    php artisan app:deploy --force
+
 # Generate Wayfinder files for production build
 RUN echo "Generating Wayfinder files for production..." && \
     WAYFINDER_BUILD=true php artisan wayfinder:generate --with-form && \

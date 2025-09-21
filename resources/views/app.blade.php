@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="app-version" content="{{ app(\App\Services\DeploymentVersionService::class)->getCurrentVersion()['version'] }}">
+        <meta name="deployment-timestamp" content="{{ app(\App\Services\DeploymentVersionService::class)->getCurrentVersion()['timestamp'] }}">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
