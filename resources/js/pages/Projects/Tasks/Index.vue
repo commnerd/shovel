@@ -77,7 +77,7 @@ const tabOptions = [
         label: 'Breakdown',
         icon: BarChart3,
         count: taskCounts.value.all,
-        description: 'Complete hierarchical view showing all tasks and subtasks with visual indentation. Only leaf tasks can be marked complete.'
+        description: 'Complete hierarchical view showing all tasks and subtasks. Only leaf tasks can be marked complete.'
     },
     {
         value: 'leaf',
@@ -739,7 +739,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                     :data-task-id="task.id"
                     class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-md transition-all duration-300"
                     :class="{
-                        'ml-6': task.depth > 0 && currentFilter !== 'leaf',
                         'opacity-50': shouldHideChildren(task),
                         'cursor-grabbing': isDragging && draggedTaskId === task.id,
                         'cursor-grab': !isDragging && currentFilter === 'top-level',
@@ -872,18 +871,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <div
                             class="flex items-center gap-3 py-2 px-3 hover:bg-gray-50 rounded-lg transition-colors"
                             :class="{
-                                'ml-4': task.depth === 1,
-                                'ml-8': task.depth === 2,
-                                'ml-12': task.depth === 3,
-                                'ml-16': task.depth >= 4,
                                 'bg-gray-25': !task.is_leaf,
                             }"
                         >
-                            <!-- Hierarchy connector lines -->
-                            <div v-if="task.depth > 0" class="flex items-center mr-2">
-                                <div class="w-4 h-0.5 bg-gray-300"></div>
-                                <div class="w-0.5 h-4 bg-gray-300 -ml-2 -mt-2"></div>
-                                </div>
 
                             <!-- Status indicator - only interactive for leaf tasks -->
                             <div class="flex items-center justify-center w-4 h-4 flex-shrink-0">
@@ -1007,7 +997,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                         v-for="task in tasks"
                         :key="task.id"
                         class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-sm transition-all duration-200"
-                        :style="{ marginLeft: `${task.depth * 16}px` }"
                     >
                         <!-- Status checkbox - Only for leaf tasks, disabled for parent tasks -->
                         <button
@@ -1081,6 +1070,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             @drop="onKanbanDrop($event, 'pending')"
                             :class="{ 'bg-blue-100 border-2 border-blue-300 border-dashed': kanbanDragOverColumn === 'pending' }"
                         >
+                            <!-- Tasks -->
                             <div
                                 v-for="task in tasks.filter(t => t.status === 'pending')"
                                 :key="task.id"
@@ -1108,6 +1098,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Empty state with drop zone -->
+                            <div
+                                v-if="tasks.filter(t => t.status === 'pending').length === 0"
+                                class="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm"
+                            >
+                                Drop tasks here
+                            </div>
                         </div>
                     </div>
 
@@ -1130,6 +1128,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             @drop="onKanbanDrop($event, 'in_progress')"
                             :class="{ 'bg-blue-200 border-2 border-blue-400 border-dashed': kanbanDragOverColumn === 'in_progress' }"
                         >
+                            <!-- Tasks -->
                             <div
                                 v-for="task in tasks.filter(t => t.status === 'in_progress')"
                                 :key="task.id"
@@ -1156,6 +1155,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         {{ new Date(task.due_date).toLocaleDateString() }}
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- Empty state with drop zone -->
+                            <div
+                                v-if="tasks.filter(t => t.status === 'in_progress').length === 0"
+                                class="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm"
+                            >
+                                Drop tasks here
                             </div>
                         </div>
                                 </div>
