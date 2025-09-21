@@ -5,11 +5,14 @@
         <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <Heading class="flex items-center gap-2">
+                    <Heading title="System Settings" class="flex items-center gap-2">
                         <Settings class="h-6 w-6 text-blue-600" />
-                        System Settings
                     </Heading>
-                    <p class="text-sm text-gray-600 mt-1">Configure default AI settings for new projects and manage provider configurations</p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        <span v-if="props.user.is_super_admin">Configure system-wide AI providers and default settings for all organizations</span>
+                        <span v-else-if="props.user.is_admin">Configure AI settings for your organization</span>
+                        <span v-else>Configure default AI settings for new projects</span>
+                    </p>
                 </div>
             </div>
 
@@ -18,10 +21,17 @@
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Sparkles class="h-5 w-5 text-purple-600" />
-                        Default AI Configuration
+                        <span v-if="props.user.is_super_admin">System-Wide Default AI Configuration</span>
+                        <span v-else>Default AI Configuration</span>
                     </CardTitle>
                     <CardDescription>
-                        Set the default AI provider and model for new projects. Each project will inherit these settings and can be customized individually to control costs.
+                        <span v-if="props.user.is_super_admin">
+                            Set the system-wide default AI provider and model for all new projects across all organizations.
+                            Organizations can override these defaults with their own settings.
+                        </span>
+                        <span v-else>
+                            Set the default AI provider and model for new projects. Each project will inherit these settings and can be customized individually to control costs.
+                        </span>
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -70,35 +80,19 @@
                             </select>
                         </div>
 
-                        <!-- Default Configuration Fields -->
+                        <!-- Default Configuration Info -->
                         <div v-if="defaultForm.provider" class="space-y-4">
                             <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                 <div class="flex items-start gap-2">
                                     <Info class="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                                     <div class="text-sm text-blue-800">
                                         <p class="font-medium">Project Inheritance</p>
-                                        <p class="mt-1">New projects will automatically use these settings. Leave fields empty to use provider-specific configurations below.</p>
+                                        <p class="mt-1">
+                                            New projects will automatically use this provider and model. 
+                                            API credentials are configured by Super Admins in the provider-specific section.
+                                        </p>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label :for="`default-api-key`">API Key (Optional)</Label>
-                                <Input
-                                    :id="`default-api-key`"
-                                    type="password"
-                                    v-model="defaultForm.api_key"
-                                    placeholder="Leave empty to use provider-specific API key"
-                                />
-                            </div>
-                            <div class="space-y-2">
-                                <Label :for="`default-base-url`">Base URL (Optional)</Label>
-                                <Input
-                                    :id="`default-base-url`"
-                                    type="url"
-                                    v-model="defaultForm.base_url"
-                                    :placeholder="getDefaultBaseUrl(defaultForm.provider)"
-                                />
                             </div>
                         </div>
 
@@ -112,16 +106,75 @@
                                 <Save class="h-4 w-4" />
                                 {{ defaultForm.processing ? 'Saving...' : 'Save Default Settings' }}
                             </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                @click="testDefaultConnection"
-                                :disabled="isTestingDefaultConnection || !defaultForm.provider || !defaultForm.model"
-                                class="flex items-center gap-2"
-                            >
-                                <Loader v-if="isTestingDefaultConnection" class="h-4 w-4 animate-spin" />
-                                <Zap v-else class="h-4 w-4" />
-                                Test Default Configuration
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <!-- Organization AI Configuration (for Admins) -->
+            <Card v-if="props.permissions.canAccessOrganizationConfig">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Building2 class="h-5 w-5 text-green-600" />
+                        Organization AI Configuration
+                    </CardTitle>
+                    <CardDescription>
+                        Set the default AI provider and model for all projects in {{ props.user.organization?.name }}.
+                        This will override the system defaults for your organization.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form @submit.prevent="updateOrganizationAISettings" class="space-y-6">
+                        <!-- Organization Provider Selection -->
+                        <div class="space-y-3">
+                            <Label for="org-provider">AI Provider</Label>
+                            <Select v-model="organizationForm.provider" :disabled="organizationForm.processing">
+                                <SelectTrigger id="org-provider">
+                                    <SelectValue placeholder="Select AI provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem v-for="(provider, key) in props.availableProviders" :key="key" :value="key">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            <div>
+                                                <div class="font-medium">{{ provider.name }}</div>
+                                                <div class="text-xs text-gray-500">{{ provider.description }}</div>
+                                            </div>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="organizationForm.errors.provider" />
+                        </div>
+
+                        <!-- Organization Model Selection -->
+                        <div v-if="organizationForm.provider" class="space-y-3">
+                            <Label for="org-model">AI Model</Label>
+                            <Select v-model="organizationForm.model" :disabled="organizationForm.processing">
+                                <SelectTrigger id="org-model">
+                                    <SelectValue placeholder="Select AI model" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="(modelName, modelKey) in props.availableProviders[organizationForm.provider]?.models || {}"
+                                        :key="modelKey"
+                                        :value="modelKey"
+                                    >
+                                        {{ modelName }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="organizationForm.errors.model" />
+                            <p class="text-xs text-gray-500">
+                                This model will be used for all AI operations in your organization unless overridden at the project level.
+                            </p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-3">
+                            <Button type="submit" :disabled="organizationForm.processing">
+                                <Loader2 v-if="organizationForm.processing" class="mr-2 h-4 w-4 animate-spin" />
+                                {{ organizationForm.processing ? 'Updating...' : 'Update Organization Settings' }}
                             </Button>
                         </div>
                     </form>
@@ -133,10 +186,11 @@
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Cog class="h-5 w-5 text-gray-600" />
-                        Provider-Specific Configuration
+                        System-Wide AI Provider Configuration
                     </CardTitle>
                     <CardDescription>
-                        Configure individual AI providers. These settings are used as fallbacks when projects don't have specific configurations.
+                        Configure API keys and endpoints for AI providers across the entire platform.
+                        These credentials will be used by all organizations and projects that don't have their own provider configurations.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -254,14 +308,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Settings, Sparkles, Cog, Save, Zap, Loader, Info } from 'lucide-vue-next';
+import { Settings, Sparkles, Cog, Save, Zap, Loader, Info, Building2, Loader2 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface DefaultAISettings {
     provider: string;
     model: string;
-    api_key: string;
-    base_url: string;
 }
 
 interface ProviderConfig {
@@ -277,24 +329,46 @@ interface ProviderInfo {
     fields: Record<string, string>;
 }
 
+interface OrganizationAISettings {
+    provider: string;
+    model: string;
+}
+
+interface User {
+    is_super_admin: boolean;
+    is_admin: boolean;
+    organization: {
+        id: number;
+        name: string;
+        is_default: boolean;
+    } | null;
+}
+
 interface Props {
     defaultAISettings: DefaultAISettings;
+    organizationAISettings: OrganizationAISettings | null;
     providerConfigs: Record<string, ProviderConfig>;
     availableProviders: Record<string, ProviderInfo>;
     permissions: {
         canAccessProviderConfig: boolean;
         canAccessDefaultConfig: boolean;
+        canAccessOrganizationConfig: boolean;
     };
+    user: User;
 }
 
 const props = defineProps<Props>();
 
-// Default AI settings form
+// Default AI settings form (provider and model only)
 const defaultForm = useForm({
     provider: props.defaultAISettings?.provider || 'cerebrus',
     model: props.defaultAISettings?.model || '',
-    api_key: props.defaultAISettings?.api_key || '',
-    base_url: props.defaultAISettings?.base_url || '',
+});
+
+// Organization AI settings form
+const organizationForm = useForm({
+    provider: props.organizationAISettings?.provider || 'cerebrus',
+    model: props.organizationAISettings?.model || '',
 });
 
 // Provider-specific settings form
@@ -312,7 +386,6 @@ const form = useForm({
 } as Record<string, any>);
 
 const isTestingConnection = ref(false);
-const isTestingDefaultConnection = ref(false);
 const connectionTestResult = ref<{ success: boolean; message: string } | null>(null);
 
 const getDefaultBaseUrl = (provider: string): string => {
@@ -346,39 +419,7 @@ const getFieldPlaceholder = (provider: string, field: string): string => {
     return placeholders[provider]?.[field] || '';
 };
 
-const testDefaultConnection = async () => {
-    isTestingDefaultConnection.value = true;
-    connectionTestResult.value = null;
-
-    try {
-        const response = await fetch('/settings/ai/test', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-                provider: defaultForm.provider,
-                api_key: defaultForm.api_key || props.providerConfigs[defaultForm.provider]?.api_key,
-                base_url: defaultForm.base_url || props.providerConfigs[defaultForm.provider]?.base_url,
-                model: defaultForm.model,
-            }),
-        });
-
-        const data = await response.json();
-        connectionTestResult.value = {
-            success: data.success,
-            message: data.message || (data.success ? 'Default configuration works!' : 'Default configuration failed'),
-        };
-    } catch {
-        connectionTestResult.value = {
-            success: false,
-            message: 'Failed to test default configuration.',
-        };
-    } finally {
-        isTestingDefaultConnection.value = false;
-    }
-};
+// Test default connection removed - credentials are managed by Super Admins
 
 const testConnection = async () => {
     isTestingConnection.value = true;
@@ -416,6 +457,14 @@ const testConnection = async () => {
 
 const updateDefaultAISettings = () => {
     defaultForm.post('/settings/ai/default', {
+        onSuccess: () => {
+            connectionTestResult.value = null;
+        },
+    });
+};
+
+const updateOrganizationAISettings = () => {
+    organizationForm.post('/settings/ai/organization', {
         onSuccess: () => {
             connectionTestResult.value = null;
         },

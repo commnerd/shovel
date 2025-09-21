@@ -27,6 +27,7 @@ class User extends Authenticatable
         'approved_at',
         'approved_by',
         'is_super_admin',
+        'email_verified_at',
     ];
 
     /**
@@ -93,6 +94,14 @@ class User extends Authenticatable
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get the invitations sent by this user.
+     */
+    public function sentInvitations(): HasMany
+    {
+        return $this->hasMany(UserInvitation::class, 'invited_by');
     }
 
     /**

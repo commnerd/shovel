@@ -57,26 +57,24 @@ class AIConfigurationTest extends TestCase
             ->post('/settings/ai/default', [
                 'provider' => 'openai',
                 'model' => 'gpt-4',
-                'api_key' => 'test-api-key',
-                'base_url' => 'https://api.openai.com/v1',
             ]);
 
         $response->assertRedirect('/settings/system');
 
-        // Verify settings were saved
+        // Verify settings were saved (only provider and model, no API key/URL)
         $this->assertEquals('openai', Setting::get('ai.default.provider'));
         $this->assertEquals('gpt-4', Setting::get('ai.default.model'));
-        $this->assertEquals('test-api-key', Setting::get('ai.default.api_key'));
-        $this->assertEquals('https://api.openai.com/v1', Setting::get('ai.default.base_url'));
+
+        // API key and base URL should not be stored in default settings
+        $this->assertNull(Setting::get('ai.default.api_key'));
+        $this->assertNull(Setting::get('ai.default.base_url'));
     }
 
     public function test_new_project_inherits_default_ai_configuration()
     {
-        // Set default AI configuration
+        // Set default AI configuration (only provider and model)
         Setting::set('ai.default.provider', 'openai');
         Setting::set('ai.default.model', 'gpt-4');
-        Setting::set('ai.default.api_key', 'default-key');
-        Setting::set('ai.default.base_url', 'https://api.openai.com/v1');
 
         $response = $this->actingAs($this->user)
             ->post('/dashboard/projects', [
@@ -92,12 +90,14 @@ class AIConfigurationTest extends TestCase
         $project = Project::where('title', 'Test Project')->first();
         $this->assertNotNull($project);
 
-        // Verify AI configuration was applied
+        // Verify AI configuration was applied (only provider and model from defaults)
         $aiConfig = $project->getAIConfiguration();
         $this->assertEquals('openai', $aiConfig['provider']);
         $this->assertEquals('gpt-4', $aiConfig['model']);
-        $this->assertEquals('default-key', $aiConfig['api_key']);
-        $this->assertEquals('https://api.openai.com/v1', $aiConfig['base_url']);
+
+        // API key and base URL should be null for project (read from system config when needed)
+        $this->assertNull($aiConfig['api_key']);
+        $this->assertNull($aiConfig['base_url']);
     }
 
     public function test_project_ai_configuration_methods()
@@ -131,11 +131,9 @@ class AIConfigurationTest extends TestCase
 
     public function test_apply_default_ai_configuration_to_existing_project()
     {
-        // Set default AI configuration
+        // Set default AI configuration (only provider and model)
         Setting::set('ai.default.provider', 'cerebrus');
         Setting::set('ai.default.model', 'llama3.1-70b');
-        Setting::set('ai.default.api_key', 'cerebrus-key');
-        Setting::set('ai.default.base_url', 'https://api.cerebras.ai/v1');
 
         $project = Project::factory()->create([
             'user_id' => $this->user->id,
@@ -147,11 +145,13 @@ class AIConfigurationTest extends TestCase
         $project->applyDefaultAIConfiguration();
         $project->refresh();
 
-        // Verify configuration was applied
+        // Verify configuration was applied (only provider and model from defaults)
         $this->assertEquals('cerebrus', $project->ai_provider);
         $this->assertEquals('llama3.1-70b', $project->ai_model);
-        $this->assertEquals('cerebrus-key', $project->ai_api_key);
-        $this->assertEquals('https://api.cerebras.ai/v1', $project->ai_base_url);
+
+        // API key and base URL should be null (not stored per-project)
+        $this->assertNull($project->ai_api_key);
+        $this->assertNull($project->ai_base_url);
     }
 
     public function test_default_ai_settings_validation()

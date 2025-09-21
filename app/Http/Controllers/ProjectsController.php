@@ -92,6 +92,37 @@ class ProjectsController extends Controller
             abort(403, 'You do not have permission to access this project.');
         }
 
+        // Get available AI providers for the dropdown
+        $availableProviders = [
+            'cerebrus' => [
+                'name' => 'Cerebras',
+                'description' => 'Fast and efficient AI models',
+                'models' => [
+                    'llama3.1-8b' => 'Llama 3.1 8B',
+                    'llama3.1-70b' => 'Llama 3.1 70B',
+                ],
+            ],
+            'openai' => [
+                'name' => 'OpenAI',
+                'description' => 'GPT models from OpenAI',
+                'models' => [
+                    'gpt-5' => 'GPT-5',
+                    'gpt-4' => 'GPT-4',
+                    'gpt-4-turbo' => 'GPT-4 Turbo',
+                    'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
+                ],
+            ],
+            'anthropic' => [
+                'name' => 'Anthropic',
+                'description' => 'Claude models from Anthropic',
+                'models' => [
+                    'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+                    'claude-3-opus-20240229' => 'Claude 3 Opus',
+                    'claude-3-haiku-20240307' => 'Claude 3 Haiku',
+                ],
+            ],
+        ];
+
         return Inertia::render('Projects/Edit', [
             'project' => [
                 'id' => $project->id,
@@ -99,7 +130,10 @@ class ProjectsController extends Controller
                 'description' => $project->description,
                 'due_date' => $project->due_date?->format('Y-m-d'),
                 'status' => $project->status,
+                'ai_provider' => $project->ai_provider,
+                'ai_model' => $project->ai_model,
             ],
+            'availableProviders' => $availableProviders,
         ]);
     }
 
@@ -118,6 +152,8 @@ class ProjectsController extends Controller
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'status' => 'sometimes|in:active,completed,archived',
+            'ai_provider' => 'nullable|in:cerebrus,openai,anthropic',
+            'ai_model' => 'nullable|string|max:100',
         ]);
 
         $project->update([
@@ -125,6 +161,8 @@ class ProjectsController extends Controller
             'description' => $validated['description'],
             'due_date' => $validated['due_date'] ?? null,
             'status' => $validated['status'] ?? $project->status,
+            'ai_provider' => $validated['ai_provider'] ?? null,
+            'ai_model' => $validated['ai_model'] ?? null,
         ]);
 
         return redirect()->route('projects.index')->with([

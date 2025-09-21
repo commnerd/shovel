@@ -73,7 +73,7 @@ class TaskPriorityAdjustmentApiTest extends TestCase
                  ]);
 
         $response->assertJsonFragment([
-            'message' => 'Task reordered successfully. Priority changed from low to high.',
+            'message' => 'Task reordered successfully! Priority changed from low to high.',
         ]);
 
         // Verify database changes
@@ -167,7 +167,7 @@ class TaskPriorityAdjustmentApiTest extends TestCase
                  ]);
 
         $response->assertJsonFragment([
-            'message' => 'Task reordered successfully.',
+            'message' => 'Task reordered successfully!',
         ]);
 
         // Verify priority unchanged
@@ -203,7 +203,7 @@ class TaskPriorityAdjustmentApiTest extends TestCase
                      'success' => true,
                      'priority_changed' => true,
                      'old_priority' => 'low',
-                     'new_priority' => 'high', // Should adopt highest neighbor priority
+                     'new_priority' => 'medium', // Should adopt most common neighbor priority
                  ]);
     }
 

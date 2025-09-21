@@ -19,8 +19,8 @@ class TasksController extends Controller
             abort(403, 'Unauthorized access to this project.');
         }
 
-        // Get filter parameter (default to 'all')
-        $filter = $request->get('filter', 'all');
+        // Get filter parameter (default to 'top-level' for List view)
+        $filter = $request->get('filter', 'top-level');
 
         // Build base query
         $tasksQuery = $project->tasks()->with(['parent', 'children']);
@@ -32,6 +32,23 @@ class TasksController extends Controller
                 break;
             case 'leaf':
                 $tasksQuery->leaf()->orderBy('sort_order');
+                break;
+            case 'board':
+                // For board view, get all tasks ordered by status then priority for Kanban
+                // Use CASE statements for SQLite compatibility
+                $tasksQuery->orderByRaw("CASE
+                                           WHEN status = 'pending' THEN 1
+                                           WHEN status = 'in_progress' THEN 2
+                                           WHEN status = 'completed' THEN 3
+                                           ELSE 4
+                                         END")
+                          ->orderByRaw("CASE
+                                         WHEN priority = 'high' THEN 1
+                                         WHEN priority = 'medium' THEN 2
+                                         WHEN priority = 'low' THEN 3
+                                         ELSE 4
+                                       END")
+                          ->orderBy('sort_order');
                 break;
             case 'all':
             default:
@@ -69,6 +86,7 @@ class TasksController extends Controller
                 'initial_order_index' => $task->initial_order_index,
                 'move_count' => $task->move_count,
                 'current_order_index' => $task->current_order_index,
+                'completion_percentage' => $task->getCompletionPercentage(),
                 'created_at' => $task->created_at->toISOString(),
             ];
         });
@@ -353,6 +371,38 @@ class TasksController extends Controller
     }
 
     /**
+     * Update task status (AJAX endpoint).
+     */
+    public function updateStatus(Request $request, Project $project, Task $task)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        // Ensure the task belongs to the project
+        if ($task->project_id !== $project->id) {
+            abort(404, 'Task not found in this project.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,in_progress,completed',
+        ]);
+
+        $task->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Task marked as {$validated['status']}!",
+            'task' => [
+                'id' => $task->id,
+                'status' => $task->status,
+                'title' => $task->title,
+            ],
+        ]);
+    }
+
+    /**
      * Remove the specified task.
      */
     public function destroy(Project $project, Task $task)
@@ -597,6 +647,10 @@ class TasksController extends Controller
         }
 
         if (!$result['success']) {
+            // Check if this is a validation error (should return 200 with error message)
+            if (isset($result['message']) && str_contains($result['message'], 'cannot be moved outside their parent task context')) {
+                return response()->json($result, 200);
+            }
             return response()->json($result, 400);
         }
 
@@ -664,6 +718,7 @@ class TasksController extends Controller
                 'initial_order_index' => $task->initial_order_index,
                 'move_count' => $task->move_count,
                 'current_order_index' => $task->current_order_index,
+                'completion_percentage' => $task->getCompletionPercentage(),
                 'created_at' => $task->created_at->toISOString(),
             ];
         })->toArray();

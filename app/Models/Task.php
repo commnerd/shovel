@@ -24,6 +24,11 @@ class Task extends Model
             if ($task->wasChanged('parent_id')) {
                 $task->updateHierarchyPath();
             }
+
+            // Update parent status when child status changes
+            if ($task->wasChanged('status') && $task->parent_id) {
+                $task->updateParentStatus();
+            }
         });
     }
 
@@ -434,6 +439,41 @@ class Task extends Model
             ];
         }
 
+        // Validate that subtasks can only be reordered within their parent context
+        if ($this->parent_id) {
+            $siblings = $this->getSiblings();
+            $parent = $this->parent;
+
+            if (!$parent) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot reorder subtask: parent task not found.',
+                    'old_position' => $oldPosition,
+                    'new_position' => $newPosition,
+                    'move_count' => $this->move_count ?? 0,
+                ];
+            }
+
+            // Check if the target position conflicts with a task that has a different parent
+            $taskAtNewPosition = static::where('project_id', $this->project_id)
+                ->where('sort_order', $newPosition)
+                ->where('id', '!=', $this->id)
+                ->first();
+
+            if ($taskAtNewPosition) {
+                // If the task at the new position has a different parent (or no parent), it's invalid
+                if ($taskAtNewPosition->parent_id !== $this->parent_id) {
+                    return [
+                        'success' => false,
+                        'message' => 'Subtasks cannot be moved outside their parent task context. Use the edit form to change the parent.',
+                        'old_position' => $oldPosition,
+                        'new_position' => $newPosition,
+                        'move_count' => $this->move_count ?? 0,
+                    ];
+                }
+            }
+        }
+
         // Check if confirmation is needed
         $confirmationCheck = $this->checkReorderConfirmation($newPosition);
         if ($confirmationCheck && !$confirmed) {
@@ -454,7 +494,7 @@ class Task extends Model
         }
 
         // Use database transaction to ensure all updates are atomic
-        \DB::transaction(function () use ($oldPosition, $newPosition, $priorityAdjustment) {
+        DB::transaction(function () use ($oldPosition, $newPosition, $priorityAdjustment) {
             // Update siblings' sort orders first
             $this->updateSiblingOrders($oldPosition, $newPosition);
 
@@ -467,8 +507,7 @@ class Task extends Model
             }
 
             // Update the main sort_order and potentially priority
-            $mainUpdateResult = $this->update($updateData);
-
+            $this->update($updateData);
 
             // Try to update tracking fields if they exist (these are optional)
             try {
@@ -484,7 +523,7 @@ class Task extends Model
                     // Already has tracking - update tracking fields
                     $this->updateQuietly([
                         'current_order_index' => $newPosition,
-                        'move_count' => $this->move_count + 1,
+                        'move_count' => ($this->move_count ?? 0) + 1,
                         'last_moved_at' => now(),
                     ]);
                 }
@@ -497,57 +536,98 @@ class Task extends Model
             }
         });
 
-        // Refresh to get the latest data and verify the update worked
-        $this->refresh();
-
-
-        // Verify the update actually worked
-        $actualPosition = $this->sort_order;
-        $updateSuccessful = $actualPosition == $newPosition;
-
-        $message = 'Task reordered successfully.';
+        $message = 'Task reordered successfully!';
         if ($priorityAdjustment) {
             $message .= " Priority changed from {$priorityAdjustment['old_priority']} to {$priorityAdjustment['new_priority']}.";
         }
 
         return [
-            'success' => $updateSuccessful,
-            'message' => $updateSuccessful
-                ? $message
-                : "Task reorder failed - position is {$actualPosition}, expected {$newPosition}",
+            'success' => true,
+            'message' => $message,
             'old_position' => $oldPosition,
             'new_position' => $newPosition,
-            'actual_position' => $actualPosition,
             'move_count' => $this->move_count ?? 0,
-            'priority_changed' => !!$priorityAdjustment,
+            'priority_changed' => $priorityAdjustment !== null,
             'old_priority' => $priorityAdjustment['old_priority'] ?? null,
             'new_priority' => $priorityAdjustment['new_priority'] ?? null,
         ];
     }
 
     /**
-     * Determine if and how task priority should be adjusted based on neighbors.
+     * Update parent task status based on children completion.
+     */
+    public function updateParentStatus(): void
+    {
+        if (!$this->parent_id) {
+            return;
+        }
+
+        $parent = $this->parent;
+        if (!$parent) {
+            return;
+        }
+
+        // Get all direct children of the parent
+        $children = $parent->children;
+        if ($children->isEmpty()) {
+            return;
+        }
+
+        // Calculate completion status
+        $totalChildren = $children->count();
+        $completedChildren = $children->where('status', 'completed')->count();
+        $inProgressChildren = $children->where('status', 'in_progress')->count();
+
+        // Determine parent status based on children
+        $newStatus = 'pending'; // Default
+
+        if ($completedChildren === $totalChildren) {
+            // All children completed
+            $newStatus = 'completed';
+        } elseif ($completedChildren > 0 || $inProgressChildren > 0) {
+            // Some children completed or in progress
+            $newStatus = 'in_progress';
+        }
+
+        // Update parent status if it changed
+        if ($parent->status !== $newStatus) {
+            $parent->updateQuietly(['status' => $newStatus]);
+
+            // Recursively update grandparent if needed
+            if ($parent->parent_id) {
+                $parent->updateParentStatus();
+            }
+        }
+    }
+
+    /**
+     * Determine if priority should be adjusted and what the new priority should be.
      */
     private function determinePriorityAdjustment(int $newPosition, array $confirmationData): ?array
     {
-        $siblings = $this->getSiblings();
-        $neighbors = $this->getNeighborsAtPosition($siblings, $newPosition);
+        $neighborPriorities = $confirmationData['neighbor_priorities'] ?? [];
 
-        if (empty($neighbors)) {
+        if (empty($neighborPriorities)) {
             return null;
         }
 
-        $currentPriority = $this->priority;
-        $neighborPriorities = array_map(fn($task) => $task->priority, $neighbors);
+        // Get the most common priority among neighbors
+        $priorityCounts = array_count_values($neighborPriorities);
+        arsort($priorityCounts);
+        $suggestedPriority = array_key_first($priorityCounts);
 
-        // Determine the most appropriate priority based on neighbors
-        $newPriority = $this->calculateOptimalPriority($neighbors, $confirmationData);
+        // Only suggest change if it's different from current
+        if ($suggestedPriority && $suggestedPriority !== $this->priority) {
+            // Validate the suggested priority respects parent constraints
+            $validationResult = $this->validateParentPriorityConstraint($suggestedPriority);
+            if (!$validationResult['valid']) {
+                // If suggested priority violates parent constraint, use parent's priority
+                $suggestedPriority = $this->parent ? $this->parent->priority : $this->priority;
+            }
 
-        if ($newPriority !== $currentPriority) {
             return [
-                'old_priority' => $currentPriority,
-                'new_priority' => $newPriority,
-                'reason' => $confirmationData['type'],
+                'old_priority' => $this->priority,
+                'new_priority' => $suggestedPriority,
             ];
         }
 
@@ -555,57 +635,30 @@ class Task extends Model
     }
 
     /**
-     * Calculate the optimal priority based on neighboring tasks and parent constraints.
-     */
-    private function calculateOptimalPriority(array $neighbors, array $confirmationData): string
-    {
-        if (empty($neighbors)) {
-            return $this->priority;
-        }
-
-        $neighborPriorities = array_map(fn($task) => $task->getPriorityLevel(), $neighbors);
-        $suggestedPriority = $this->priority;
-
-        // Calculate suggested priority based on neighbors
-        if ($confirmationData['type'] === 'moving_to_higher_priority') {
-            $maxNeighborPriority = max($neighborPriorities);
-            $suggestedPriority = $this->getPriorityName($maxNeighborPriority);
-        } elseif ($confirmationData['type'] === 'moving_to_lower_priority') {
-            $minNeighborPriority = min($neighborPriorities);
-            $suggestedPriority = $this->getPriorityName($minNeighborPriority);
-        }
-
-        // Validate against parent constraints
-        $validation = $this->validateParentPriorityConstraint($suggestedPriority);
-
-        if (!$validation['valid']) {
-            // If suggested priority violates parent constraint, use parent's priority instead
-            return $validation['minimum_allowed_priority'];
-        }
-
-        return $suggestedPriority;
-    }
-
-    /**
-     * Update sort orders of sibling tasks when reordering.
+     * Update sibling sort orders when a task is moved.
      */
     private function updateSiblingOrders(int $oldPosition, int $newPosition): void
     {
-        $siblings = Task::where('parent_id', $this->parent_id)
-            ->where('project_id', $this->project_id)
-            ->where('id', '!=', $this->id);
-
-        $affectedCount = 0;
-
-        if ($newPosition < $oldPosition) {
-            // Moving up: increment sort_order for tasks between new and old position
-            $affectedCount = $siblings->whereBetween('sort_order', [$newPosition, $oldPosition - 1])
-                ->increment('sort_order');
-        } else {
-            // Moving down: decrement sort_order for tasks between old and new position
-            $affectedCount = $siblings->whereBetween('sort_order', [$oldPosition + 1, $newPosition])
-                ->decrement('sort_order');
+        if ($oldPosition === $newPosition) {
+            return;
         }
 
+        $siblings = $this->getSiblings();
+
+        if ($oldPosition < $newPosition) {
+            // Moving down: shift tasks between old and new position up
+            foreach ($siblings as $sibling) {
+                if ($sibling->sort_order > $oldPosition && $sibling->sort_order <= $newPosition) {
+                    $sibling->updateQuietly(['sort_order' => $sibling->sort_order - 1]);
+                }
+            }
+        } else {
+            // Moving up: shift tasks between new and old position down
+            foreach ($siblings as $sibling) {
+                if ($sibling->sort_order >= $newPosition && $sibling->sort_order < $oldPosition) {
+                    $sibling->updateQuietly(['sort_order' => $sibling->sort_order + 1]);
+                }
+            }
+        }
     }
 }

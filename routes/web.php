@@ -35,6 +35,10 @@ Route::post('/settings/ai/default', [App\Http\Controllers\Settings\SettingsContr
     ->middleware(['auth', 'verified'])
     ->name('settings.ai.default');
 
+Route::post('/settings/ai/organization', [App\Http\Controllers\Settings\SettingsController::class, 'updateOrganizationAI'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.ai.organization');
+
 // Super Admin Return Route (outside middleware to allow impersonated users to return)
 Route::post('/super-admin/return-to-super-admin', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'returnToSuperAdmin'])
     ->middleware(['auth', 'verified'])
@@ -134,6 +138,10 @@ Route::post('/dashboard/projects/{project}/tasks/{task}/reorder', [App\Http\Cont
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.reorder');
 
+Route::patch('/dashboard/projects/{project}/tasks/{task}/status', [App\Http\Controllers\TasksController::class, 'updateStatus'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.update-status');
+
 Route::delete('/dashboard/projects/{project}', [App\Http\Controllers\ProjectsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('projects.destroy');
@@ -157,7 +165,30 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserIsAdmin::cl
 
     Route::delete('/users/{user}/remove-from-group', [App\Http\Controllers\Admin\UserManagementController::class, 'removeFromGroup'])
         ->name('admin.users.remove-from-group');
+
+    // User Invitations routes
+    Route::get('/invitations', [App\Http\Controllers\UserInvitationController::class, 'index'])
+        ->name('admin.invitations.index');
+
+    Route::get('/invitations/create', [App\Http\Controllers\UserInvitationController::class, 'create'])
+        ->name('admin.invitations.create');
+
+    Route::post('/invitations', [App\Http\Controllers\UserInvitationController::class, 'store'])
+        ->name('admin.invitations.store');
+
+    Route::delete('/invitations/{invitation}', [App\Http\Controllers\UserInvitationController::class, 'destroy'])
+        ->name('admin.invitations.destroy');
+
+    Route::post('/invitations/{invitation}/resend', [App\Http\Controllers\UserInvitationController::class, 'resend'])
+        ->name('admin.invitations.resend');
 });
+
+// Public invitation routes (no auth required)
+Route::get('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordController::class, 'show'])
+    ->name('invitation.set-password');
+
+Route::post('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordController::class, 'store'])
+    ->name('invitation.set-password.store');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

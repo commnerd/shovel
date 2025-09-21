@@ -137,11 +137,13 @@ class Project extends Model
      */
     public function applyDefaultAIConfiguration(): void
     {
+        // Only apply provider and model from defaults
+        // API keys and base URLs should be read from system provider configuration
         $defaultConfig = [
             'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebrus'),
             'model' => \App\Models\Setting::get('ai.default.model'),
-            'api_key' => \App\Models\Setting::get('ai.default.api_key'),
-            'base_url' => \App\Models\Setting::get('ai.default.base_url'),
+            'api_key' => null, // Don't store API keys per-project
+            'base_url' => null, // Don't store base URLs per-project
             'config' => \App\Models\Setting::get('ai.default.config', []),
         ];
 

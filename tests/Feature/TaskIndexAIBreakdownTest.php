@@ -54,7 +54,7 @@ class TaskIndexAIBreakdownTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
@@ -86,7 +86,7 @@ class TaskIndexAIBreakdownTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
@@ -113,7 +113,7 @@ class TaskIndexAIBreakdownTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
@@ -223,7 +223,7 @@ class TaskIndexAIBreakdownTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
@@ -238,7 +238,7 @@ class TaskIndexAIBreakdownTest extends TestCase
     public function test_empty_task_index_shows_create_first_task()
     {
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
@@ -250,7 +250,7 @@ class TaskIndexAIBreakdownTest extends TestCase
     public function test_task_index_component_loads_correctly()
     {
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')

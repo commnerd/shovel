@@ -21,13 +21,22 @@ class SettingsController extends Controller
         $canAccessDefaultConfig = $user->isSuperAdmin() ||
             $user->isAdmin() ||
             ($user->organization && $user->organization->is_default);
-        // Get current default AI configuration for new projects
+        $canAccessOrganizationConfig = $user->isAdmin() && $user->organization && !$user->organization->is_default;
+        // Get current default AI configuration for new projects (provider and model only)
         $defaultAISettings = [
             'provider' => Setting::get('ai.default.provider', 'cerebrus'),
             'model' => Setting::get('ai.default.model'),
-            'api_key' => Setting::get('ai.default.api_key', ''),
-            'base_url' => Setting::get('ai.default.base_url'),
         ];
+
+        // Get organization-specific AI settings for admins
+        $organizationAISettings = null;
+        if ($canAccessOrganizationConfig && $user->organization) {
+            $orgId = $user->organization->id;
+            $organizationAISettings = [
+                'provider' => Setting::get("ai.organization.{$orgId}.provider", 'cerebrus'),
+                'model' => Setting::get("ai.organization.{$orgId}.model"),
+            ];
+        }
 
         // Get provider-specific configurations
         $providerConfigs = [
@@ -95,11 +104,22 @@ class SettingsController extends Controller
 
         return Inertia::render('settings/System', [
             'defaultAISettings' => $defaultAISettings,
+            'organizationAISettings' => $organizationAISettings,
             'providerConfigs' => $providerConfigs,
             'availableProviders' => $availableProviders,
             'permissions' => [
                 'canAccessProviderConfig' => $canAccessProviderConfig,
                 'canAccessDefaultConfig' => $canAccessDefaultConfig,
+                'canAccessOrganizationConfig' => $canAccessOrganizationConfig,
+            ],
+            'user' => [
+                'is_super_admin' => $user->isSuperAdmin(),
+                'is_admin' => $user->isAdmin(),
+                'organization' => $user->organization ? [
+                    'id' => $user->organization->id,
+                    'name' => $user->organization->name,
+                    'is_default' => $user->organization->is_default,
+                ] : null,
             ],
         ]);
     }
@@ -163,23 +183,39 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'provider' => 'required|in:cerebrus,openai,anthropic',
             'model' => 'required|string|max:100',
-            'api_key' => 'nullable|string|max:255',
-            'base_url' => 'nullable|url|max:255',
         ]);
 
-        // Update default AI settings
+        // Update default AI settings (provider and model only)
         Setting::set('ai.default.provider', $validated['provider'], 'string', 'Default AI provider for new projects');
         Setting::set('ai.default.model', $validated['model'], 'string', 'Default AI model for new projects');
 
-        if (! empty($validated['api_key'])) {
-            Setting::set('ai.default.api_key', $validated['api_key'], 'string', 'Default AI API key for new projects');
-        }
-
-        if (! empty($validated['base_url'])) {
-            Setting::set('ai.default.base_url', $validated['base_url'], 'string', 'Default AI base URL for new projects');
-        }
-
         return redirect()->route('settings.system.index')->with('message', 'Default AI settings updated successfully!');
+    }
+
+    /**
+     * Update organization-specific AI settings.
+     */
+    public function updateOrganizationAI(Request $request)
+    {
+        $user = auth()->user();
+
+        // Only Admins of non-default organizations can update organization AI settings
+        if (!$user->isAdmin() || !$user->organization || $user->organization->is_default) {
+            abort(403, 'You do not have permission to modify organization AI settings.');
+        }
+
+        $validated = $request->validate([
+            'provider' => 'required|in:cerebrus,openai,anthropic',
+            'model' => 'required|string|max:100',
+        ]);
+
+        $orgId = $user->organization->id;
+
+        // Update organization-specific AI settings
+        Setting::set("ai.organization.{$orgId}.provider", $validated['provider'], 'string', "Default AI provider for organization {$user->organization->name}");
+        Setting::set("ai.organization.{$orgId}.model", $validated['model'], 'string', "Default AI model for organization {$user->organization->name}");
+
+        return redirect()->route('settings.system.index')->with('message', 'Organization AI settings updated successfully!');
     }
 
     /**

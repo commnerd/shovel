@@ -285,7 +285,7 @@ class AdminImpersonationTest extends TestCase
                 'reason' => 'Subtask access testing',
             ]);
 
-        $response = $this->get("/dashboard/projects/{$this->project->id}/tasks");
+        $response = $this->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
 

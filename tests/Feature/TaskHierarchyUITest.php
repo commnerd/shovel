@@ -96,7 +96,7 @@ class TaskHierarchyUITest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
 
@@ -168,7 +168,7 @@ class TaskHierarchyUITest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->get("/dashboard/projects/{$this->project->id}/tasks");
+            ->get("/dashboard/projects/{$this->project->id}/tasks?filter=all");
 
         $response->assertOk();
 

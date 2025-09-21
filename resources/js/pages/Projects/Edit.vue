@@ -17,10 +17,19 @@ interface Project {
     description: string;
     due_date?: string;
     status: string;
+    ai_provider?: string;
+    ai_model?: string;
+}
+
+interface ProviderInfo {
+    name: string;
+    description: string;
+    models: Record<string, string>;
 }
 
 const props = defineProps<{
     project: Project;
+    availableProviders: Record<string, ProviderInfo>;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,6 +52,8 @@ const form = useForm({
     description: props.project.description,
     due_date: props.project.due_date || '',
     status: props.project.status,
+    ai_provider: props.project.ai_provider || '',
+    ai_model: props.project.ai_model || '',
 });
 
 const isSubmitting = ref(false);
@@ -190,6 +201,60 @@ const deleteProject = () => {
                                         <option value="archived">Archived</option>
                                     </select>
                                     <InputError :message="form.errors.status" />
+                                </div>
+
+                                <!-- AI Configuration Section -->
+                                <div class="border-t pt-4">
+                                    <h4 class="text-sm font-medium text-gray-900 mb-3">AI Configuration for Task Breakdowns</h4>
+                                    <p class="text-xs text-gray-500 mb-4">
+                                        Choose which AI service and model to use for generating task breakdowns in this project.
+                                        Leave empty to use system defaults.
+                                    </p>
+
+                                    <div class="space-y-4">
+                                        <div class="space-y-2">
+                                            <Label for="ai_provider">AI Provider</Label>
+                                            <select
+                                                id="ai_provider"
+                                                v-model="form.ai_provider"
+                                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                :disabled="form.processing"
+                                            >
+                                                <option value="">Use System Default</option>
+                                                <option
+                                                    v-for="(provider, key) in availableProviders"
+                                                    :key="key"
+                                                    :value="key"
+                                                >
+                                                    {{ provider.name }} - {{ provider.description }}
+                                                </option>
+                                            </select>
+                                            <InputError :message="form.errors.ai_provider" />
+                                        </div>
+
+                                        <div v-if="form.ai_provider" class="space-y-2">
+                                            <Label for="ai_model">AI Model</Label>
+                                            <select
+                                                id="ai_model"
+                                                v-model="form.ai_model"
+                                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                :disabled="form.processing"
+                                            >
+                                                <option value="">Select a model...</option>
+                                                <option
+                                                    v-for="(modelName, modelKey) in availableProviders[form.ai_provider]?.models || {}"
+                                                    :key="modelKey"
+                                                    :value="modelKey"
+                                                >
+                                                    {{ modelName }}
+                                                </option>
+                                            </select>
+                                            <InputError :message="form.errors.ai_model" />
+                                            <p class="text-xs text-gray-500">
+                                                This model will be used for AI task breakdowns in this project
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="text-xs text-gray-500 pt-2">
