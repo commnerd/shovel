@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 class AIUsageService
 {
-    private string $apiKey;
+    private ?string $apiKey;
     private string $baseUrl;
 
     public function __construct()
@@ -131,6 +131,10 @@ class AIUsageService
      */
     private function getQuotaInfo(): ?array
     {
+        if (!$this->apiKey) {
+            return null;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
