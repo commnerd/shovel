@@ -31,7 +31,9 @@ class TasksController extends Controller
                 $tasksQuery->topLevel()->orderBy('sort_order');
                 break;
             case 'leaf':
-                $tasksQuery->leaf()->orderBy('sort_order');
+                // For leaf view, we want to show hierarchy but only allow leaf tasks to be actionable
+                // Get all tasks and sort hierarchically, but frontend will handle the filtering
+                $tasksQuery->orderBy('sort_order');
                 break;
             case 'board':
                 // For board view, get all tasks ordered by status for Kanban
@@ -54,8 +56,8 @@ class TasksController extends Controller
 
         $tasks = $tasksQuery->get();
 
-        // For 'all' filter, sort hierarchically while respecting sort_order within levels
-        if ($filter === 'all') {
+        // For 'all', 'leaf', and 'board' filters, sort hierarchically while respecting sort_order within levels
+        if (in_array($filter, ['all', 'leaf', 'board'])) {
             $tasks = $this->sortTasksHierarchically($tasks);
         }
 
@@ -446,6 +448,62 @@ class TasksController extends Controller
     }
 
     /**
+     * Show subtask reordering page for a specific task.
+     */
+    public function showSubtaskReorder(Project $project, Task $task)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        // Ensure the task belongs to the project
+        if ($task->project_id !== $project->id) {
+            abort(404, 'Task not found in this project.');
+        }
+
+        // Get all subtasks ordered by their current sort order
+        $subtasks = $task->children()->orderBy('sort_order')->get();
+
+        return Inertia::render('Projects/Tasks/SubtaskReorder', [
+            'project' => [
+                'id' => $project->id,
+                'title' => $project->title,
+                'description' => $project->description,
+            ],
+            'task' => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'due_date' => $task->due_date?->format('Y-m-d'),
+                'parent_id' => $task->parent_id,
+                'has_children' => $task->children->count() > 0,
+                'is_leaf' => $task->isLeaf(),
+                'is_top_level' => $task->isTopLevel(),
+                'depth' => $task->depth,
+            ],
+            'subtasks' => $subtasks->map(function ($subtask) {
+                return [
+                    'id' => $subtask->id,
+                    'title' => $subtask->title,
+                    'description' => $subtask->description,
+                    'status' => $subtask->status,
+                    'due_date' => $subtask->due_date?->format('Y-m-d'),
+                    'parent_id' => $subtask->parent_id,
+                    'has_children' => $subtask->children->count() > 0,
+                    'is_leaf' => $subtask->isLeaf(),
+                    'is_top_level' => $subtask->isTopLevel(),
+                    'depth' => $subtask->depth,
+                    'sort_order' => $subtask->sort_order,
+                    'completion_percentage' => $subtask->completion_percentage,
+                    'created_at' => $subtask->created_at->format('Y-m-d H:i:s'),
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Generate AI-powered task breakdown suggestions.
      */
     public function generateTaskBreakdown(Request $request, Project $project)
@@ -582,9 +640,18 @@ class TasksController extends Controller
         ]);
 
         try {
+            // Get the filter context from the request to determine the appropriate validation
+            $filter = $request->get('filter', 'all');
+            $context = match($filter) {
+                'top-level' => 'top-level',
+                'subtasks' => 'subtasks',
+                default => 'all'
+            };
+
             $result = $task->reorderTo(
                 $validated['new_position'],
-                $validated['confirmed'] ?? false
+                $validated['confirmed'] ?? false,
+                $context
             );
         } catch (\Exception $e) {
             \Log::error('Task reorder failed', [

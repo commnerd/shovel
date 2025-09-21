@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ const props = defineProps<{
     parentTasks: ParentTask[];
     parentTask?: ParentTask; // Pre-selected parent task for subtask creation
 }>();
+
+// Focus management - using getElementById instead of ref
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -215,6 +217,15 @@ const handleKeydown = (event: KeyboardEvent) => {
         submit();
     }
 };
+
+// Focus the title input on mount
+onMounted(async () => {
+    await nextTick();
+    const titleInput = document.getElementById('title') as HTMLInputElement;
+    if (titleInput) {
+        titleInput.focus();
+    }
+});
 </script>
 
 <template>

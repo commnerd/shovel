@@ -181,9 +181,15 @@ class TaskIndexAIBreakdownTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
-            ->has('tasks', 1)
+            ->has('tasks', 2)
             ->where('filter', 'leaf')
-            ->where('tasks.0.title', 'Leaf Task')
+            ->where('tasks', function ($tasks) {
+                // Should contain both parent and leaf task
+                $taskTitles = collect($tasks)->pluck('title')->toArray();
+                $this->assertContains('Top Level Task', $taskTitles);
+                $this->assertContains('Leaf Task', $taskTitles);
+                return true;
+            })
         );
 
         // Test top-level tasks filter

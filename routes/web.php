@@ -114,6 +114,10 @@ Route::get('/dashboard/projects/{project}/tasks/{task}/breakdown', [App\Http\Con
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.show_breakdown');
 
+Route::get('/dashboard/projects/{project}/tasks/{task}/subtasks/reorder', [App\Http\Controllers\TasksController::class, 'showSubtaskReorder'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.subtasks.reorder');
+
 Route::post('/dashboard/projects/{project}/tasks', [App\Http\Controllers\TasksController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.store');

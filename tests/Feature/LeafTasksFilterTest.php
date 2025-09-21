@@ -101,8 +101,8 @@ class LeafTasksFilterTest extends TestCase
             $this->assertContains($leafTask2->id, $taskIds);
             $this->assertContains($standaloneLeafTask->id, $taskIds);
 
-            // Should have exactly 3 tasks (only leaf tasks)
-            $this->assertCount(3, $tasks);
+            // Should have all tasks (including parent tasks for hierarchy context)
+            $this->assertCount(5, $tasks);
 
             return true;
         })
@@ -257,15 +257,16 @@ class LeafTasksFilterTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page->component('Projects/Tasks/Index')
             ->where('filter', 'leaf')
             ->where('tasks', function ($tasks) use ($leafTask) {
-                // Should only have the leaf task
-                $this->assertCount(1, $tasks);
+                // Should have all tasks in hierarchy (parent + child + leaf)
+                $this->assertCount(3, $tasks);
 
-                $task = $tasks[0];
-                $this->assertEquals($leafTask->id, $task['id']);
-                $this->assertEquals('Deep Leaf Task', $task['title']);
+                // Find the leaf task in the hierarchy
+                $leafTaskData = collect($tasks)->firstWhere('id', $leafTask->id);
+                $this->assertNotNull($leafTaskData);
+                $this->assertEquals('Deep Leaf Task', $leafTaskData['title']);
 
                 // Should still have depth information
-                $this->assertEquals(2, $task['depth']);
+                $this->assertEquals(2, $leafTaskData['depth']);
 
                 return true;
             })

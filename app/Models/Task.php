@@ -299,7 +299,7 @@ class Task extends Model
     /**
      * Execute task reordering with tracking.
      */
-    public function reorderTo(int $newPosition, bool $confirmed = false): array
+    public function reorderTo(int $newPosition, bool $confirmed = false, string $context = 'all'): array
     {
         $oldPosition = $this->sort_order;
 
@@ -313,39 +313,15 @@ class Task extends Model
             ];
         }
 
-        // Validate that subtasks can only be reordered within their parent context
-        if ($this->parent_id) {
-            $siblings = $this->getSiblings();
-            $parent = $this->parent;
-
-            if (!$parent) {
-                return [
-                    'success' => false,
-                    'message' => 'Cannot reorder subtask: parent task not found.',
-                    'old_position' => $oldPosition,
-                    'new_position' => $newPosition,
-                    'move_count' => $this->move_count ?? 0,
-                ];
-            }
-
-            // Check if the target position conflicts with a task that has a different parent
-            $taskAtNewPosition = static::where('project_id', $this->project_id)
-                ->where('sort_order', $newPosition)
-                ->where('id', '!=', $this->id)
-                ->first();
-
-            if ($taskAtNewPosition) {
-                // If the task at the new position has a different parent (or no parent), it's invalid
-                if ($taskAtNewPosition->parent_id !== $this->parent_id) {
-                    return [
-                        'success' => false,
-                        'message' => 'Subtasks cannot be moved outside their parent task context. Use the edit form to change the parent.',
-                        'old_position' => $oldPosition,
-                        'new_position' => $newPosition,
-                        'move_count' => $this->move_count ?? 0,
-                    ];
-                }
-            }
+        // Simplified validation - just ensure the position is reasonable
+        if ($newPosition < 1) {
+            return [
+                'success' => false,
+                'message' => 'Position must be greater than 0.',
+                'old_position' => $oldPosition,
+                'new_position' => $newPosition,
+                'move_count' => $this->move_count ?? 0,
+            ];
         }
 
         // Check if confirmation is needed (none needed anymore)

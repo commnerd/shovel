@@ -489,6 +489,10 @@ const initializeSortable = async () => {
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
+                touchStartThreshold: 5, // Enable touch support with threshold
+                forceFallback: false, // Use native drag on supported devices
+                fallbackOnBody: true, // Better touch experience
+                swapThreshold: 0.65, // Better touch interaction
                 onStart: (evt) => {
                     const taskId = parseInt(evt.item.dataset.taskId || '0');
                     onDragStart(taskId);
@@ -658,39 +662,46 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Filter tabs -->
             <!-- Tab Navigation -->
             <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                    <button
-                        v-for="tab in tabOptions"
-                        :key="tab.value"
-                        @click="changeFilter(tab.value)"
-                        :class="[
-                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
-                            currentFilter === tab.value
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        ]"
-                        :aria-current="currentFilter === tab.value ? 'page' : undefined"
-                        :title="tab.description"
-                    >
-                        <component
-                            :is="tab.icon"
+                <!-- Mobile: Scrollable horizontal tabs -->
+                <nav class="-mb-px flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                    <div class="flex space-x-1 sm:space-x-8 min-w-max px-2 sm:px-0">
+                        <button
+                            v-for="tab in tabOptions"
+                            :key="tab.value"
+                            @click="changeFilter(tab.value)"
                             :class="[
-                                'h-5 w-5 mr-2',
-                                currentFilter === tab.value ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
-                            ]"
-                        />
-                        {{ tab.label }}
-                        <span
-                            :class="[
-                                'ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                                'group inline-flex items-center border-b-2 font-medium transition-colors duration-200 whitespace-nowrap',
+                                'py-3 px-2 sm:py-4 sm:px-1 text-xs sm:text-sm',
                                 currentFilter === tab.value
-                                    ? 'bg-blue-100 text-blue-600'
-                                    : 'bg-gray-100 text-gray-900'
+                                    ? 'border-blue-500 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             ]"
+                            :aria-current="currentFilter === tab.value ? 'page' : undefined"
+                            :title="tab.description"
                         >
-                            {{ tab.count }}
-                        </span>
-                    </button>
+                            <component
+                                :is="tab.icon"
+                                :class="[
+                                    'h-4 w-4 sm:h-5 sm:w-5',
+                                    'mr-1 sm:mr-2',
+                                    currentFilter === tab.value ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                                ]"
+                            />
+                            <span class="hidden sm:inline">{{ tab.label }}</span>
+                            <span class="sm:hidden text-xs">{{ tab.label.charAt(0) }}</span>
+                            <span
+                                :class="[
+                                    'ml-1 sm:ml-2 inline-flex items-center rounded-full text-xs font-medium',
+                                    'px-1.5 py-0.5 sm:px-2.5 sm:py-0.5',
+                                    currentFilter === tab.value
+                                        ? 'bg-blue-100 text-blue-600'
+                                        : 'bg-gray-100 text-gray-900'
+                                ]"
+                            >
+                                {{ tab.count }}
+                            </span>
+                        </button>
+                    </div>
                 </nav>
             </div>
 
@@ -800,40 +811,55 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         </span>
 
                     <!-- Actions -->
-                    <div class="flex items-center gap-3 flex-shrink-0">
-                        <!-- Subtasks group -->
-                        <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                        <!-- Subtasks group - hidden on very small screens -->
+                        <div class="hidden sm:flex items-center gap-2">
                             <span class="text-xs text-gray-500 font-medium">Subtasks:</span>
                             <div class="flex items-center border rounded-md">
                                 <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-r-none border-r">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-1">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-1" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
                                         <Plus class="h-3 w-3" />
-                                        <span class="text-xs hidden sm:inline">Add</span>
+                                        <span class="text-xs hidden md:inline">Add</span>
                                     </Link>
                                 </Button>
                                 <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-l-none">
                                     <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" class="flex items-center gap-1">
                                         <Sparkles class="h-3 w-3" />
-                                        <span class="text-xs hidden sm:inline">Generate</span>
+                                        <span class="text-xs hidden md:inline">Generate</span>
                                     </Link>
                                 </Button>
                             </div>
                         </div>
 
+                        <!-- Mobile: Compact action buttons -->
+                        <div class="sm:hidden flex items-center gap-1">
+                            <Button size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
+                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
+                                    <Plus class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
+                                </Link>
+                            </Button>
+                            <Button size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
+                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
+                                    <Sparkles class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
+                                </Link>
+                            </Button>
+                        </div>
+
                         <!-- Edit and Delete buttons -->
                         <div class="flex items-center gap-1">
-                            <Button size="sm" variant="ghost" as-child class="h-8 w-8 p-0">
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
-                                    <Edit class="h-3 w-3" />
+                            <Button size="sm" variant="ghost" as-child class="h-6 w-6 sm:h-8 sm:w-8 p-0">
+                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
+                                    <Edit class="h-3 w-3 sm:h-3 sm:w-3" />
                                 </Link>
                             </Button>
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                class="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                class="h-6 w-6 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 @click="deleteTask(task.id)"
+                                title="Delete Task"
                             >
-                                <Trash2 class="h-3 w-3" />
+                                <Trash2 class="h-3 w-3 sm:h-3 sm:w-3" />
                             </Button>
                         </div>
                     </div>
@@ -898,7 +924,19 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 ]" />
 
                             <!-- Task title with hierarchy styling -->
+                            <Link
+                                v-if="task.has_children"
+                                :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/reorder`"
+                                class="text-sm flex-1 hover:text-blue-600 transition-colors"
+                                :class="[
+                                    'text-gray-900',
+                                    task.is_leaf ? 'font-medium' : 'font-semibold text-gray-800'
+                                ]"
+                            >
+                                {{ task.title }}
+                            </Link>
                             <span
+                                v-else
                                 class="text-sm flex-1"
                                 :class="[
                                     task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900',
@@ -909,13 +947,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </span>
 
                             <!-- Task metadata -->
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <!-- Due date -->
                                 <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
                                     <Calendar class="h-3 w-3" />
-                                    {{ new Date(task.due_date).toLocaleDateString() }}
+                                    <span class="hidden sm:inline">{{ new Date(task.due_date).toLocaleDateString() }}</span>
+                                    <span class="sm:hidden">{{ new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
                                 </div>
-
 
                                 <!-- Status badge with different styling for parents -->
                                 <span
@@ -923,37 +961,39 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         getStatusColor(task.status),
                                         task.is_leaf ? '' : 'opacity-75'
                                     ]"
-                                    class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
+                                    class="inline-flex items-center rounded-full border px-1.5 sm:px-2 py-0.5 text-xs font-medium"
                                     :title="task.is_leaf ? '' : 'Status determined by child tasks'"
                                 >
-                                    {{ task.status }}
+                                    <span class="hidden sm:inline">{{ task.status }}</span>
+                                    <span class="sm:hidden">{{ task.status.charAt(0).toUpperCase() }}</span>
                                 </span>
 
                                 <!-- Child task progress for parents -->
                                 <span v-if="!task.is_leaf && task.has_children" class="text-xs text-gray-500">
-                                    {{ Math.round(task.completion_percentage) }}% complete
+                                    <span class="hidden sm:inline">{{ Math.round(task.completion_percentage) }}% complete</span>
+                                    <span class="sm:hidden">{{ Math.round(task.completion_percentage) }}%</span>
                                 </span>
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex items-center gap-1">
-                                <Button size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
+                            <div class="flex items-center gap-0.5 sm:gap-1">
+                                <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
                                         <Edit class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
 
-                                <!-- Add subtask button for parent tasks -->
-                                <Button v-if="!task.is_leaf" size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`">
-                                        <Plus class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
+                                <!-- Add subtask button for all tasks (promotes leaf tasks to parent tasks) -->
+                                <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
+                                        <Plus class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
 
-                                <!-- AI breakdown button for tasks without children -->
-                                <Button v-if="task.is_leaf" size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`">
-                                        <Sparkles class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
+                                <!-- AI breakdown button for all tasks -->
+                                <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
+                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
+                                        <Sparkles class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
                             </div>
@@ -961,15 +1001,17 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                 </div>
 
-                <!-- Todo View (Leaf Tasks) -->
+                <!-- Todo View (Hierarchical with Actionable Focus) -->
                 <div v-if="currentFilter === 'leaf'" class="space-y-2">
                     <div
                         v-for="task in tasks"
                         :key="task.id"
                         class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-sm transition-all duration-200"
+                        :style="{ marginLeft: `${task.depth * 16}px` }"
                     >
-                        <!-- Status checkbox - Todo view only shows leaf tasks anyway -->
+                        <!-- Status checkbox - Only for leaf tasks, disabled for parent tasks -->
                         <button
+                            v-if="task.is_leaf"
                             @click="toggleTaskStatus(task)"
                             class="flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                             :class="task.status === 'completed'
@@ -979,12 +1021,27 @@ const breadcrumbs: BreadcrumbItem[] = [
                         >
                             <CheckCircle v-if="task.status === 'completed'" class="h-3 w-3" />
                         </button>
-
-                        <!-- Task title -->
-                        <div class="flex-1 min-w-0">
-                            <span class="text-sm font-medium text-gray-900 truncate block">{{ task.title }}</span>
+                        <div v-else class="w-5 h-5 flex items-center justify-center">
+                            <component :is="getTaskTypeIcon(task)"
+                                :class="[
+                                    'h-3 w-3 flex-shrink-0',
+                                    task.is_leaf ? 'text-green-600' : 'text-blue-600'
+                                ]" />
                         </div>
 
+                        <!-- Task title with hierarchy indicator -->
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-medium text-gray-900 truncate block"
+                                :class="[
+                                    task.is_leaf ? 'text-gray-900' : 'text-gray-600',
+                                    task.is_leaf ? 'font-medium' : 'font-normal'
+                                ]">
+                                {{ task.title }}
+                            </span>
+                            <div v-if="!task.is_leaf" class="text-xs text-gray-500 mt-1">
+                                Parent task ({{ task.has_children ? 'has subtasks' : 'no subtasks' }})
+                            </div>
+                        </div>
 
                         <!-- Due date if exists -->
                         <div v-if="task.due_date" class="flex items-center gap-1 text-xs text-gray-500">
@@ -997,8 +1054,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <Button size="sm" variant="ghost" as-child class="h-8 w-8 p-0">
                                 <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
                                     <Edit class="h-3 w-3" />
-                                        </Link>
-                                    </Button>
+                                </Link>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -1224,10 +1281,35 @@ const breadcrumbs: BreadcrumbItem[] = [
     transform: rotate(5deg);
 }
 
-/* Improve drag handle visibility */
-.drag-handle:hover {
+/* Improve drag handle visibility and touch interaction */
+.drag-handle:hover,
+.drag-handle:active {
     background-color: #f3f4f6;
     border-radius: 4px;
+}
+
+/* Better touch targets for mobile */
+.drag-handle {
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+}
+
+/* Touch-friendly cursor */
+@media (hover: none) and (pointer: coarse) {
+    .drag-handle {
+        cursor: default;
+        touch-action: none; /* Prevent scrolling while dragging */
+    }
+
+    /* Better visual feedback for touch */
+    .drag-handle:active {
+        background-color: #e5e7eb;
+        transform: scale(1.05);
+    }
 }
 
 /* Ensure draggable items have proper cursor */
@@ -1237,5 +1319,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 .cursor-grabbing .drag-handle {
     cursor: grabbing;
+}
+
+/* Hide scrollbar for mobile tab navigation */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+}
+
+/* Mobile tab improvements */
+@media (max-width: 640px) {
+    .tab-navigation {
+        scroll-behavior: smooth;
+    }
+
+    .tab-button {
+        min-width: 60px;
+        flex-shrink: 0;
+    }
 }
 </style>

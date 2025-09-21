@@ -112,7 +112,7 @@ class TaskHierarchyIntegrationTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
-        $response->assertInertia(fn ($page) => $page->has('tasks', 4) // 3 first-level children + 1 sub-subtask
+        $response->assertInertia(fn ($page) => $page->has('tasks', 6) // all tasks including parent hierarchy
         );
 
         // Step 6: Test completion workflow

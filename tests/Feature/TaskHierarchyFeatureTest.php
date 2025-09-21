@@ -231,7 +231,7 @@ class TaskHierarchyFeatureTest extends TestCase
             ->get("/dashboard/projects/{$this->project->id}/tasks?filter=leaf");
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => $page->has('tasks', 2) // child and standalone
+        $response->assertInertia(fn ($page) => $page->has('tasks', 3) // parent, child, and standalone
             ->where('filter', 'leaf')
         );
     }

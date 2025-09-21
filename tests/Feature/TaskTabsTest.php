@@ -146,7 +146,7 @@ class TaskTabsTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
             $page->component('Projects/Tasks/Index')
-                 ->has('tasks', 2) // Should show subtask and standalone task (both are leaf)
+                 ->has('tasks', 3) // Should show parent, subtask, and standalone task (hierarchy context)
         );
     }
 

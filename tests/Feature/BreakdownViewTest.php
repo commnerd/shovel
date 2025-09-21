@@ -287,4 +287,79 @@ class BreakdownViewTest extends TestCase
         $this->assertEquals('completed', $leafTask->status);
         $this->assertEquals('completed', $parentTask->status); // Parent should auto-update
     }
+
+    public function test_subtask_reorder_page_accessible_for_parent_tasks()
+    {
+        // Create parent task
+        $parentTask = Task::factory()->create([
+            'project_id' => $this->project->id,
+            'title' => 'Parent Task',
+        ]);
+
+        // Create subtasks
+        $subtask1 = Task::factory()->create([
+            'project_id' => $this->project->id,
+            'parent_id' => $parentTask->id,
+            'title' => 'Subtask 1',
+            'sort_order' => 1,
+        ]);
+
+        $subtask2 = Task::factory()->create([
+            'project_id' => $this->project->id,
+            'parent_id' => $parentTask->id,
+            'title' => 'Subtask 2',
+            'sort_order' => 2,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get("/dashboard/projects/{$this->project->id}/tasks/{$parentTask->id}/subtasks/reorder");
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) =>
+            $page->component('Projects/Tasks/SubtaskReorder')
+                ->has('project')
+                ->has('task')
+                ->has('subtasks')
+                ->where('subtasks.0.title', 'Subtask 1')
+                ->where('subtasks.1.title', 'Subtask 2')
+        );
+    }
+
+    public function test_subtask_reorder_page_not_accessible_for_leaf_tasks()
+    {
+        // Create leaf task (no children)
+        $leafTask = Task::factory()->create([
+            'project_id' => $this->project->id,
+            'title' => 'Leaf Task',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get("/dashboard/projects/{$this->project->id}/tasks/{$leafTask->id}/subtasks/reorder");
+
+        // Should still be accessible but show empty state
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) =>
+            $page->component('Projects/Tasks/SubtaskReorder')
+                ->has('project')
+                ->has('task')
+                ->has('subtasks')
+                ->where('subtasks', [])
+        );
+    }
+
+    public function test_unauthorized_user_cannot_access_subtask_reorder_page()
+    {
+        $otherUser = User::factory()->create();
+
+        // Create parent task
+        $parentTask = Task::factory()->create([
+            'project_id' => $this->project->id,
+            'title' => 'Parent Task',
+        ]);
+
+        $response = $this->actingAs($otherUser)
+            ->get("/dashboard/projects/{$this->project->id}/tasks/{$parentTask->id}/subtasks/reorder");
+
+        $response->assertStatus(403);
+    }
 }
