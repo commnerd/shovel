@@ -129,7 +129,7 @@ class OpenAIProvider implements AIProviderInterface
 
             if (!$response->isSuccessful()) {
                 $this->logError('task_breakdown', $response->getErrorMessage() ?? 'Unknown error');
-                return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+                return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, $context['project']['due_date'] ?? null);
             }
 
             $content = $this->cleanResponseContent($response->getContent());
@@ -139,7 +139,7 @@ class OpenAIProvider implements AIProviderInterface
 
         } catch (\Exception $e) {
             $this->logError('task_breakdown', $e->getMessage());
-            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, $context['project']['due_date'] ?? null);
         }
     }
 
@@ -384,7 +384,7 @@ class OpenAIProvider implements AIProviderInterface
 
         } catch (\Exception $e) {
             $this->logError('parse_task_breakdown', $e->getMessage());
-            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, null);
         }
     }
 
@@ -436,7 +436,7 @@ class OpenAIProvider implements AIProviderInterface
         );
     }
 
-    protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription): AITaskResponse
+    protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription, ?string $projectDueDate = null): AITaskResponse
     {
         $tasks = [
             [

@@ -436,7 +436,7 @@ class CerebrusProvider implements AIProviderInterface
             if (! $response->isSuccessful()) {
                 $this->logError('task_breakdown', $response->getErrorMessage() ?? 'Unknown error');
 
-                return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+                return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, $context['project']['due_date'] ?? null);
             }
 
             $content = $this->cleanResponseContent($response->getContent());
@@ -446,12 +446,12 @@ class CerebrusProvider implements AIProviderInterface
             $breakdownOptions = ['project_due_date' => $context['project']['due_date'] ?? null];
             $parsedResponse = $this->parseTaskResponse($response, $taskTitle, $breakdownOptions);
 
-            return $parsedResponse ?: $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+            return $parsedResponse ?: $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, $context['project']['due_date'] ?? null);
 
         } catch (\Exception $e) {
             $this->logError('task_breakdown', $e->getMessage());
 
-            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription);
+            return $this->createFallbackTaskBreakdown($taskTitle, $taskDescription, $context['project']['due_date'] ?? null);
         }
     }
 
@@ -553,26 +553,26 @@ class CerebrusProvider implements AIProviderInterface
     /**
      * Create fallback task breakdown when AI fails.
      */
-    protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription): AITaskResponse
+    protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription, ?string $projectDueDate = null): AITaskResponse
     {
         $fallbackTasks = [
             [
                 'title' => 'Research & Planning',
                 'description' => "Research requirements and plan approach for: {$taskTitle}",
                 'status' => 'pending',
-                'due_date' => now()->addDays(2)->format('Y-m-d'),
+                'due_date' => $projectDueDate ? $this->calculateTaskDueDateFromProject($projectDueDate, ['title' => 'Research & Planning']) : null,
             ],
             [
                 'title' => 'Implementation',
                 'description' => "Implement the main functionality for: {$taskTitle}",
                 'status' => 'pending',
-                'due_date' => now()->addDays(5)->format('Y-m-d'),
+                'due_date' => $projectDueDate ? $this->calculateTaskDueDateFromProject($projectDueDate, ['title' => 'Implementation']) : null,
             ],
             [
                 'title' => 'Testing & Validation',
                 'description' => 'Test and validate the implementation',
                 'status' => 'pending',
-                'due_date' => now()->addDays(7)->format('Y-m-d'),
+                'due_date' => $projectDueDate ? $this->calculateTaskDueDateFromProject($projectDueDate, ['title' => 'Testing & Validation']) : null,
             ],
         ];
 

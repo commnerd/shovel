@@ -82,6 +82,10 @@ Route::get('/dashboard/projects/create', [App\Http\Controllers\ProjectsControlle
     ->middleware(['auth', 'verified'])
     ->name('projects.create');
 
+Route::get('/dashboard/projects/create/tasks', [App\Http\Controllers\ProjectsController::class, 'showCreateTasksPage'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.create-tasks.show');
+
 Route::post('/dashboard/projects/create/tasks', [App\Http\Controllers\ProjectsController::class, 'createTasksPage'])
     ->middleware(['auth', 'verified'])
     ->name('projects.create-tasks');

@@ -226,6 +226,46 @@ class ProjectsController extends Controller
     }
 
     /**
+     * Show the task generation page (GET request).
+     */
+    public function showCreateTasksPage(Request $request)
+    {
+        // Get user's groups for the dropdown
+        $user = auth()->user();
+        $userGroups = collect();
+
+        if ($user->organization) {
+            $userGroups = $user->organization->groups->map(function ($group) {
+                return [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'description' => $group->description,
+                    'is_default' => $group->is_default,
+                    'organization_name' => $group->organization->name ?? 'Unknown',
+                ];
+            });
+        }
+
+        $defaultGroup = $userGroups->where('is_default', true)->first();
+
+        return Inertia::render('Projects/CreateTasks', [
+            'projectData' => [
+                'title' => $request->get('title'),
+                'description' => $request->get('description', ''),
+                'due_date' => $request->get('due_date'),
+                'group_id' => $request->get('group_id', $defaultGroup['id'] ?? null),
+                'ai_provider' => $request->get('ai_provider'),
+                'ai_model' => $request->get('ai_model'),
+            ],
+            'suggestedTasks' => [],
+            'aiUsed' => false,
+            'aiCommunication' => null,
+            'userGroups' => $userGroups,
+            'defaultGroupId' => $defaultGroup['id'] ?? null,
+        ]);
+    }
+
+    /**
      * Show the task generation page with AI-generated tasks.
      */
     public function createTasksPage(Request $request)
