@@ -31,6 +31,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Disable foreign key checks for SQLite
+        \DB::statement('PRAGMA foreign_keys=OFF;');
         Schema::dropIfExists('tasks');
+        \DB::statement('PRAGMA foreign_keys=ON;');
     }
 };

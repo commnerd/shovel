@@ -8,6 +8,9 @@
           </h2>
           <p class="text-sm text-gray-600 mt-1">
             AI-curated task recommendations for {{ new Date().toLocaleDateString() }}
+            <span v-if="cacheTimestamp" class="text-xs text-gray-400 ml-2">
+              (Last updated: {{ formatTime(cacheTimestamp) }})
+            </span>
           </p>
         </div>
         <div class="flex items-center space-x-3">
@@ -392,27 +395,39 @@ interface Props {
     due_date: string | null
   }>
   stats: Stats
+  cache_timestamp?: string
 }
 
 const props = defineProps<Props>()
 
 const isRefreshing = ref(false)
 
+const cacheTimestamp = computed(() => props.cache_timestamp)
+
+const formatTime = (timestamp: string) => {
+  return new Date(timestamp).toLocaleTimeString()
+}
+
 const refreshCurations = async () => {
   isRefreshing.value = true
 
   try {
-    const response = await fetch('/dashboard/todays-tasks/refresh', {
+    // Add cache busting timestamp
+    const timestamp = Date.now()
+    const response = await fetch(`/dashboard/todays-tasks/refresh?t=${timestamp}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     })
 
     if (response.ok) {
-      // Reload the page to show fresh curations
-      router.reload()
+      // Reload the page to show fresh curations with cache busting
+      router.reload({ only: ['curations', 'tasks', 'priorityTasks', 'stats'] })
     } else {
       alert('Failed to refresh curations. Please try again.')
     }

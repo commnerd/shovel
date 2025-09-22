@@ -264,5 +264,6 @@ Route::get('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordControll
 Route::post('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordController::class, 'store'])
     ->name('invitation.set-password.store');
 
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

@@ -38,8 +38,8 @@ class ProjectAuthorizationTest extends TestCase
         parent::setUp();
 
         // Set up organizations
-        $this->organization = Organization::factory()->create(['name' => 'Test Org']);
-        $this->otherOrganization = Organization::factory()->create(['name' => 'Other Org']);
+        $this->organization = Organization::factory()->create(['name' => 'Test Org', 'domain' => 'testorg.com']);
+        $this->otherOrganization = Organization::factory()->create(['name' => 'Other Org', 'domain' => 'otherorg.com']);
 
         // Create roles
         $orgRoles = $this->organization->createDefaultRoles();

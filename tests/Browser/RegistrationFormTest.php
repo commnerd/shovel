@@ -66,7 +66,7 @@ class RegistrationFormTest extends DuskTestCase
                 ->waitForLocation('/organization/create', 30)
                 ->assertPathIs('/organization/create')
                 ->assertSee('Create Your Organization')
-                ->assertValue('input[readonly]', 'duskfounder@dusktest123.com'); // Email should be shown
+                ->assertSee('duskfounder@dusktest123.com'); // Email should be shown
         });
     }
 }

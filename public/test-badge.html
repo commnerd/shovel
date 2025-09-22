@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badge Component Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .badge {
+            @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+        }
+        .badge-default {
+            @apply border-transparent bg-blue-500 text-white hover:bg-blue-600;
+        }
+        .badge-secondary {
+            @apply border-transparent bg-gray-500 text-white hover:bg-gray-600;
+        }
+        .badge-destructive {
+            @apply border-transparent bg-red-500 text-white hover:bg-red-600;
+        }
+        .badge-outline {
+            @apply text-gray-900 border-gray-300;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Badge Component Test Page</h1>
+
+        <!-- Default Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Default Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default" data-testid="default-badge">Test Badge</div>
+                <div class="badge badge-default" data-testid="default-badge-empty"></div>
+            </div>
+        </section>
+
+        <!-- Secondary Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Secondary Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-secondary" data-testid="secondary-badge">Secondary Badge</div>
+            </div>
+        </section>
+
+        <!-- Destructive Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Destructive Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-destructive" data-testid="destructive-badge">Destructive Badge</div>
+            </div>
+        </section>
+
+        <!-- Outline Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Outline Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-outline" data-testid="outline-badge">Outline Badge</div>
+            </div>
+        </section>
+
+        <!-- Custom Class Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Custom Class Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default custom-class" data-testid="custom-class-badge">Custom Badge</div>
+            </div>
+        </section>
+
+        <!-- Merged Classes Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Merged Classes Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-secondary custom-spacing" data-testid="merged-classes-badge">Merged Badge</div>
+            </div>
+        </section>
+
+        <!-- HTML Content Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">HTML Content Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default" data-testid="html-content-badge">
+                    <span>HTML Content</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Focus Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Focus Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default" data-testid="focus-badge" tabindex="0">Focus Badge</div>
+            </div>
+        </section>
+
+        <!-- All Variants -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">All Variants</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default" data-testid="variant-default-badge">default badge</div>
+                <div class="badge badge-secondary" data-testid="variant-secondary-badge">secondary badge</div>
+                <div class="badge badge-destructive" data-testid="variant-destructive-badge">destructive badge</div>
+                <div class="badge badge-outline" data-testid="variant-outline-badge">outline badge</div>
+            </div>
+        </section>
+
+        <!-- Attributed Badge -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Attributed Badge</h2>
+            <div class="space-x-2">
+                <div class="badge badge-default"
+                     data-testid="attributed-badge"
+                     aria-label="Test badge"
+                     data-custom="test-value">
+                    Attributed Badge
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

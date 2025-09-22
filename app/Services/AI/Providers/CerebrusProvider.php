@@ -328,7 +328,24 @@ Requirements:
 
             $data = json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \InvalidArgumentException('Response content is not valid JSON: '.json_last_error_msg());
+                // If JSON parsing fails, try to parse as text list
+                $this->logError('json_parse_failed', 'Response content is not valid JSON: '.json_last_error_msg().'. Content: '.substr($content, 0, 200));
+
+                // Try to parse as text list similar to OpenAIProvider
+                $tasks = $this->parseTextListToTasks($content);
+                if (!empty($tasks)) {
+                    return AITaskResponse::success(
+                        tasks: $tasks,
+                        projectTitle: null,
+                        notes: ["Generated using Cerebrus (text parsing fallback)"],
+                        summary: "Task breakdown for: {$projectDescription}",
+                        problems: [],
+                        suggestions: [],
+                        rawResponse: $response
+                    );
+                }
+
+                throw new \InvalidArgumentException('Response content is not valid JSON and text parsing failed: '.json_last_error_msg());
             }
 
             // Extract tasks, title, and communication
@@ -416,12 +433,58 @@ Requirements:
                         ? $status
                         : 'pending',
                     'due_date' => $dueDate,
+                    'size' => $this->extractTaskSize($task),
                     'subtasks' => $task['subtasks'] ?? [],
                 ];
             }
         }
 
         return $validatedTasks;
+    }
+
+    /**
+     * Extract task size from AI response or generate fallback.
+     */
+    protected function extractTaskSize(array $task): ?string
+    {
+        // Check if size is explicitly provided
+        if (isset($task['size']) && in_array(strtoupper($task['size']), ['XS', 'S', 'M', 'L', 'XL'])) {
+            return strtoupper($task['size']);
+        }
+
+        // Generate fallback size based on task content
+        return $this->generateFallbackSize($task);
+    }
+
+    /**
+     * Generate fallback size based on task content.
+     */
+    protected function generateFallbackSize(array $task): string
+    {
+        $title = strtolower($task['title'] ?? '');
+        $description = strtolower($task['description'] ?? '');
+
+        $text = $title . ' ' . $description;
+
+        // Heuristic sizing based on keywords
+        $complexityKeywords = [
+            'xs' => ['fix', 'bug', 'typo', 'small', 'quick', 'minor', 'update', 'change'],
+            's' => ['add', 'create', 'implement', 'simple', 'basic', 'standard'],
+            'm' => ['feature', 'component', 'module', 'integration', 'api', 'database'],
+            'l' => ['system', 'architecture', 'refactor', 'migration', 'complex', 'major'],
+            'xl' => ['rewrite', 'redesign', 'overhaul', 'platform', 'framework', 'enterprise']
+        ];
+
+        foreach ($complexityKeywords as $size => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($text, $keyword)) {
+                    return $size;
+                }
+            }
+        }
+
+        // Default to medium if no keywords match
+        return 'm';
     }
 
     /**
@@ -493,7 +556,16 @@ Requirements:
     {
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
-        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.';
+        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.
+
+For each subtask, you must also assign a T-shirt size based on complexity and effort:
+- XS (Extra Small): 1-2 hours, simple tasks, minor changes, quick fixes
+- S (Small): 3-8 hours, straightforward tasks, small features, simple implementations
+- M (Medium): 1-3 days, moderate complexity, standard features, some research needed
+- L (Large): 3-7 days, complex tasks, major features, significant research or integration
+- XL (Extra Large): 1-2 weeks, very complex tasks, major architectural changes, multiple dependencies
+
+Each subtask in your response must include a "size" field with one of these values.';
 
         return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
@@ -580,6 +652,69 @@ Requirements:
     /**
      * Create fallback task breakdown when AI fails.
      */
+    protected function parseTextListToTasks(string $content): array
+    {
+        $tasks = [];
+        $lines = array_filter(array_map('trim', explode("\n", $content)));
+
+        foreach ($lines as $line) {
+            // Enhanced regex patterns to match more formats
+            if (preg_match('/^\d+\.\s*(.+)/', $line, $matches) ||        // "1. Task title"
+                preg_match('/^[-*]\s*(.+)/', $line, $matches) ||          // "- Task title" or "* Task title"
+                preg_match('/^\d+\)\s*(.+)/', $line, $matches) ||         // "1) Task title"
+                preg_match('/^Task\s*\d+:\s*(.+)/i', $line, $matches) ||  // "Task 1: Title"
+                preg_match('/^[•▪▫]\s*(.+)/', $line, $matches) ||         // Bullet points
+                preg_match('/^\s*[▶►]\s*(.+)/', $line, $matches)) {       // Arrow bullets
+
+                $title = trim($matches[1]);
+                if (!empty($title) && strlen($title) > 3) { // Ensure meaningful titles
+                    $tasks[] = [
+                        'title' => $title,
+                        'description' => '',
+                        'status' => 'pending',
+                        'size' => $this->extractTaskSize(['title' => $title]),
+                    ];
+                }
+            } else if (!empty($line) &&
+                      !preg_match('/^(Here|The|These|Below|Following|I|You|Please|Let|This)/i', $line) &&
+                      strlen(trim($line)) > 10 &&
+                      !str_contains($line, '```') &&
+                      count($tasks) < 10) {
+                // If line doesn't match patterns but looks like a task, include it
+                $cleanTitle = trim($line);
+                if (!empty($cleanTitle)) {
+                    $tasks[] = [
+                        'title' => $cleanTitle,
+                        'description' => '',
+                        'status' => 'pending',
+                        'size' => $this->extractTaskSize(['title' => $cleanTitle]),
+                    ];
+                }
+            }
+        }
+
+        // If no tasks found, try a more aggressive approach
+        if (empty($tasks)) {
+            $allLines = array_filter(array_map('trim', explode("\n", $content)));
+            foreach ($allLines as $line) {
+                if (strlen(trim($line)) > 5 &&
+                    !str_contains($line, '```') &&
+                    !preg_match('/^(Here|The|These|Below|Following|I|You|Please|Let|This|Based|In)/i', $line)) {
+                    $tasks[] = [
+                        'title' => trim($line),
+                        'description' => '',
+                        'status' => 'pending',
+                        'size' => $this->extractTaskSize(['title' => trim($line)]),
+                    ];
+
+                    if (count($tasks) >= 5) break; // Limit to reasonable number
+                }
+            }
+        }
+
+        return $tasks;
+    }
+
     protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription, ?string $projectDueDate = null): AITaskResponse
     {
         $fallbackTasks = [

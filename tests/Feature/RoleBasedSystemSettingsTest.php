@@ -26,11 +26,13 @@ class RoleBasedSystemSettingsTest extends TestCase
         // Create organizations
         $this->organization = Organization::factory()->create([
             'name' => 'Test Organization',
+            'domain' => 'testorg.com',
             'is_default' => false,
         ]);
 
         $this->defaultOrganization = Organization::factory()->create([
             'name' => 'None',
+            'domain' => null,
             'is_default' => true,
         ]);
 

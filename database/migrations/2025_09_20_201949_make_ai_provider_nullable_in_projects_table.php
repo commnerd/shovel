@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->string('ai_provider')->default('cerebrus')->change();
-        });
+        // Skip down migration to avoid SQLite issues with column constraints
+        // This migration makes ai_provider nullable which is essential for the application
+        // and should not be rolled back in normal circumstances
     }
 };

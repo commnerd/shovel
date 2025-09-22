@@ -8,8 +8,8 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
-        "test": "vitest run",
-        "test:watch": "vitest"
+        "test": "echo 'All tests have been migrated to Laravel Dusk. Run: ./vendor/bin/sail dusk'",
+        "test:watch": "echo 'All tests have been migrated to Laravel Dusk. Run: ./vendor/bin/sail dusk'"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -18,19 +18,16 @@
         "@types/node": "^22.13.5",
         "@vitejs/plugin-vue": "^6.0.0",
         "@vue/eslint-config-typescript": "^14.3.0",
-        "@vue/test-utils": "^2.4.6",
         "concurrently": "^9.0.1",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-vue": "^9.32.0",
-        "jsdom": "^27.0.0",
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
         "typescript": "^5.2.2",
         "typescript-eslint": "^8.23.0",
         "vite": "^7.1.5",
-        "vitest": "^3.2.4",
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
@@ -54,5 +51,5 @@
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
-    "version": "0.5.1"
+    "version": "0.5.2"
 }

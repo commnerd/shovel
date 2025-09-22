@@ -57,7 +57,16 @@ abstract class DuskTestCase extends BaseTestCase
     protected function baseUrl()
     {
         return static::runningInSail()
-            ? 'http://laravel.test'
+            ? 'http://172.19.0.4'
             : config('app.url');
+    }
+
+    /**
+     * Determine if headless mode should be disabled.
+     * Set DUSK_HEADLESS_DISABLED=true in .env.dusk.local to disable headless mode.
+     */
+    protected function hasHeadlessDisabled(): bool
+    {
+        return env('DUSK_HEADLESS_DISABLED', false);
     }
 }

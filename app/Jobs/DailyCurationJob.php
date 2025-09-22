@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Task;
 use App\Models\Project;
 use App\Models\DailyCuration;
+use App\Models\DailyWeightMetric;
 use App\Services\AI\Facades\AI;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,22 +38,19 @@ class DailyCurationJob implements ShouldQueue
         try {
             Log::info('Starting daily curation for user', ['user_id' => $this->user->id]);
 
-            // Get user's active projects
-            $activeProjects = $this->user->projects()
-                ->where('status', 'active')
-                ->with(['tasks' => function ($query) {
-                    $query->where('status', '!=', 'completed')
-                        ->orderBy('due_date', 'asc')
-                        ->orderBy('created_at', 'desc');
-                }])
-                ->get();
+            // Get ALL projects the user can see (owned + group projects)
+            $visibleProjects = $this->getVisibleProjects();
 
-            if ($activeProjects->isEmpty()) {
-                Log::info('No active projects found for user', ['user_id' => $this->user->id]);
+            if ($visibleProjects->isEmpty()) {
+                Log::info('No visible projects found for user', ['user_id' => $this->user->id]);
                 return;
             }
 
-            foreach ($activeProjects as $project) {
+            // Calculate and store daily weight metrics
+            $this->calculateAndStoreWeightMetrics($visibleProjects);
+
+            // Process each project for curation
+            foreach ($visibleProjects as $project) {
                 $this->curateProjectTasks($project);
             }
 
@@ -69,18 +67,148 @@ class DailyCurationJob implements ShouldQueue
     }
 
     /**
+     * Get all projects visible to the user (owned + group projects).
+     */
+    protected function getVisibleProjects()
+    {
+        // Get user's own projects
+        $ownedProjects = $this->user->projects()
+            ->with(['tasks' => function ($query) {
+                $query->where('status', '!=', 'completed')
+                    ->orderBy('due_date', 'asc')
+                    ->orderBy('created_at', 'desc');
+            }])
+            ->get();
+
+        // Get group projects the user has access to
+        $groupProjects = Project::whereHas('group', function ($query) {
+            $query->whereHas('users', function ($userQuery) {
+                $userQuery->where('user_id', $this->user->id);
+            });
+        })
+        ->with(['tasks' => function ($query) {
+            $query->where('status', '!=', 'completed')
+                ->orderBy('due_date', 'asc')
+                ->orderBy('created_at', 'desc');
+        }])
+        ->get();
+
+        // Merge and deduplicate projects
+        return $ownedProjects->merge($groupProjects)->unique('id');
+    }
+
+    /**
+     * Calculate and store daily weight metrics for the user.
+     */
+    protected function calculateAndStoreWeightMetrics($projects): void
+    {
+        $today = Carbon::now();
+        $totalStoryPoints = 0;
+        $totalTasksCount = 0;
+        $signedTasksCount = 0;
+        $unsignedTasksCount = 0;
+        $projectBreakdown = [];
+        $sizeBreakdown = ['xs' => 0, 's' => 0, 'm' => 0, 'l' => 0, 'xl' => 0];
+
+        foreach ($projects as $project) {
+            $projectPoints = 0;
+            $projectTasksCount = 0;
+            $projectSignedCount = 0;
+            $projectUnsignedCount = 0;
+
+            foreach ($project->tasks as $task) {
+                if ($task->status === 'completed') {
+                    continue; // Skip completed tasks
+                }
+
+                $projectTasksCount++;
+                $totalTasksCount++;
+
+                if ($task->current_story_points && $task->current_story_points > 0) {
+                    $points = $task->current_story_points;
+                    $totalStoryPoints += $points;
+                    $projectPoints += $points;
+                    $projectSignedCount++;
+                    $signedTasksCount++;
+
+                    // Track by size
+                    if ($task->size && isset($sizeBreakdown[$task->size])) {
+                        $sizeBreakdown[$task->size] += $points;
+                    }
+                } else {
+                    $projectUnsignedCount++;
+                    $unsignedTasksCount++;
+                }
+            }
+
+            // Store project breakdown
+            if ($projectTasksCount > 0) {
+                $projectBreakdown[] = [
+                    'project_id' => $project->id,
+                    'project_title' => $project->title,
+                    'total_points' => $projectPoints,
+                    'total_tasks' => $projectTasksCount,
+                    'signed_tasks' => $projectSignedCount,
+                    'unsigned_tasks' => $projectUnsignedCount,
+                    'average_points' => $projectSignedCount > 0 ? round($projectPoints / $projectSignedCount, 2) : 0,
+                ];
+            }
+        }
+
+        // Calculate average points per task
+        $averagePointsPerTask = $signedTasksCount > 0 ? round($totalStoryPoints / $signedTasksCount, 2) : 0;
+
+        // Calculate daily velocity (average of last 7 days)
+        $dailyVelocity = DailyWeightMetric::getAverageVelocity($this->user, 7);
+
+        // Store the metrics
+        DailyWeightMetric::createOrUpdate($this->user, $today, [
+            'total_story_points' => $totalStoryPoints,
+            'total_tasks_count' => $totalTasksCount,
+            'signed_tasks_count' => $signedTasksCount,
+            'unsigned_tasks_count' => $unsignedTasksCount,
+            'average_points_per_task' => $averagePointsPerTask,
+            'daily_velocity' => $dailyVelocity,
+            'project_breakdown' => $projectBreakdown,
+            'size_breakdown' => $sizeBreakdown,
+        ]);
+
+        Log::info('Daily weight metrics calculated and stored', [
+            'user_id' => $this->user->id,
+            'total_story_points' => $totalStoryPoints,
+            'total_tasks' => $totalTasksCount,
+            'signed_tasks' => $signedTasksCount,
+            'unsigned_tasks' => $unsignedTasksCount,
+            'average_points_per_task' => $averagePointsPerTask,
+        ]);
+    }
+
+    /**
      * Curate tasks for a specific project using AI suggestions.
      */
     protected function curateProjectTasks(Project $project): void
     {
         try {
-            // Get pending and in-progress tasks
+            // Get ALL incomplete tasks (pending, in-progress, and unsigned tasks)
             $incompleteTasks = $project->tasks()
                 ->whereIn('status', ['pending', 'in_progress'])
                 ->with('parent', 'children')
                 ->get();
 
-            if ($incompleteTasks->isEmpty()) {
+            // Also include unsigned tasks (tasks without story points) regardless of status
+            $unsignedTasks = $project->tasks()
+                ->where(function ($query) {
+                    $query->whereNull('current_story_points')
+                          ->orWhere('current_story_points', 0);
+                })
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->with('parent', 'children')
+                ->get();
+
+            // Merge and deduplicate
+            $allTasks = $incompleteTasks->merge($unsignedTasks)->unique('id');
+
+            if ($allTasks->isEmpty()) {
                 return;
             }
 
@@ -97,7 +225,7 @@ class DailyCurationJob implements ShouldQueue
                     'timezone' => 'UTC', // Could be enhanced with user timezone
                 ],
                 'current_date' => Carbon::now()->format('Y-m-d'),
-                'tasks' => $incompleteTasks->map(function ($task) {
+                'tasks' => $allTasks->map(function ($task) {
                     return [
                         'id' => $task->id,
                         'title' => $task->title,
@@ -148,12 +276,20 @@ class DailyCurationJob implements ShouldQueue
                 ['role' => 'user', 'content' => $prompt],
             ]);
 
-            $suggestions = json_decode($aiResponse->getContent(), true);
+            $responseContent = $aiResponse->getContent();
+
+            // Clean up the response if it's wrapped in markdown code blocks
+            if (strpos($responseContent, '```json') !== false) {
+                $responseContent = preg_replace('/```json\s*/', '', $responseContent);
+                $responseContent = preg_replace('/\s*```/', '', $responseContent);
+            }
+
+            $suggestions = json_decode($responseContent, true);
 
             if (!$suggestions || !isset($suggestions['suggestions'])) {
                 Log::warning('Invalid AI response for curation', [
                     'project_id' => $project->id,
-                    'response' => $aiResponse->getContent()
+                    'response' => $responseContent
                 ]);
                 return $this->getFallbackSuggestions($context);
             }
@@ -187,7 +323,7 @@ class DailyCurationJob implements ShouldQueue
 
         $prompt .= "**Current Tasks:**\n";
         foreach ($context['tasks'] as $task) {
-            $prompt .= "- {$task['title']} ({$task['status']})";
+            $prompt .= "- ID: {$task['id']} - {$task['title']} ({$task['status']})";
             if ($task['due_date']) {
                 $prompt .= " - Due: {$task['due_date']}";
             }
@@ -261,12 +397,36 @@ class DailyCurationJob implements ShouldQueue
                     'message' => 'Continue working on this in-progress task.'
                 ];
             }
+            // Check for pending tasks without due dates (general suggestions)
+            elseif ($task['status'] === 'pending' && !$task['due_date']) {
+                $suggestions[] = [
+                    'type' => 'priority',
+                    'task_id' => $task['id'],
+                    'message' => 'Consider working on this pending task today.'
+                ];
+            }
+            // Check for unsigned tasks (tasks without story points)
+            elseif (!$task['story_points'] || $task['story_points'] == 0) {
+                $suggestions[] = [
+                    'type' => 'optimization',
+                    'task_id' => $task['id'],
+                    'message' => 'This task needs to be sized (assigned story points) to better track progress.'
+                ];
+            }
+        }
+
+        // If no specific task suggestions, provide general project guidance
+        if (empty($suggestions)) {
+            $suggestions[] = [
+                'type' => 'optimization',
+                'message' => 'Review your project tasks and consider setting priorities or due dates to better organize your work.'
+            ];
         }
 
         return [
             'suggestions' => $suggestions,
             'summary' => 'Basic task analysis completed. Consider reviewing overdue and high-priority tasks.',
-            'focus_areas' => ['overdue_tasks', 'in_progress_tasks']
+            'focus_areas' => ['overdue_tasks', 'in_progress_tasks', 'pending_tasks']
         ];
     }
 

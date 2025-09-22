@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyCuration;
+use App\Models\DailyWeightMetric;
 use App\Models\Task;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class TodaysTasksController extends Controller
                 ->filter();
         })->unique();
 
-        $tasks = $taskIds->isNotEmpty() 
+        $tasks = $taskIds->isNotEmpty()
             ? Task::whereIn('id', $taskIds)
                 ->with(['project:id,title,project_type', 'parent:id,title'])
                 ->get()
@@ -67,6 +68,11 @@ class TodaysTasksController extends Controller
             ->limit(10)
             ->get();
 
+        // Get today's weight metrics
+        $weightMetrics = DailyWeightMetric::where('user_id', $user->id)
+            ->forToday()
+            ->first();
+
         // Mark curations as viewed
         $curations->each(function ($curation) {
             if ($curation->isNew()) {
@@ -74,7 +80,7 @@ class TodaysTasksController extends Controller
             }
         });
 
-        return Inertia::render('TodaysTasks/Index', [
+        $response = Inertia::render('TodaysTasks/Index', [
             'curations' => $curations->map(function ($curation) {
                 return [
                     'id' => $curation->id,
@@ -141,7 +147,20 @@ class TodaysTasksController extends Controller
                     return $task->due_date && Carbon::parse($task->due_date)->lt(Carbon::now());
                 })->count(),
             ],
+            'weightMetrics' => $weightMetrics ? [
+                'total_story_points' => $weightMetrics->total_story_points,
+                'total_tasks_count' => $weightMetrics->total_tasks_count,
+                'signed_tasks_count' => $weightMetrics->signed_tasks_count,
+                'unsigned_tasks_count' => $weightMetrics->unsigned_tasks_count,
+                'average_points_per_task' => $weightMetrics->average_points_per_task,
+                'daily_velocity' => $weightMetrics->daily_velocity,
+                'project_breakdown' => $weightMetrics->project_breakdown,
+                'size_breakdown' => $weightMetrics->size_breakdown,
+            ] : null,
+            'cache_timestamp' => now()->toISOString(),
         ]);
+
+        return $response;
     }
 
     /**
@@ -159,6 +178,11 @@ class TodaysTasksController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Curation dismissed successfully',
+            'timestamp' => now()->toISOString(),
+        ])->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -181,6 +205,11 @@ class TodaysTasksController extends Controller
                 'id' => $task->id,
                 'status' => $task->status,
             ],
+            'timestamp' => now()->toISOString(),
+        ])->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -207,6 +236,11 @@ class TodaysTasksController extends Controller
                 'id' => $task->id,
                 'status' => $task->status,
             ],
+            'timestamp' => now()->toISOString(),
+        ])->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -223,6 +257,11 @@ class TodaysTasksController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Today\'s tasks refreshed successfully',
+            'timestamp' => now()->toISOString(),
+        ])->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -261,6 +300,13 @@ class TodaysTasksController extends Controller
             })->where('status', 'in_progress')->count(),
         ];
 
-        return response()->json($stats);
+        return response()->json([
+            ...$stats,
+            'timestamp' => now()->toISOString(),
+        ])->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 }

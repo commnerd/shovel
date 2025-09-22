@@ -378,16 +378,56 @@ class OpenAIProvider implements AIProviderInterface
         $lines = array_filter(array_map('trim', explode("\n", $content)));
 
         foreach ($lines as $line) {
-            if (preg_match('/^\d+\.\s*(.+)/', $line, $matches) ||
-                preg_match('/^[-*]\s*(.+)/', $line, $matches)) {
+            // Enhanced regex patterns to match more formats
+            if (preg_match('/^\d+\.\s*(.+)/', $line, $matches) ||        // "1. Task title"
+                preg_match('/^[-*]\s*(.+)/', $line, $matches) ||          // "- Task title" or "* Task title"
+                preg_match('/^\d+\)\s*(.+)/', $line, $matches) ||         // "1) Task title"
+                preg_match('/^Task\s*\d+:\s*(.+)/i', $line, $matches) ||  // "Task 1: Title"
+                preg_match('/^[•▪▫]\s*(.+)/', $line, $matches) ||         // Bullet points
+                preg_match('/^\s*[▶►]\s*(.+)/', $line, $matches)) {       // Arrow bullets
 
                 $title = trim($matches[1]);
-                if (!empty($title)) {
+                if (!empty($title) && strlen($title) > 3) { // Ensure meaningful titles
                     $tasks[] = [
                         'title' => $title,
                         'description' => '',
                         'status' => 'pending',
+                        'size' => $this->generateFallbackSize($title),
                     ];
+                }
+            } else if (!empty($line) &&
+                      !preg_match('/^(Here|The|These|Below|Following|I|You|Please|Let|This)/i', $line) &&
+                      strlen(trim($line)) > 10 &&
+                      !str_contains($line, '```') &&
+                      count($tasks) < 10) {
+                // If line doesn't match patterns but looks like a task, include it
+                $cleanTitle = trim($line);
+                if (!empty($cleanTitle)) {
+                    $tasks[] = [
+                        'title' => $cleanTitle,
+                        'description' => '',
+                        'status' => 'pending',
+                        'size' => $this->generateFallbackSize($cleanTitle),
+                    ];
+                }
+            }
+        }
+
+        // If no tasks found, try a more aggressive approach
+        if (empty($tasks)) {
+            $allLines = array_filter(array_map('trim', explode("\n", $content)));
+            foreach ($allLines as $line) {
+                if (strlen(trim($line)) > 5 &&
+                    !str_contains($line, '```') &&
+                    !preg_match('/^(Here|The|These|Below|Following|I|You|Please|Let|This|Based|In)/i', $line)) {
+                    $tasks[] = [
+                        'title' => trim($line),
+                        'description' => '',
+                        'status' => 'pending',
+                        'size' => $this->generateFallbackSize(trim($line)),
+                    ];
+
+                    if (count($tasks) >= 5) break; // Limit to reasonable number
                 }
             }
         }
@@ -420,6 +460,34 @@ class OpenAIProvider implements AIProviderInterface
         );
     }
 
+    /**
+     * Generate fallback size based on task content.
+     */
+    protected function generateFallbackSize(string $title): string
+    {
+        $text = strtolower($title);
+
+        // Heuristic sizing based on keywords
+        $complexityKeywords = [
+            'xs' => ['fix', 'bug', 'typo', 'small', 'quick', 'minor', 'update', 'change'],
+            's' => ['add', 'create', 'implement', 'simple', 'basic', 'standard'],
+            'm' => ['feature', 'component', 'module', 'integration', 'api', 'database'],
+            'l' => ['system', 'architecture', 'refactor', 'migration', 'complex', 'major'],
+            'xl' => ['rewrite', 'redesign', 'overhaul', 'platform', 'framework', 'enterprise']
+        ];
+
+        foreach ($complexityKeywords as $size => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($text, $keyword)) {
+                    return $size;
+                }
+            }
+        }
+
+        // Default to medium if no keywords match
+        return 'm';
+    }
+
     protected function createFallbackTaskBreakdown(string $taskTitle, string $taskDescription, ?string $projectDueDate = null): AITaskResponse
     {
         $tasks = [
@@ -427,11 +495,13 @@ class OpenAIProvider implements AIProviderInterface
                 'title' => 'Research and Planning',
                 'description' => "Research requirements and plan approach for: {$taskTitle}",
                 'status' => 'pending',
+                'size' => 'm',
             ],
             [
                 'title' => 'Implementation',
                 'description' => "Implement the main functionality for: {$taskTitle}",
                 'status' => 'pending',
+                'size' => 'l',
             ],
         ];
 

@@ -155,7 +155,7 @@
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <h4 class="text-lg font-medium text-gray-900">
-                                    Generated Subtasks ({{ suggestedSubtasks.length }})
+                                    Generated Subtasks ({{ suggestedSubtasks?.length || 0 }})
                                 </h4>
                                 <div class="flex gap-2">
                                     <Button
@@ -179,7 +179,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid gap-4">
+                            <div v-if="suggestedSubtasks && suggestedSubtasks.length > 0" class="grid gap-4">
                                 <Card
                                     v-for="(subtask, index) in suggestedSubtasks"
                                     :key="index"
@@ -190,10 +190,20 @@
                                             <span class="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium">
                                                 {{ index + 1 }}
                                             </span>
-                                            {{ subtask.title }}
+                                            <span v-if="subtask.title && subtask.title.trim()">
+                                                {{ subtask.title.trim() }}
+                                            </span>
+                                            <span v-else class="text-gray-500 italic">
+                                                Untitled Subtask {{ index + 1 }}
+                                            </span>
                                         </CardTitle>
                                         <CardDescription>
-                                            {{ subtask.description }}
+                                            <span v-if="subtask.description && subtask.description.trim()">
+                                                {{ subtask.description.trim() }}
+                                            </span>
+                                            <span v-else class="text-gray-400 italic">
+                                                No description provided
+                                            </span>
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent class="pt-0">
@@ -209,10 +219,21 @@
                                     </CardContent>
                                 </Card>
                             </div>
+
+                            <!-- No subtasks message -->
+                            <div v-else class="text-center py-8">
+                                <div class="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                                    <AlertTriangle class="h-8 w-8 text-orange-600" />
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">No Subtasks Generated</h3>
+                                <p class="text-gray-600 max-w-md mx-auto">
+                                    The AI wasn't able to generate subtasks for this task. Try regenerating with more specific feedback.
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex gap-4 pt-4 border-t">
+                        <div v-if="suggestedSubtasks && suggestedSubtasks.length > 0" class="flex gap-4 pt-4 border-t">
                             <Button
                                 @click="createAllSubtasks"
                                 :disabled="isCreatingSubtasks"

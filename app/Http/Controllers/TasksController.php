@@ -187,6 +187,23 @@ class TasksController extends Controller
         // Update hierarchy path and depth
         $task->updateHierarchyPath();
 
+        // Automatically size the task using AI (only for top-level tasks)
+        if ($task->canHaveSize()) {
+            try {
+                $sizingService = app(\App\Services\AI\TaskSizingService::class);
+                $suggestedSize = $sizingService->sizeTask($task);
+
+                if ($suggestedSize) {
+                    $task->setSize($suggestedSize);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to auto-size task', [
+                    'task_id' => $task->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         // Create subtasks if provided
         if (! empty($validated['subtasks'])) {
             foreach ($validated['subtasks'] as $index => $subtaskData) {
@@ -998,10 +1015,7 @@ class TasksController extends Controller
             // Update size if provided (only for top-level tasks)
             if (isset($validated['size'])) {
                 if (!$task->canHaveSize()) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Only top-level tasks can have a T-shirt size.',
-                    ], 400);
+                    return back()->withErrors(['size' => 'Only top-level tasks can have a T-shirt size.']);
                 }
                 $task->setSize($validated['size']);
             }
@@ -1009,31 +1023,15 @@ class TasksController extends Controller
             // Update story points if provided (only for subtasks)
             if (isset($validated['current_story_points'])) {
                 if (!$task->canHaveStoryPoints()) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Only subtasks can have story points.',
-                    ], 400);
+                    return back()->withErrors(['current_story_points' => 'Only subtasks can have story points.']);
                 }
                 $task->setStoryPoints($validated['current_story_points']);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Task updated successfully!',
-                'task' => [
-                    'id' => $task->id,
-                    'size' => $task->size,
-                    'current_story_points' => $task->current_story_points,
-                    'initial_story_points' => $task->initial_story_points,
-                    'story_points_change_count' => $task->story_points_change_count,
-                ],
-            ]);
+            return back()->with('success', 'Task updated successfully!');
 
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 400);
+            return back()->withErrors(['general' => $e->getMessage()]);
         } catch (\Exception $e) {
             \Log::error('Failed to update task sizing', [
                 'task_id' => $task->id,
@@ -1041,10 +1039,7 @@ class TasksController extends Controller
                 'validated_data' => $validated,
             ]);
 
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to update task. Please try again.',
-            ], 500);
+            return back()->withErrors(['general' => 'Failed to update task. Please try again.']);
         }
     }
 }

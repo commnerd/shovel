@@ -52,8 +52,14 @@ const fibonacciPoints = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
 // Computed properties
 const isTopLevel = computed(() => props.task.depth === 0);
 const isSubtask = computed(() => props.task.depth > 0);
-const canHaveSize = computed(() => isTopLevel.value);
-const canHaveStoryPoints = computed(() => isSubtask.value);
+const canHaveSize = computed(() => {
+    // Only top-level tasks can have T-shirt sizes
+    return isTopLevel.value && !isSubtask.value && props.task.depth === 0;
+});
+const canHaveStoryPoints = computed(() => {
+    // Only subtasks can have story points
+    return isSubtask.value && !isTopLevel.value && props.task.depth > 0;
+});
 
 const getSizeDisplayName = (size: string) => {
     const option = sizeOptions.find(opt => opt.value === size);
@@ -155,7 +161,7 @@ const cancelEditingPoints = () => {
 <template>
     <div class="flex items-center gap-2">
         <!-- T-shirt Size (Top-level tasks only) -->
-        <div v-if="canHaveSize" class="flex items-center gap-2">
+        <div v-if="canHaveSize && !canHaveStoryPoints" class="flex items-center gap-2">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger>
@@ -206,7 +212,7 @@ const cancelEditingPoints = () => {
         </div>
 
         <!-- Story Points (Subtasks only) -->
-        <div v-if="canHaveStoryPoints" class="flex items-center gap-2">
+        <div v-if="canHaveStoryPoints && !canHaveSize" class="flex items-center gap-2">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger>
