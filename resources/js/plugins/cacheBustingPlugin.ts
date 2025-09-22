@@ -35,6 +35,12 @@ export function cacheBustingPlugin(app: App) {
     router.on('before', (event) => {
         if (event.detail.visit.method === 'get' && event.detail.visit.data) {
             const originalUrl = event.detail.visit.url.toString();
+
+            // Skip cache busting if URL contains undefined values
+            if (originalUrl.includes('undefined') || originalUrl.includes('null')) {
+                return;
+            }
+
             const enhancedUrl = cacheBusting.bustUrl(originalUrl);
             event.detail.visit.url = enhancedUrl as any;
         }

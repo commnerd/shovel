@@ -712,10 +712,14 @@ onUnmounted(() => {
 });
 
 const changeFilter = (filter: string) => {
-    router.get(`/dashboard/projects/${project.value.id}/tasks`, { filter }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    if (project.value.id) {
+        router.get(`/dashboard/projects/${project.value.id}/tasks`, { filter }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    } else {
+        console.error('Project ID is undefined, cannot change filter');
+    }
 };
 
 // Mock some tasks if none exist
@@ -773,7 +777,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                 </div>
                 <Button class="flex items-center gap-2" as-child>
-                    <Link :href="`/dashboard/projects/${project.id}/tasks/create`">
+                    <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks/create`">
                         <Plus class="h-4 w-4" />
                         New Task
                     </Link>
@@ -937,13 +941,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <span class="text-xs text-gray-500 font-medium">Subtasks:</span>
                             <div class="flex items-center border rounded-md">
                                 <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-r-none border-r">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-1" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
+                                    <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" class="flex items-center gap-1" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
                                         <Plus class="h-3 w-3" />
                                         <span class="text-xs hidden md:inline">Add</span>
                                     </Link>
                                 </Button>
                                 <Button size="sm" variant="ghost" as-child class="h-7 px-2 rounded-l-none">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" class="flex items-center gap-1">
+                                    <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" class="flex items-center gap-1">
                                         <Sparkles class="h-3 w-3" />
                                         <span class="text-xs hidden md:inline">Generate</span>
                                     </Link>
@@ -954,12 +958,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <!-- Mobile: Compact action buttons -->
                         <div class="sm:hidden flex items-center gap-1">
                             <Button size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
+                                <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
                                     <Plus class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
                                 </Link>
                             </Button>
                             <Button size="sm" variant="ghost" as-child class="h-6 w-6 p-0">
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
+                                <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
                                     <Sparkles class="h-3 w-3 sm:h-2.5 sm:w-2.5" />
                                 </Link>
                             </Button>
@@ -968,7 +972,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <!-- Edit and Delete buttons -->
                         <div class="flex items-center gap-1">
                             <Button size="sm" variant="ghost" as-child class="h-6 w-6 sm:h-8 sm:w-8 p-0">
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
+                                <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
                                     <Edit class="h-3 w-3 sm:h-3 sm:w-3" />
                                 </Link>
                             </Button>
@@ -1045,7 +1049,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                             <!-- Task title with hierarchy styling -->
                             <Link
-                                v-if="task.has_children"
+                                v-if="task.has_children && project.id && task.id"
                                 :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/reorder`"
                                 class="text-sm flex-1 hover:text-blue-600 transition-colors"
                                 :class="[
@@ -1107,21 +1111,21 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <!-- Actions -->
                             <div class="flex items-center gap-0.5 sm:gap-1">
                                 <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
+                                    <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`" title="Edit Task">
                                         <Edit class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
 
                                 <!-- Add subtask button for all tasks (promotes leaf tasks to parent tasks) -->
                                 <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
+                                    <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`" :title="task.is_leaf ? 'Add Subtask (will promote to parent)' : 'Add Subtask'">
                                         <Plus class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
 
                                 <!-- AI breakdown button for all tasks -->
                                 <Button size="sm" variant="ghost" as-child class="h-5 w-5 sm:h-6 sm:w-6 p-0">
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
+                                    <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/breakdown`" title="AI Breakdown">
                                         <Sparkles class="h-2.5 w-2.5" />
                                     </Link>
                                 </Button>
@@ -1183,7 +1187,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <!-- Actions -->
                         <div class="flex items-center gap-1">
                             <Button size="sm" variant="ghost" as-child class="h-8 w-8 p-0">
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
+                                <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/edit`">
                                     <Edit class="h-3 w-3" />
                                 </Link>
                             </Button>
@@ -1408,7 +1412,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             View Task List
                         </Button>
                         <Button variant="default" class="w-full" as-child>
-                            <Link :href="`/dashboard/projects/${project.id}/tasks/create`">
+                            <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks/create`">
                                 Create First Task
                             </Link>
                         </Button>

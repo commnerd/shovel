@@ -67,15 +67,31 @@ export class CacheBusting {
      * Add cache busting parameters to a URL
      */
     public bustUrl(url: string, options: CacheBustingOptions = {}): string {
-        const urlObj = new URL(url, window.location.origin);
-        const params = this.generateUrlParams(options);
+        // Validate URL before processing
+        if (!url || typeof url !== 'string') {
+            return url;
+        }
 
-        // Add cache busting parameters to existing search params
-        params.forEach((value, key) => {
-            urlObj.searchParams.set(key, value);
-        });
+        // Check if URL contains undefined values that would cause invalid URL construction
+        if (url.includes('undefined') || url.includes('null')) {
+            return url; // Return original URL if it contains undefined/null values
+        }
 
-        return urlObj.toString();
+        try {
+            const urlObj = new URL(url, window.location.origin);
+            const params = this.generateUrlParams(options);
+
+            // Add cache busting parameters to existing search params
+            params.forEach((value, key) => {
+                urlObj.searchParams.set(key, value);
+            });
+
+            return urlObj.toString();
+        } catch (error) {
+            // If URL construction fails, return the original URL
+            console.warn('Failed to construct URL for cache busting:', url, error);
+            return url;
+        }
     }
 
     /**

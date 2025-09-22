@@ -92,6 +92,11 @@ const isOverdue = (iteration: Iteration) => {
 };
 
 const createIteration = () => {
+    if (!props.project.id) {
+        console.error('Project ID is undefined, cannot create iteration');
+        return;
+    }
+
     router.post(`/dashboard/projects/${props.project.id}/iterations`, {
         name: `Sprint ${props.iterations.length + 1}`,
         start_date: new Date().toISOString().split('T')[0],
@@ -107,6 +112,11 @@ const createIteration = () => {
 };
 
 const startIteration = (iteration: Iteration) => {
+    if (!props.project.id || !iteration.id) {
+        console.error('Project ID or iteration ID is undefined, cannot start iteration');
+        return;
+    }
+
     router.put(`/dashboard/projects/${props.project.id}/iterations/${iteration.id}`, {
         status: 'active'
     }, {
@@ -115,6 +125,11 @@ const startIteration = (iteration: Iteration) => {
 };
 
 const completeIteration = (iteration: Iteration) => {
+    if (!props.project.id || !iteration.id) {
+        console.error('Project ID or iteration ID is undefined, cannot complete iteration');
+        return;
+    }
+
     router.put(`/dashboard/projects/${props.project.id}/iterations/${iteration.id}`, {
         status: 'completed'
     }, {
@@ -123,6 +138,11 @@ const completeIteration = (iteration: Iteration) => {
 };
 
 const cancelIteration = (iteration: Iteration) => {
+    if (!props.project.id || !iteration.id) {
+        console.error('Project ID or iteration ID is undefined, cannot cancel iteration');
+        return;
+    }
+
     router.put(`/dashboard/projects/${props.project.id}/iterations/${iteration.id}`, {
         status: 'cancelled'
     }, {
@@ -131,6 +151,11 @@ const cancelIteration = (iteration: Iteration) => {
 };
 
 const deleteIteration = (iteration: Iteration) => {
+    if (!props.project.id || !iteration.id) {
+        console.error('Project ID or iteration ID is undefined, cannot delete iteration');
+        return;
+    }
+
     if (confirm(`Are you sure you want to delete "${iteration.name}"? This action cannot be undone.`)) {
         router.delete(`/dashboard/projects/${props.project.id}/iterations/${iteration.id}`, {
             onSuccess: () => emit('refresh')
@@ -139,6 +164,11 @@ const deleteIteration = (iteration: Iteration) => {
 };
 
 const viewIteration = (iteration: Iteration) => {
+    if (!props.project.id || !iteration.id) {
+        console.error('Project ID or iteration ID is undefined, cannot view iteration');
+        return;
+    }
+
     router.visit(`/dashboard/projects/${props.project.id}/iterations/${iteration.id}`);
 };
 </script>

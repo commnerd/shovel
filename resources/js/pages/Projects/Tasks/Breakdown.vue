@@ -7,7 +7,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
-                        <Link :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                        <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
                             <ArrowLeft class="h-4 w-4" />
                             Back to Tasks
                         </Link>
@@ -261,7 +261,7 @@
                                 size="lg"
                                 :disabled="isCreatingSubtasks"
                             >
-                                <Link :href="`/dashboard/projects/${project.id}/tasks`">
+                                <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`">
                                     Cancel
                                 </Link>
                             </Button>
@@ -729,12 +729,17 @@ const createAllSubtasks = async () => {
         }
 
         // Redirect back to tasks with success message
-        router.visit(`/dashboard/projects/${props.project.id}/tasks`, {
-            method: 'get',
-            data: {
-                message: `Successfully created ${suggestedSubtasks.value.length} subtasks for "${props.task.title}"!`
-            }
-        });
+        if (props.project.id) {
+            router.visit(`/dashboard/projects/${props.project.id}/tasks`, {
+                method: 'get',
+                data: {
+                    message: `Successfully created ${suggestedSubtasks.value.length} subtasks for "${props.task.title}"!`
+                }
+            });
+        } else {
+            console.error('Project ID is undefined, cannot redirect');
+            router.reload();
+        }
     } catch (error) {
         console.error('Subtask creation error:', error);
         alert('Failed to create subtasks. Please try again.');
@@ -774,7 +779,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: props.project.title || 'Untitled Project',
-        href: `/dashboard/projects/${props.project.id}/tasks`,
+        href: props.project.id ? `/dashboard/projects/${props.project.id}/tasks` : '/dashboard/projects',
     },
     {
         title: 'AI Breakdown',

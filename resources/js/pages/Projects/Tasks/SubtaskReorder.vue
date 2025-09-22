@@ -110,10 +110,14 @@ const toggleTaskStatus = async (subtask: Subtask) => {
             errorMessage.value = null;
 
             // Refresh the page to get updated subtask status
-            router.visit(window.location.href, {
-                preserveScroll: true,
-                only: ['subtasks'],
-            });
+            if (window.location && window.location.href) {
+                router.visit(window.location.href, {
+                    preserveScroll: true,
+                    only: ['subtasks'],
+                });
+            } else {
+                router.reload({ only: ['subtasks'] });
+            }
 
             // Clear success message after 2 seconds
             setTimeout(() => {
@@ -170,10 +174,14 @@ const handleReorder = async (taskId: number, newPosition: number, confirmed = fa
             errorMessage.value = null;
 
             // Refresh the page to get updated subtask order
-            router.visit(window.location.href, {
-                preserveScroll: true,
-                only: ['subtasks'],
-            });
+            if (window.location && window.location.href) {
+                router.visit(window.location.href, {
+                    preserveScroll: true,
+                    only: ['subtasks'],
+                });
+            } else {
+                router.reload({ only: ['subtasks'] });
+            }
 
             // Clear success message after a few seconds
             setTimeout(() => {
@@ -222,10 +230,14 @@ const cancelReorder = () => {
     errorMessage.value = null;
 
     // Reset the visual order by reloading subtasks
-    router.visit(window.location.href, {
-        preserveScroll: true,
-        only: ['subtasks'],
-    });
+    if (window.location && window.location.href) {
+        router.visit(window.location.href, {
+            preserveScroll: true,
+            only: ['subtasks'],
+        });
+    } else {
+        router.reload({ only: ['subtasks'] });
+    }
 };
 
 const onDragStart = (taskId: number) => {
@@ -317,11 +329,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: project.value.title || 'Untitled Project',
-        href: `/dashboard/projects/${project.value.id}/tasks`,
+        href: project.value.id ? `/dashboard/projects/${project.value.id}/tasks` : '/dashboard/projects',
     },
     {
         title: task.value.title || 'Untitled Task',
-        href: `/dashboard/projects/${project.value.id}/tasks/${task.value.id}/subtasks/reorder`,
+        href: (project.value.id && task.value.id) ? `/dashboard/projects/${project.value.id}/tasks/${task.value.id}/subtasks/reorder` : '/dashboard/projects',
     },
 ];
 </script>
@@ -336,7 +348,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <Button variant="ghost" size="sm" as-child>
-                            <Link :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                            <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
                                 <ArrowLeft class="h-4 w-4" />
                                 Back to Tasks
                             </Link>
@@ -445,7 +457,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <!-- Actions -->
                                     <div class="flex items-center gap-1">
                                         <Button size="sm" variant="ghost" as-child class="h-8 w-8 p-0">
-                                            <Link :href="`/dashboard/projects/${project.id}/tasks/${subtask.id}/edit`">
+                                            <Link v-if="project.id && subtask.id" :href="`/dashboard/projects/${project.id}/tasks/${subtask.id}/edit`">
                                                 <Edit class="h-3 w-3" />
                                             </Link>
                                         </Button>
@@ -471,7 +483,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                         <div class="space-y-3">
                             <Button variant="default" class="w-full" as-child>
-                                <Link :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`">
+                                <Link v-if="project.id && task.id" :href="`/dashboard/projects/${project.id}/tasks/${task.id}/subtasks/create`">
                                     Create First Subtask
                                 </Link>
                             </Button>

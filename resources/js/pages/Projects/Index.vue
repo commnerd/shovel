@@ -130,13 +130,13 @@ const getStatusIcon = (status: string) => {
                                 <!-- Action buttons -->
                                 <div class="flex gap-2 pt-2">
                                     <Button size="sm" variant="outline" as-child class="flex-1">
-                                        <Link :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                                        <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
                                             <Eye class="h-4 w-4" />
                                             View Tasks
                                         </Link>
                                     </Button>
                                     <Button size="sm" variant="ghost" as-child>
-                                        <Link :href="`/dashboard/projects/${project.id}/edit`" class="flex items-center gap-2">
+                                        <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/edit`" class="flex items-center gap-2">
                                             <Edit class="h-4 w-4" />
                                             Edit
                                         </Link>

@@ -92,9 +92,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const form = useForm({
     title: props.projectData.title || '',
-    description: props.projectData.description,
+    description: props.projectData.description || '',
     due_date: props.projectData.due_date || '',
-    group_id: props.projectData.group_id || props.defaultGroupId,
+    group_id: props.projectData.group_id || props.defaultGroupId || null,
     ai_provider: props.projectData.ai_provider || null,
     ai_model: props.projectData.ai_model || null,
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
@@ -202,6 +202,29 @@ const goBackToEdit = () => {
 };
 
 const createProject = () => {
+    // Clean up form data to remove undefined values that might cause URL construction issues
+    const cleanedTasks = form.tasks.map(task => ({
+        title: task.title || '',
+        description: task.description || '',
+        status: task.status || 'pending',
+        sort_order: task.sort_order || 1,
+        // Only include optional fields if they have valid values
+        ...(task.size && { size: task.size }),
+        ...(task.initial_story_points !== undefined && { initial_story_points: task.initial_story_points }),
+        ...(task.current_story_points !== undefined && { current_story_points: task.current_story_points }),
+        ...(task.story_points_change_count !== undefined && { story_points_change_count: task.story_points_change_count }),
+    }));
+
+    // Update the form with cleaned data
+    form.tasks = cleanedTasks;
+
+    // Ensure all required fields are valid before submission
+    if (!form.title || !form.description) {
+        console.error('Missing required fields');
+        return;
+    }
+
+    // Submit using form.post
     form.post('/dashboard/projects', {
         onSuccess: () => {
             // Project created successfully

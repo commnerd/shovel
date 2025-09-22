@@ -272,11 +272,18 @@
                           Mark Complete
                         </button>
                         <Link
+                          v-if="tasks[suggestion.task_id]?.project?.id"
                           :href="`/dashboard/projects/${tasks[suggestion.task_id].project.id}/tasks`"
                           class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                         >
                           View Project
                         </Link>
+                        <span
+                          v-else
+                          class="px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded cursor-not-allowed"
+                        >
+                          View Project
+                        </span>
                       </div>
                     </div>
                   </div>

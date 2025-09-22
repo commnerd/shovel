@@ -493,6 +493,9 @@ class ProjectsController extends Controller
                 }
             }
 
+            // Ensure group_id is an integer
+            $groupId = (int) $groupId;
+
             // Verify user has access to the selected group
             if ($groupId && ! auth()->user()->belongsToGroup($groupId)) {
                 throw new \Exception('You do not have access to the selected group.');

@@ -41,11 +41,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: props.project.title || 'Untitled Project',
-        href: `/dashboard/projects/${props.project.id}/tasks`,
+        href: props.project.id ? `/dashboard/projects/${props.project.id}/tasks` : '/dashboard/projects',
     },
     {
         title: props.parentTask ? `Create Subtask for "${props.parentTask.title}"` : 'Create Task',
-        href: `/dashboard/projects/${props.project.id}/tasks/create`,
+        href: props.project.id ? `/dashboard/projects/${props.project.id}/tasks/create` : '/dashboard/projects',
     },
 ];
 
@@ -185,7 +185,11 @@ const createTaskWithSubtasks = async () => {
 
         if (response.ok) {
             // Redirect to tasks index
-            window.location.href = `/dashboard/projects/${props.project.id}/tasks`;
+            if (props.project.id) {
+                window.location.href = `/dashboard/projects/${props.project.id}/tasks`;
+            } else {
+                window.location.href = '/dashboard/projects';
+            }
         } else {
             alert('Failed to create task with subtasks. Please try again.');
         }
@@ -278,7 +282,7 @@ onMounted(async () => {
                 <!-- Header with back button -->
                 <div class="flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
-                        <Link :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                        <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
                             <ArrowLeft class="h-4 w-4" />
                             Back to Tasks
                         </Link>
@@ -495,7 +499,7 @@ onMounted(async () => {
                                     {{ isSubmitting ? 'Creating...' : 'Create Task' }}
                                 </Button>
                                 <Button variant="outline" as-child>
-                                    <Link :href="`/dashboard/projects/${project.id}/tasks`">Cancel</Link>
+                                    <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`">Cancel</Link>
                                 </Button>
                             </CardFooter>
                         </form>
