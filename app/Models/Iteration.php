@@ -134,6 +134,16 @@ class Iteration extends Model
     }
 
     /**
+     * Get the total completed points from tasks in this iteration.
+     */
+    public function getCompletedPoints(): int
+    {
+        return $this->leafTasks()
+            ->where('status', 'completed')
+            ->sum('current_story_points') ?? 0;
+    }
+
+    /**
      * Calculate and update the committed and completed points based on assigned tasks.
      */
     public function updatePointsFromTasks(): void

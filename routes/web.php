@@ -154,6 +154,31 @@ Route::patch('/dashboard/tasks/{task}', [App\Http\Controllers\TasksController::c
     ->middleware(['auth', 'verified'])
     ->name('tasks.update');
 
+// Today's Tasks routes
+Route::get('/dashboard/todays-tasks', [App\Http\Controllers\TodaysTasksController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.index');
+
+Route::post('/dashboard/todays-tasks/refresh', [App\Http\Controllers\TodaysTasksController::class, 'refresh'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.refresh');
+
+Route::post('/dashboard/todays-tasks/curations/{curation}/dismiss', [App\Http\Controllers\TodaysTasksController::class, 'dismiss'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.curations.dismiss');
+
+Route::post('/dashboard/todays-tasks/tasks/{task}/complete', [App\Http\Controllers\TodaysTasksController::class, 'completeTask'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.tasks.complete');
+
+Route::patch('/dashboard/todays-tasks/tasks/{task}/status', [App\Http\Controllers\TodaysTasksController::class, 'updateTaskStatus'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.tasks.update-status');
+
+Route::get('/dashboard/todays-tasks/stats', [App\Http\Controllers\TodaysTasksController::class, 'stats'])
+    ->middleware(['auth', 'verified'])
+    ->name('todays-tasks.stats');
+
 Route::delete('/dashboard/projects/{project}', [App\Http\Controllers\ProjectsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('projects.destroy');

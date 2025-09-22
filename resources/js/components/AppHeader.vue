@@ -14,7 +14,7 @@ import { toUrl, urlIsActive } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { InertiaLinkProps, Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search, FolderOpen } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, FolderOpen, CheckSquare } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -40,6 +40,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: "Today's Tasks",
+        href: '/dashboard/todays-tasks',
+        icon: CheckSquare,
     },
     {
         title: 'Projects',

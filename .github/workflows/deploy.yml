@@ -74,11 +74,15 @@ jobs:
           # Pull the image with git tag
           docker pull ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
 
-          # Stop and remove existing container if it exists
+          # Stop and remove existing containers if they exist
           docker stop foca-app 2>/dev/null || true
           docker rm foca-app 2>/dev/null || true
+          docker stop foca-scheduler 2>/dev/null || true
+          docker rm foca-scheduler 2>/dev/null || true
+          docker stop foca-queue 2>/dev/null || true
+          docker rm foca-queue 2>/dev/null || true
 
-          # Run the new container
+          # Run the main web application container
           docker run -d \
             --network web \
             --name foca-app \
@@ -87,11 +91,32 @@ jobs:
             --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
 
-          # Wait for container to be ready
-          sleep 10
+          # Run the scheduler container
+          docker run -d \
+            --network web \
+            --name foca-scheduler \
+            --restart unless-stopped \
+            --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
+            --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
+            ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }} \
+            php artisan schedule:work
+
+          # Run the queue worker container
+          docker run -d \
+            --network web \
+            --name foca-queue \
+            --restart unless-stopped \
+            --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
+            --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
+            ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }} \
+            php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+
+          # Wait for containers to be ready
+          sleep 15
 
           # Run database migrations
           docker exec foca-app php artisan migrate --force
 
           # Clean up old garbage
+
           docker system prune --all --force
