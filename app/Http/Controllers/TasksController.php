@@ -83,6 +83,10 @@ class TasksController extends Controller
                 'current_order_index' => $task->current_order_index,
                 'completion_percentage' => $task->getCompletionPercentage(),
                 'created_at' => $task->created_at->toISOString(),
+                'size' => $task->size,
+                'initial_story_points' => $task->initial_story_points,
+                'current_story_points' => $task->current_story_points,
+                'story_points_change_count' => $task->story_points_change_count,
             ];
         });
 
@@ -93,6 +97,7 @@ class TasksController extends Controller
                 'description' => $project->description,
                 'due_date' => $project->due_date?->format('Y-m-d'),
                 'status' => $project->status,
+                'project_type' => $project->project_type,
             ],
             'tasks' => $tasks,
             'filter' => $filter,
@@ -430,6 +435,7 @@ class TasksController extends Controller
                 'id' => $project->id,
                 'title' => $project->title,
                 'description' => $project->description,
+                'project_type' => $project->project_type,
             ],
             'task' => [
                 'id' => $task->id,
@@ -442,6 +448,10 @@ class TasksController extends Controller
                 'is_leaf' => $task->isLeaf(),
                 'is_top_level' => $task->isTopLevel(),
                 'depth' => $task->depth,
+                'size' => $task->size,
+                'initial_story_points' => $task->initial_story_points,
+                'current_story_points' => $task->current_story_points,
+                'story_points_change_count' => $task->story_points_change_count,
             ],
             'projectTaskCount' => $project->tasks()->count(),
         ]);
@@ -470,6 +480,7 @@ class TasksController extends Controller
                 'id' => $project->id,
                 'title' => $project->title,
                 'description' => $project->description,
+                'project_type' => $project->project_type,
             ],
             'task' => [
                 'id' => $task->id,
@@ -498,6 +509,10 @@ class TasksController extends Controller
                     'sort_order' => $subtask->sort_order,
                     'completion_percentage' => $subtask->completion_percentage,
                     'created_at' => $subtask->created_at->format('Y-m-d H:i:s'),
+                    'size' => $subtask->size,
+                    'initial_story_points' => $subtask->initial_story_points,
+                    'current_story_points' => $subtask->current_story_points,
+                    'story_points_change_count' => $subtask->story_points_change_count,
                 ];
             }),
         ]);
@@ -960,6 +975,76 @@ class TasksController extends Controller
                 'messages' => [],
                 'error' => $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Update task sizing and story points (for iterative projects).
+     */
+    public function updateSizing(Request $request, Task $task)
+    {
+        // Ensure the task belongs to a project owned by the authenticated user
+        $project = $task->project;
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this task.');
+        }
+
+        $validated = $request->validate([
+            'size' => 'nullable|string|in:xs,s,m,l,xl',
+            'current_story_points' => 'nullable|integer|min:1|max:89',
+        ]);
+
+        try {
+            // Update size if provided (only for top-level tasks)
+            if (isset($validated['size'])) {
+                if (!$task->canHaveSize()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Only top-level tasks can have a T-shirt size.',
+                    ], 400);
+                }
+                $task->setSize($validated['size']);
+            }
+
+            // Update story points if provided (only for subtasks)
+            if (isset($validated['current_story_points'])) {
+                if (!$task->canHaveStoryPoints()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Only subtasks can have story points.',
+                    ], 400);
+                }
+                $task->setStoryPoints($validated['current_story_points']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task updated successfully!',
+                'task' => [
+                    'id' => $task->id,
+                    'size' => $task->size,
+                    'current_story_points' => $task->current_story_points,
+                    'initial_story_points' => $task->initial_story_points,
+                    'story_points_change_count' => $task->story_points_change_count,
+                ],
+            ]);
+
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        } catch (\Exception $e) {
+            \Log::error('Failed to update task sizing', [
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+                'validated_data' => $validated,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update task. Please try again.',
+            ], 500);
         }
     }
 }

@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, CheckCircle, Clock, Circle, Calendar, GripVertical, AlertTriangle, CheckSquare, Edit } from 'lucide-vue-next';
 import { useSortable } from '@vueuse/integrations/useSortable';
+import TaskSizing from '@/components/TaskSizing.vue';
 import type { BreadcrumbItem } from '@/types';
 
 interface Subtask {
@@ -25,6 +26,11 @@ interface Subtask {
     sort_order: number;
     completion_percentage: number;
     created_at: string;
+    // Iterative project fields
+    size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+    initial_story_points?: number;
+    current_story_points?: number;
+    story_points_change_count?: number;
 }
 
 interface Task {
@@ -44,6 +50,7 @@ interface Project {
     id: number;
     title: string;
     description: string;
+    project_type: 'finite' | 'iterative';
 }
 
 const page = usePage();
@@ -294,6 +301,11 @@ onUnmounted(() => {
     }
 });
 
+// Refresh subtasks data from server
+const refreshSubtasks = () => {
+    router.reload({ only: ['subtasks'] });
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -411,6 +423,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <!-- Subtask title -->
                                     <div class="flex-1 min-w-0">
                                         <span class="text-sm font-medium text-gray-900 truncate block">{{ subtask.title }}</span>
+                                        <div v-if="project.project_type === 'iterative'" class="mt-1">
+                                            <TaskSizing :task="subtask" @updated="refreshSubtasks" />
+                                        </div>
                                     </div>
 
                                     <!-- Due date if exists -->

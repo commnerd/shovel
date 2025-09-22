@@ -28,6 +28,9 @@ class SuperAdminUserSearchTest extends TestCase
     {
         parent::setUp();
 
+        // Configure AI provider to prevent middleware redirects
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+
         // Set up organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
 

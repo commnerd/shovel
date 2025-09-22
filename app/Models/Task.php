@@ -37,10 +37,15 @@ class Task extends Model
      */
     protected $fillable = [
         'project_id',
+        'iteration_id',
         'parent_id',
         'title',
         'description',
         'status',
+        'size',
+        'initial_story_points',
+        'current_story_points',
+        'story_points_change_count',
         'depth',
         'path',
         'sort_order',
@@ -70,6 +75,14 @@ class Task extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the iteration that owns the task.
+     */
+    public function iteration(): BelongsTo
+    {
+        return $this->belongsTo(Iteration::class);
     }
 
     /**
@@ -455,5 +468,170 @@ class Task extends Model
                 }
             }
         }
+    }
+
+    /**
+     * T-shirt size constants for top-level tasks.
+     */
+    public const SIZES = [
+        'xs' => 'Extra Small',
+        's' => 'Small',
+        'm' => 'Medium',
+        'l' => 'Large',
+        'xl' => 'Extra Large',
+    ];
+
+    /**
+     * Fibonacci sequence for story points.
+     */
+    public const FIBONACCI_POINTS = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+
+    /**
+     * Check if the task can have a T-shirt size (top-level tasks only).
+     */
+    public function canHaveSize(): bool
+    {
+        return $this->isTopLevel();
+    }
+
+    /**
+     * Check if the task can have story points (subtasks only).
+     */
+    public function canHaveStoryPoints(): bool
+    {
+        return !$this->isTopLevel();
+    }
+
+    /**
+     * Set the T-shirt size for the task.
+     */
+    public function setSize(string $size): void
+    {
+        if (!$this->canHaveSize()) {
+            throw new \InvalidArgumentException('Only top-level tasks can have a T-shirt size');
+        }
+
+        if (!array_key_exists($size, self::SIZES)) {
+            throw new \InvalidArgumentException('Invalid size. Must be one of: ' . implode(', ', array_keys(self::SIZES)));
+        }
+
+        $this->update(['size' => $size]);
+    }
+
+    /**
+     * Set story points for the task.
+     */
+    public function setStoryPoints(int $points): void
+    {
+        if (!$this->canHaveStoryPoints()) {
+            throw new \InvalidArgumentException('Only subtasks can have story points');
+        }
+
+        if (!in_array($points, self::FIBONACCI_POINTS)) {
+            throw new \InvalidArgumentException('Story points must be a Fibonacci number: ' . implode(', ', self::FIBONACCI_POINTS));
+        }
+
+        // Set initial points if not set
+        if ($this->initial_story_points === null) {
+            $this->initial_story_points = $points;
+            $this->current_story_points = $points;
+            $this->story_points_change_count = 0;
+        } else {
+            // Update current points and increment change count
+            if ($this->current_story_points !== $points) {
+                $this->current_story_points = $points;
+                $this->story_points_change_count++;
+            }
+        }
+
+        $this->save();
+
+        // Update iteration points if assigned to one
+        if ($this->iteration) {
+            $this->iteration->updatePointsFromTasks();
+        }
+    }
+
+    /**
+     * Get the display name for the task's size.
+     */
+    public function getSizeDisplayName(): ?string
+    {
+        return $this->size ? self::SIZES[$this->size] : null;
+    }
+
+    /**
+     * Get the story points change history count.
+     */
+    public function getStoryPointsChangeCount(): int
+    {
+        return $this->story_points_change_count ?? 0;
+    }
+
+    /**
+     * Check if story points have been changed from initial value.
+     */
+    public function hasStoryPointsChanged(): bool
+    {
+        return $this->initial_story_points !== $this->current_story_points;
+    }
+
+    /**
+     * Move task to an iteration.
+     */
+    public function moveToIteration(?Iteration $iteration): void
+    {
+        $oldIteration = $this->iteration;
+
+        $this->update(['iteration_id' => $iteration?->id]);
+
+        // Update points for both old and new iterations
+        if ($oldIteration) {
+            $oldIteration->updatePointsFromTasks();
+        }
+
+        if ($iteration) {
+            $iteration->updatePointsFromTasks();
+        }
+    }
+
+    /**
+     * Move task to backlog (remove from iteration).
+     */
+    public function moveToBacklog(): void
+    {
+        $this->moveToIteration(null);
+    }
+
+    /**
+     * Scope to get tasks with story points.
+     */
+    public function scopeWithStoryPoints($query)
+    {
+        return $query->whereNotNull('current_story_points');
+    }
+
+    /**
+     * Scope to get tasks with sizes.
+     */
+    public function scopeWithSize($query)
+    {
+        return $query->whereNotNull('size');
+    }
+
+    /**
+     * Scope to get tasks in a specific iteration.
+     */
+    public function scopeInIteration($query, $iterationId)
+    {
+        return $query->where('iteration_id', $iterationId);
+    }
+
+    /**
+     * Scope to get backlog tasks (not assigned to any iteration).
+     */
+    public function scopeInBacklog($query)
+    {
+        return $query->whereNull('iteration_id');
     }
 }

@@ -238,11 +238,11 @@ class AITaskBreakdownTest extends TestCase
 
     public function test_task_breakdown_system_prompt_configuration()
     {
-        config([
-            'ai.prompts.task_breakdown.system' => 'Custom system prompt for testing',
+        $provider = new CerebrusProvider([
+            'api_key' => 'test-key',
+            'base_url' => 'https://test.com',
+            'model' => 'test-model'
         ]);
-
-        $provider = new CerebrusProvider(config('ai.providers.cerebrus'));
 
         // Use reflection to access protected method
         $reflection = new \ReflectionClass($provider);
@@ -251,8 +251,8 @@ class AITaskBreakdownTest extends TestCase
 
         $prompt = $method->invoke($provider);
 
-        // Verify the custom prompt is included
-        $this->assertStringContainsString('Custom system prompt for testing', $prompt);
+        // Verify the hardcoded prompt is included
+        $this->assertStringContainsString('You are an expert project manager and task breakdown specialist', $prompt);
 
         // Verify date/time context is appended
         $this->assertStringContainsString('Current date and time:', $prompt);
@@ -263,11 +263,11 @@ class AITaskBreakdownTest extends TestCase
 
     public function test_task_breakdown_user_prompt_configuration()
     {
-        config([
-            'ai.prompts.task_breakdown.user' => 'Custom user prompt: {task_title}',
+        $provider = new CerebrusProvider([
+            'api_key' => 'test-key',
+            'base_url' => 'https://test.com',
+            'model' => 'test-model'
         ]);
-
-        $provider = new CerebrusProvider(config('ai.providers.cerebrus'));
 
         // Use reflection to access protected method
         $reflection = new \ReflectionClass($provider);
@@ -276,7 +276,7 @@ class AITaskBreakdownTest extends TestCase
 
         $prompt = $method->invoke($provider, 'Test Task', 'Test description', []);
 
-        $this->assertStringContainsString('Custom user prompt:', $prompt);
+        $this->assertStringContainsString('Please break down the following task into smaller, actionable subtasks:', $prompt);
         $this->assertStringContainsString('Test Task', $prompt);
         $this->assertStringContainsString('Test description', $prompt);
     }

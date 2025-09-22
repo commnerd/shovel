@@ -22,6 +22,9 @@ class UserInvitationTest extends TestCase
     {
         parent::setUp();
 
+        // Configure AI provider to prevent middleware redirects
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+
         // Create organizations
         $this->organization = Organization::factory()->create([
             'name' => 'Test Organization',

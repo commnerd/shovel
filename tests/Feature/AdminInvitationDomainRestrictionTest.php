@@ -19,6 +19,9 @@ class AdminInvitationDomainRestrictionTest extends TestCase
     {
         parent::setUp();
 
+        // Configure AI provider to prevent middleware redirects
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+
         $this->organization = Organization::factory()->create([
             'name' => 'Acme Corp',
             'domain' => 'acmecorp.com',

@@ -54,13 +54,15 @@ class SettingsController extends Controller
             ],
         ];
 
-        $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
+        $availableProviders = \App\Services\AIConfigurationService::getAllProviders();
+        $configuredProviders = \App\Services\AIConfigurationService::getAvailableProviders();
 
         return Inertia::render('settings/System', [
             'defaultAISettings' => $defaultAISettings,
             'organizationAISettings' => $organizationAISettings,
             'providerConfigs' => $providerConfigs,
             'availableProviders' => $availableProviders,
+            'configuredProviders' => $configuredProviders,
             'permissions' => [
                 'canAccessProviderConfig' => $canAccessProviderConfig,
                 'canAccessDefaultConfig' => $canAccessDefaultConfig,
@@ -128,8 +130,17 @@ class SettingsController extends Controller
         if (!$canAccess) {
             abort(403, 'You do not have permission to modify default AI settings.');
         }
+
+        // Get configured providers for validation
+        $configuredProviders = \App\Services\AIConfigurationService::getAvailableProviders();
+        $configuredProviderKeys = array_keys($configuredProviders);
+
+        if (empty($configuredProviderKeys)) {
+            return back()->withErrors(['provider' => 'No AI providers are configured. Please configure at least one provider first.']);
+        }
+
         $validated = $request->validate([
-            'provider' => 'required|in:cerebrus,openai,anthropic',
+            'provider' => 'required|in:' . implode(',', $configuredProviderKeys),
             'model' => 'required|string|max:100',
         ]);
 
@@ -152,8 +163,16 @@ class SettingsController extends Controller
             abort(403, 'You do not have permission to modify organization AI settings.');
         }
 
+        // Get configured providers for validation
+        $configuredProviders = \App\Services\AIConfigurationService::getAvailableProviders();
+        $configuredProviderKeys = array_keys($configuredProviders);
+
+        if (empty($configuredProviderKeys)) {
+            return back()->withErrors(['provider' => 'No AI providers are configured. Please configure at least one provider first.']);
+        }
+
         $validated = $request->validate([
-            'provider' => 'required|in:cerebrus,openai,anthropic',
+            'provider' => 'required|in:' . implode(',', $configuredProviderKeys),
             'model' => 'required|string|max:100',
         ]);
 

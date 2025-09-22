@@ -13,6 +13,14 @@ class UserInvitationIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Configure AI provider to prevent middleware redirects
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    }
+
     public function test_complete_user_invitation_workflow()
     {
         Notification::fake();

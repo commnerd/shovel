@@ -145,14 +145,10 @@ class OpenAIProvider implements AIProviderInterface
 
     public function analyzeProject(string $projectDescription, array $existingTasks = [], array $options = []): string
     {
-        $systemPrompt = config('ai.prompts.project_analysis.system',
-            'You are a senior project consultant who analyzes project requirements and provides strategic insights.'
-        );
+        $systemPrompt = 'You are a senior project consultant who analyzes project requirements and provides strategic insights.';
 
         $userPrompt = str_replace('{description}', $projectDescription,
-            config('ai.prompts.project_analysis.user',
-                'Analyze this project: "{description}". Provide insights about scope, complexity, timeline estimates, potential risks, and recommended technologies.'
-            )
+            'Analyze this project: "{description}". Provide insights about scope, complexity, timeline estimates, potential risks, and recommended technologies.'
         );
 
         $messages = [
@@ -166,15 +162,11 @@ class OpenAIProvider implements AIProviderInterface
 
     public function suggestTaskImprovements(array $tasks, array $options = []): array
     {
-        $systemPrompt = config('ai.prompts.task_suggestions.system',
-            'You are an AI assistant that helps improve task management by suggesting optimizations and next steps.'
-        );
+        $systemPrompt = 'You are an AI assistant that helps improve task management by suggesting optimizations and next steps.';
 
         $tasksJson = json_encode($tasks, JSON_PRETTY_PRINT);
         $userPrompt = str_replace('{tasks}', $tasksJson,
-            config('ai.prompts.task_suggestions.user',
-                'Given these existing tasks: {tasks}, suggest improvements, identify missing tasks, or recommend task prioritization changes.'
-            )
+            'Given these existing tasks: {tasks}, suggest improvements, identify missing tasks, or recommend task prioritization changes.'
         );
 
         $messages = [
@@ -227,9 +219,7 @@ class OpenAIProvider implements AIProviderInterface
     {
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
-        $basePrompt = config('ai.prompts.task_generation.system',
-            'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions, create compelling project titles, and generate comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.'
-        );
+        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions, create compelling project titles, and generate comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.';
 
         return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
@@ -239,9 +229,7 @@ class OpenAIProvider implements AIProviderInterface
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
         $basePrompt = str_replace('{description}', $projectDescription,
-            config('ai.prompts.task_generation.user',
-                'Based on this project description: "{description}", create a compelling project title and detailed task breakdown.'
-            )
+            'Based on this project description: "{description}", create a compelling project title and detailed task breakdown.'
         );
 
         return "**Current Context:**\nDate and time: {$currentDateTime}\n\n" . $basePrompt;
@@ -251,18 +239,14 @@ class OpenAIProvider implements AIProviderInterface
     {
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
-        $basePrompt = config('ai.prompts.task_breakdown.system',
-            'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.'
-        );
+        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.';
 
         return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
 
     protected function buildTaskBreakdownUserPrompt(string $taskTitle, string $taskDescription, array $context): string
     {
-        $basePrompt = config('ai.prompts.task_breakdown.user',
-            'Please break down the following task into smaller, actionable subtasks:'
-        );
+        $basePrompt = 'Please break down the following task into smaller, actionable subtasks:';
 
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
         $prompt = $basePrompt . "\n\n";

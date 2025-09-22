@@ -13,7 +13,7 @@ class AIManager extends Manager
      */
     public function getDefaultDriver(): string
     {
-        return $this->config->get('ai.default', 'cerebrus');
+        return \App\Models\Setting::get('ai.default.provider', 'cerebrus');
     }
 
     /**
@@ -21,7 +21,16 @@ class AIManager extends Manager
      */
     protected function createCerebrusDriver(): AIProviderInterface
     {
-        $config = $this->config->get('ai.providers.cerebrus');
+        // Get all configuration from database settings
+        $config = [
+            'driver' => 'cerebrus',
+            'api_key' => \App\Models\Setting::get('ai.cerebrus.api_key'),
+            'base_url' => \App\Models\Setting::get('ai.cerebrus.base_url', 'https://api.cerebras.ai/v1'),
+            'model' => \App\Models\Setting::get('ai.cerebrus.model', 'llama-4-scout-17b-16e-instruct'),
+            'timeout' => \App\Models\Setting::get('ai.cerebrus.timeout', 30),
+            'max_tokens' => \App\Models\Setting::get('ai.cerebrus.max_tokens', 4000),
+            'temperature' => \App\Models\Setting::get('ai.cerebrus.temperature', 0.7),
+        ];
 
         return new CerebrusProvider($config);
     }
@@ -31,7 +40,17 @@ class AIManager extends Manager
      */
     protected function createOpenaiDriver(): AIProviderInterface
     {
-        $config = $this->config->get('ai.providers.openai');
+        // Get all configuration from database settings
+        $config = [
+            'driver' => 'openai',
+            'api_key' => \App\Models\Setting::get('ai.openai.api_key'),
+            'organization' => \App\Models\Setting::get('ai.openai.organization'),
+            'base_url' => \App\Models\Setting::get('ai.openai.base_url', 'https://api.openai.com/v1'),
+            'model' => \App\Models\Setting::get('ai.openai.model', 'gpt-4'),
+            'timeout' => \App\Models\Setting::get('ai.openai.timeout', 30),
+            'max_tokens' => \App\Models\Setting::get('ai.openai.max_tokens', 4000),
+            'temperature' => \App\Models\Setting::get('ai.openai.temperature', 0.7),
+        ];
 
         return new OpenAIProvider($config);
     }
@@ -41,7 +60,16 @@ class AIManager extends Manager
      */
     protected function createAnthropicDriver(): AIProviderInterface
     {
-        $config = $this->config->get('ai.providers.anthropic');
+        // Get all configuration from database settings
+        $config = [
+            'driver' => 'anthropic',
+            'api_key' => \App\Models\Setting::get('ai.anthropic.api_key'),
+            'base_url' => \App\Models\Setting::get('ai.anthropic.base_url', 'https://api.anthropic.com/v1'),
+            'model' => \App\Models\Setting::get('ai.anthropic.model', 'claude-3-sonnet-20240229'),
+            'timeout' => \App\Models\Setting::get('ai.anthropic.timeout', 30),
+            'max_tokens' => \App\Models\Setting::get('ai.anthropic.max_tokens', 4000),
+            'temperature' => \App\Models\Setting::get('ai.anthropic.temperature', 0.7),
+        ];
 
         // This would be implemented when adding Anthropic support
         throw new \InvalidArgumentException('Anthropic provider not yet implemented');
@@ -52,7 +80,16 @@ class AIManager extends Manager
      */
     protected function createGeminiDriver(): AIProviderInterface
     {
-        $config = $this->config->get('ai.providers.gemini');
+        // Get all configuration from database settings
+        $config = [
+            'driver' => 'gemini',
+            'api_key' => \App\Models\Setting::get('ai.gemini.api_key'),
+            'base_url' => \App\Models\Setting::get('ai.gemini.base_url', 'https://generativelanguage.googleapis.com'),
+            'model' => \App\Models\Setting::get('ai.gemini.model', 'gemini-pro'),
+            'timeout' => \App\Models\Setting::get('ai.gemini.timeout', 30),
+            'max_tokens' => \App\Models\Setting::get('ai.gemini.max_tokens', 4000),
+            'temperature' => \App\Models\Setting::get('ai.gemini.temperature', 0.7),
+        ];
 
         // This would be implemented when adding Gemini support
         throw new \InvalidArgumentException('Gemini provider not yet implemented');
@@ -111,9 +148,9 @@ class AIManager extends Manager
      */
     public function hasConfiguredProvider(): bool
     {
-        $providers = $this->config->get('ai.providers', []);
+        $providerNames = ['cerebrus', 'openai', 'anthropic', 'gemini'];
 
-        foreach ($providers as $name => $config) {
+        foreach ($providerNames as $name) {
             try {
                 $provider = $this->provider($name);
                 if ($provider->isConfigured()) {
@@ -133,9 +170,10 @@ class AIManager extends Manager
     public function getAvailableProviders(): array
     {
         $providers = [];
-        $configs = $this->config->get('ai.providers', []);
+        // Define available provider names since we no longer use config file
+        $providerNames = ['cerebrus', 'openai', 'anthropic', 'gemini'];
 
-        foreach ($configs as $name => $config) {
+        foreach ($providerNames as $name) {
             try {
                 $provider = $this->provider($name);
                 $providers[$name] = [

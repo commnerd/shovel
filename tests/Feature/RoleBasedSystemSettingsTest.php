@@ -20,6 +20,9 @@ class RoleBasedSystemSettingsTest extends TestCase
     {
         parent::setUp();
 
+        // Configure AI provider to prevent middleware redirects
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+
         // Create organizations
         $this->organization = Organization::factory()->create([
             'name' => 'Test Organization',
@@ -136,6 +139,21 @@ class RoleBasedSystemSettingsTest extends TestCase
 
     public function test_admin_can_update_organization_ai_settings()
     {
+        // Mock anthropic as configured
+        \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
+            ->andReturn([
+                'anthropic' => [
+                    'name' => 'Anthropic',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'cerebrus' => [
+                    'name' => 'Cerebras',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+            ]);
+
         $response = $this->actingAs($this->admin)
             ->post('/settings/ai/organization', [
                 'provider' => 'anthropic',

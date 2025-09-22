@@ -58,7 +58,32 @@ class CerebrusProvider implements AIProviderInterface
      */
     public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse
     {
-        $prompts = config('ai.prompts.task_generation');
+        // Define prompts directly in the provider
+        $prompts = [
+            'system' => 'You are an expert project manager and task breakdown specialist. Your role is to analyze project descriptions and generate comprehensive, actionable task breakdowns. You must respond with valid JSON only - no explanations, no markdown, no code blocks.',
+            'user' => 'Please analyze this project description and generate a comprehensive task breakdown: {description}
+
+CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
+{
+  "tasks": [
+    {
+      "title": "Task title",
+      "description": "Detailed task description",
+      "status": "pending"
+    }
+  ],
+  "summary": "Brief project summary",
+  "notes": ["Additional insights", "Implementation suggestions"]
+}
+
+Requirements:
+- Generate 3-8 actionable tasks
+- Each task must have: title, description, status (always "pending")
+- Tasks should be logical, sequential, and comprehensive
+- Include a brief summary of the project
+- Add helpful notes with insights or suggestions
+- Respond with valid JSON only - no other text'
+        ];
 
         // Build enhanced prompt with schema and temporal context
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
@@ -106,7 +131,10 @@ class CerebrusProvider implements AIProviderInterface
      */
     public function analyzeProject(string $projectDescription, array $existingTasks = [], array $options = []): string
     {
-        $prompts = config('ai.prompts.project_analysis');
+        $prompts = [
+            'system' => 'You are an expert project analyst. Analyze project descriptions and provide strategic insights.',
+            'user' => 'Please analyze this project: {description}. Provide insights on scope, complexity, risks, and recommendations.'
+        ];
 
         $messages = [
             ['role' => 'system', 'content' => $prompts['system']],
@@ -123,7 +151,10 @@ class CerebrusProvider implements AIProviderInterface
      */
     public function suggestTaskImprovements(array $tasks, array $options = []): array
     {
-        $prompts = config('ai.prompts.task_suggestions');
+        $prompts = [
+            'system' => 'You are a task optimization expert. Analyze existing tasks and suggest improvements.',
+            'user' => 'Please analyze these tasks and suggest improvements: {tasks}. Focus on clarity, completeness, and actionability.'
+        ];
         $tasksJson = json_encode($tasks);
 
         $messages = [
@@ -462,9 +493,7 @@ class CerebrusProvider implements AIProviderInterface
     {
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
-        $basePrompt = config('ai.prompts.task_breakdown.system',
-            'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.'
-        );
+        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.';
 
         return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
@@ -474,9 +503,7 @@ class CerebrusProvider implements AIProviderInterface
      */
     protected function buildTaskBreakdownUserPrompt(string $taskTitle, string $taskDescription, array $context): string
     {
-        $basePrompt = config('ai.prompts.task_breakdown.user',
-            'Please break down the following task into smaller, actionable subtasks:'
-        );
+        $basePrompt = 'Please break down the following task into smaller, actionable subtasks:';
 
         $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
         $prompt = $basePrompt."\n\n";

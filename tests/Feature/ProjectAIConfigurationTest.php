@@ -23,6 +23,26 @@ class ProjectAIConfigurationTest extends TestCase
 
     public function test_project_edit_form_includes_ai_configuration_options()
     {
+        // Mock AI providers as configured
+        \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
+            ->andReturn([
+                'cerebrus' => [
+                    'name' => 'Cerebras',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'openai' => [
+                    'name' => 'OpenAI',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'anthropic' => [
+                    'name' => 'Anthropic',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+            ]);
+
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/edit");
 
@@ -173,6 +193,26 @@ class ProjectAIConfigurationTest extends TestCase
 
     public function test_available_providers_include_all_expected_providers()
     {
+        // Mock AI providers as configured
+        \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
+            ->andReturn([
+                'cerebrus' => [
+                    'name' => 'Cerebras',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'openai' => [
+                    'name' => 'OpenAI',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'anthropic' => [
+                    'name' => 'Anthropic',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+            ]);
+
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/edit");
 
@@ -189,6 +229,26 @@ class ProjectAIConfigurationTest extends TestCase
 
     public function test_available_models_are_included_for_each_provider()
     {
+        // Mock AI providers as configured
+        \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
+            ->andReturn([
+                'cerebrus' => [
+                    'name' => 'Cerebras',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'openai' => [
+                    'name' => 'OpenAI',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+                'anthropic' => [
+                    'name' => 'Anthropic',
+                    'configured' => true,
+                    'config' => ['api_key' => 'test-key'],
+                ],
+            ]);
+
         $response = $this->actingAs($this->user)
             ->get("/dashboard/projects/{$this->project->id}/edit");
 

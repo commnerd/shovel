@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ArrowLeft, Filter, CheckCircle, Clock, Circle, Calendar, Users, Layers, Plus, Edit, Trash2, TreePine, Leaf, GitBranch, Sparkles, GripVertical, AlertTriangle, List, BarChart3, CheckSquare, Kanban } from 'lucide-vue-next';
 import { useSortable } from '@vueuse/integrations/useSortable';
 import type { BreadcrumbItem } from '@/types';
+import TaskSizing from '@/components/TaskSizing.vue';
 
 interface Task {
     id: number;
@@ -17,6 +18,7 @@ interface Task {
     description?: string;
     status: 'pending' | 'in_progress' | 'completed';
     parent_id?: number;
+    iteration_id?: number;
     due_date?: string;
     has_children: boolean;
     depth: number;
@@ -28,13 +30,25 @@ interface Task {
     current_order_index?: number;
     completion_percentage: number;
     created_at: string;
+    // Iterative project fields
+    size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+    initial_story_points?: number;
+    current_story_points?: number;
+    story_points_change_count?: number;
+    iteration?: {
+        id: number;
+        name: string;
+        status: string;
+    };
 }
 
 interface Project {
     id: number;
+    title: string;
     description: string;
     due_date?: string;
     status: string;
+    project_type: 'finite' | 'iterative';
 }
 
 interface TaskCounts {
@@ -393,6 +407,11 @@ const toggleTaskStatus = async (task: Task) => {
             errorMessage.value = null;
         }, 5000);
     }
+};
+
+// Refresh tasks data from server
+const refreshTasks = () => {
+    router.reload({ only: ['tasks'] });
 };
 
 // Kanban board drag and drop functions
@@ -1036,6 +1055,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 {{ task.title }}
                             </Link>
+                            <!-- Task sizing for iterative projects (parent tasks) -->
+                            <div v-if="project.project_type === 'iterative'" class="ml-2">
+                                <TaskSizing :task="task" @updated="refreshTasks" />
+                            </div>
                             <span
                                 v-else
                                 class="text-sm flex-1"
@@ -1046,6 +1069,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 {{ task.title }}
                             </span>
+
+                            <!-- Task sizing for iterative projects -->
+                            <div v-if="project.project_type === 'iterative'" class="ml-2">
+                                <TaskSizing :task="task" @updated="refreshTasks" />
+                            </div>
 
                             <!-- Task metadata -->
                             <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
@@ -1138,6 +1166,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 ]">
                                 {{ task.title }}
                             </span>
+                            <div v-if="project.project_type === 'iterative'" class="mt-1">
+                                <TaskSizing :task="task" @updated="refreshTasks" />
+                            </div>
                             <div v-if="!task.is_leaf" class="text-xs text-gray-500 mt-1">
                                 Parent task ({{ task.has_children ? 'has subtasks' : 'no subtasks' }})
                             </div>
@@ -1193,6 +1224,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
+                                </div>
+                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                    <TaskSizing :task="task" @updated="refreshTasks" />
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}
@@ -1255,6 +1289,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
                                 </div>
+                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                    <TaskSizing :task="task" @updated="refreshTasks" />
+                                </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}
                                 </div>
@@ -1315,6 +1352,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1 line-through">{{ task.title }}</h4>
+                                </div>
+                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                    <TaskSizing :task="task" @updated="refreshTasks" />
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
                                     {{ task.description }}

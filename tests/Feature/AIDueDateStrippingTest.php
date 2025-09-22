@@ -15,6 +15,9 @@ beforeEach(function () {
 });
 
 test('AI returned due dates are stripped when parent task has no due date', function () {
+    // Configure OpenAI provider for this test
+    \App\Models\Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
+
     // Create user, organization, group, and project
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
@@ -89,6 +92,9 @@ test('AI returned due dates are stripped when parent task has no due date', func
 });
 
 test('AI returned due dates are preserved when parent task has due date', function () {
+    // Configure OpenAI provider for this test
+    \App\Models\Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
+
     // Create user, organization, group, and project
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
@@ -164,6 +170,9 @@ test('AI returned due dates are preserved when parent task has due date', functi
 });
 
 test('AI returned due dates are stripped when no parent task provided and project has no due date', function () {
+    // Configure OpenAI provider for this test
+    \App\Models\Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
+
     // Create user, organization, group, and project
     $user = User::factory()->create();
     $organization = Organization::factory()->create();

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
+import TaskSizing from '@/components/TaskSizing.vue';
 import {
     ArrowLeft,
     Sparkles,
@@ -30,6 +31,11 @@ export interface TaskSuggestion {
     description: string;
     status: 'pending' | 'in_progress' | 'completed';
     sort_order: number;
+    // Iterative project fields
+    size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+    initial_story_points?: number;
+    current_story_points?: number;
+    story_points_change_count?: number;
 }
 
 interface AICommunication {
@@ -205,6 +211,12 @@ const createProject = () => {
         }
     });
 };
+
+// Refresh tasks data (for TaskSizing component updates)
+const refreshTasks = () => {
+    // In this context, we don't need to reload from server since tasks are local
+    // The TaskSizing component will update the local task data
+};
 </script>
 
 <template>
@@ -359,6 +371,9 @@ const createProject = () => {
                                     <!-- Display Mode -->
                                     <div v-else class="w-full">
                                         <h3 class="text-lg font-semibold text-gray-900 mb-3 leading-tight">{{ task.title }}</h3>
+                                        <div v-if="projectData.project_type === 'iterative'" class="mb-3">
+                                            <TaskSizing :task="task" @updated="refreshTasks" />
+                                        </div>
                                         <p class="text-base text-gray-700 mb-4 leading-relaxed">{{ task.description }}</p>
                                         <div class="flex items-center gap-3 flex-wrap">
                                             <Badge variant="outline" class="px-3 py-1">

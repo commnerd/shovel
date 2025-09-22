@@ -150,9 +150,50 @@ Route::patch('/dashboard/projects/{project}/tasks/{task}/status', [App\Http\Cont
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.update-status');
 
+Route::patch('/dashboard/tasks/{task}', [App\Http\Controllers\TasksController::class, 'updateSizing'])
+    ->middleware(['auth', 'verified'])
+    ->name('tasks.update');
+
 Route::delete('/dashboard/projects/{project}', [App\Http\Controllers\ProjectsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('projects.destroy');
+
+// Iteration routes
+Route::get('/dashboard/projects/{project}/iterations', [App\Http\Controllers\IterationsController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.index');
+
+Route::get('/dashboard/projects/{project}/iterations/create', [App\Http\Controllers\IterationsController::class, 'create'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.create');
+
+Route::post('/dashboard/projects/{project}/iterations', [App\Http\Controllers\IterationsController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.store');
+
+Route::get('/dashboard/projects/{project}/iterations/{iteration}', [App\Http\Controllers\IterationsController::class, 'show'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.show');
+
+Route::get('/dashboard/projects/{project}/iterations/{iteration}/edit', [App\Http\Controllers\IterationsController::class, 'edit'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.edit');
+
+Route::put('/dashboard/projects/{project}/iterations/{iteration}', [App\Http\Controllers\IterationsController::class, 'update'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.update');
+
+Route::delete('/dashboard/projects/{project}/iterations/{iteration}', [App\Http\Controllers\IterationsController::class, 'destroy'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.destroy');
+
+Route::post('/dashboard/projects/{project}/iterations/{iteration}/tasks', [App\Http\Controllers\IterationsController::class, 'moveTask'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.move-task');
+
+Route::delete('/dashboard/projects/{project}/iterations/{iteration}/tasks', [App\Http\Controllers\IterationsController::class, 'removeTask'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.iterations.remove-task');
 
 // Admin routes
 Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserIsAdmin::class])->prefix('admin')->group(function () {

@@ -26,6 +26,9 @@ interface FormData {
     description: string;
     due_date: string;
     group_id?: number;
+    project_type: 'finite' | 'iterative';
+    default_iteration_length_weeks?: number;
+    auto_create_iterations?: boolean;
     ai_provider: string;
     ai_model: string;
 }
@@ -60,12 +63,24 @@ export interface TaskSuggestion {
     sort_order: number;
 }
 
+// Get first available provider or fallback to default
+const getDefaultAIProvider = () => {
+    const availableProviderKeys = Object.keys(props.availableProviders);
+    if (availableProviderKeys.length > 0) {
+        return props.formData?.ai_provider || props.defaultAISettings.provider || availableProviderKeys[0];
+    }
+    return props.formData?.ai_provider || props.defaultAISettings.provider || '';
+};
+
 const form = useForm({
     title: props.formData?.title || '',
     description: props.formData?.description || '',
     due_date: props.formData?.due_date || '',
     group_id: props.formData?.group_id || props.defaultGroupId || null,
-    ai_provider: props.formData?.ai_provider || props.defaultAISettings.provider || 'cerebrus',
+    project_type: props.formData?.project_type || 'iterative',
+    default_iteration_length_weeks: props.formData?.default_iteration_length_weeks || 2,
+    auto_create_iterations: props.formData?.auto_create_iterations || false,
+    ai_provider: getDefaultAIProvider(),
     ai_model: props.formData?.ai_model || props.defaultAISettings.model || '',
 });
 
@@ -73,6 +88,12 @@ const isGeneratingTasks = ref(false);
 
 const generateTasks = () => {
     if (!form.description.trim() || isGeneratingTasks.value) return;
+
+    // Check if any AI providers are configured
+    if (Object.keys(props.availableProviders).length === 0) {
+        alert('No AI providers are configured. Please configure an AI provider in Settings first.');
+        return;
+    }
 
     isGeneratingTasks.value = true;
 
@@ -84,6 +105,9 @@ const generateTasks = () => {
             description: form.description,
             due_date: form.due_date,
             group_id: form.group_id,
+            project_type: form.project_type,
+            default_iteration_length_weeks: form.default_iteration_length_weeks,
+            auto_create_iterations: form.auto_create_iterations,
             ai_provider: form.ai_provider,
             ai_model: form.ai_model,
         },
@@ -192,6 +216,99 @@ const handleKeydown = (event: KeyboardEvent) => {
                     </p>
                 </div>
 
+                <!-- Project Type Selection -->
+                <div class="space-y-4 p-4 border rounded-lg bg-blue-50">
+                    <h3 class="font-medium text-gray-900 flex items-center gap-2">
+                        <Wand2 class="h-4 w-4 text-blue-600" />
+                        Project Type
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Iterative Project Option -->
+                        <div
+                            class="p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                            :class="form.project_type === 'iterative'
+                                ? 'border-blue-500 bg-blue-100'
+                                : 'border-gray-200 hover:border-gray-300'"
+                            @click="form.project_type = 'iterative'"
+                        >
+                            <div class="flex items-center gap-2 mb-2">
+                                <input
+                                    type="radio"
+                                    id="iterative"
+                                    v-model="form.project_type"
+                                    value="iterative"
+                                    class="h-4 w-4"
+                                />
+                                <Label for="iterative" class="font-medium cursor-pointer">Iterative Project</Label>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                Agile project with sprints and continuous delivery. Ideal for ongoing development.
+                            </p>
+                        </div>
+
+                        <!-- Finite Project Option -->
+                        <div
+                            class="p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                            :class="form.project_type === 'finite'
+                                ? 'border-blue-500 bg-blue-100'
+                                : 'border-gray-200 hover:border-gray-300'"
+                            @click="form.project_type = 'finite'"
+                        >
+                            <div class="flex items-center gap-2 mb-2">
+                                <input
+                                    type="radio"
+                                    id="finite"
+                                    v-model="form.project_type"
+                                    value="finite"
+                                    class="h-4 w-4"
+                                />
+                                <Label for="finite" class="font-medium cursor-pointer">Finite Project</Label>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                Traditional project with defined scope and timeline. Perfect for one-time deliverables.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Iterative Project Settings -->
+                    <div v-if="form.project_type === 'iterative'" class="space-y-3 pt-3 border-t border-blue-200">
+                        <div class="space-y-2">
+                            <Label for="iteration_length" class="text-sm font-medium">
+                                Default Sprint Length (weeks)
+                            </Label>
+                            <Input
+                                id="iteration_length"
+                                v-model.number="form.default_iteration_length_weeks"
+                                type="number"
+                                min="1"
+                                max="12"
+                                class="w-24"
+                                :disabled="form.processing || isGeneratingTasks"
+                            />
+                            <p class="text-xs text-gray-500">
+                                How long each sprint should last (typically 1-4 weeks)
+                            </p>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="auto_create"
+                                v-model="form.auto_create_iterations"
+                                class="h-4 w-4"
+                                :disabled="form.processing || isGeneratingTasks"
+                            />
+                            <Label for="auto_create" class="text-sm font-medium cursor-pointer">
+                                Automatically create new sprints
+                            </Label>
+                        </div>
+                        <p class="text-xs text-gray-500 ml-6">
+                            When enabled, new sprints will be created automatically when needed
+                        </p>
+                    </div>
+                </div>
+
                 <!-- AI Configuration -->
                 <div class="space-y-4 p-4 border rounded-lg bg-gray-50">
                     <h3 class="font-medium text-gray-900 flex items-center gap-2">
@@ -199,47 +316,69 @@ const handleKeydown = (event: KeyboardEvent) => {
                         AI Configuration
                     </h3>
 
+                    <!-- No Providers Configured -->
+                    <div v-if="Object.keys(availableProviders).length === 0" class="text-center py-6">
+                        <Bot class="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No AI Providers Configured</h4>
+                        <p class="text-sm text-gray-600 mb-4">
+                            To use AI features for task generation and breakdown, you need to configure at least one AI provider with an API key.
+                        </p>
+                        <Button
+                            variant="outline"
+                            @click="() => router.visit('/settings/system')"
+                            class="inline-flex items-center gap-2"
+                        >
+                            <Bot class="h-4 w-4" />
+                            Configure AI Providers
+                        </Button>
+                        <p class="text-xs text-gray-500 mt-3">
+                            You can still create projects manually without AI assistance.
+                        </p>
+                    </div>
+
                     <!-- AI Provider Selection -->
-                    <div class="space-y-2">
-                        <Label for="ai_provider">AI Provider</Label>
-                        <select
-                            id="ai_provider"
-                            v-model="form.ai_provider"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            :disabled="form.processing || isGeneratingTasks"
-                        >
-                            <option v-for="(provider, key) in availableProviders" :key="key" :value="key">
-                                {{ provider.name }} - {{ provider.description }}
-                            </option>
-                        </select>
-                        <InputError :message="form.errors.ai_provider" />
-                    </div>
-
-                    <!-- AI Model Selection -->
-                    <div v-if="form.ai_provider && availableProviders[form.ai_provider]?.models" class="space-y-2">
-                        <Label for="ai_model">AI Model</Label>
-                        <select
-                            id="ai_model"
-                            v-model="form.ai_model"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            :disabled="form.processing || isGeneratingTasks"
-                        >
-                            <option value="">Select a model...</option>
-                            <option
-                                v-for="(modelName, modelKey) in availableProviders[form.ai_provider].models"
-                                :key="modelKey"
-                                :value="modelKey"
+                    <div v-else class="space-y-4">
+                        <div class="space-y-2">
+                            <Label for="ai_provider">AI Provider</Label>
+                            <select
+                                id="ai_provider"
+                                v-model="form.ai_provider"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="form.processing || isGeneratingTasks"
                             >
-                                {{ modelName }}
-                            </option>
-                        </select>
-                        <InputError :message="form.errors.ai_model" />
-                    </div>
+                                <option v-for="(provider, key) in availableProviders" :key="key" :value="key">
+                                    {{ provider.name }} - {{ provider.description }}
+                                </option>
+                            </select>
+                            <InputError :message="form.errors.ai_provider" />
+                        </div>
 
-                    <p class="text-xs text-gray-500">
-                        Configure which AI provider and model to use for generating tasks for this project.
-                        This will be used for task generation and breakdown features.
-                    </p>
+                        <!-- AI Model Selection -->
+                        <div v-if="form.ai_provider && availableProviders[form.ai_provider]?.models" class="space-y-2">
+                            <Label for="ai_model">AI Model</Label>
+                            <select
+                                id="ai_model"
+                                v-model="form.ai_model"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="form.processing || isGeneratingTasks"
+                            >
+                                <option value="">Select a model...</option>
+                                <option
+                                    v-for="(modelName, modelKey) in availableProviders[form.ai_provider].models"
+                                    :key="modelKey"
+                                    :value="modelKey"
+                                >
+                                    {{ modelName }}
+                                </option>
+                            </select>
+                            <InputError :message="form.errors.ai_model" />
+                        </div>
+
+                        <p class="text-xs text-gray-500">
+                            Configure which AI provider and model to use for generating tasks for this project.
+                            This will be used for task generation and breakdown features.
+                        </p>
+                    </div>
                 </div>
 
                 <div class="text-xs text-gray-500 pt-2">
@@ -251,12 +390,18 @@ const handleKeydown = (event: KeyboardEvent) => {
                 <Button
                     type="submit"
                     class="w-full flex items-center gap-2"
-                    :disabled="form.processing || isGeneratingTasks || !form.description.trim()"
+                    :disabled="form.processing || isGeneratingTasks || !form.description.trim() || Object.keys(availableProviders).length === 0"
                     data-testid="generate-tasks-button"
                 >
                     <Wand2 v-if="!isGeneratingTasks" class="h-4 w-4 sm:h-4 sm:w-4" />
                     <div v-else class="h-4 w-4 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    {{ isGeneratingTasks ? 'Generating Tasks...' : 'Generate Tasks with AI' }}
+                    {{
+                        Object.keys(availableProviders).length === 0
+                            ? 'Configure AI Provider First'
+                            : isGeneratingTasks
+                                ? 'Generating Tasks...'
+                                : 'Generate Tasks with AI'
+                    }}
                 </Button>
             </CardFooter>
         </form>

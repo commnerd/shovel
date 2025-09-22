@@ -390,6 +390,9 @@ class AdminImpersonationTest extends TestCase
 
     public function test_super_admin_can_access_tasks_from_all_organizations()
     {
+        // Configure AI provider to prevent middleware redirect
+        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+
         // Login as user from other organization through super admin impersonation
         $this->actingAs($this->superAdmin)
             ->post("/super-admin/users/{$this->otherOrgUser->id}/login-as", [

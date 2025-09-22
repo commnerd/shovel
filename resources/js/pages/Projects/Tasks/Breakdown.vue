@@ -32,16 +32,22 @@
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="flex items-center gap-6 text-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium">Status:</span>
-                            <span :class="getStatusColor(task.status)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
-                                {{ task.status.replace('_', ' ') }}
-                            </span>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-6 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">Status:</span>
+                                <span :class="getStatusColor(task.status)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
+                                    {{ task.status.replace('_', ' ') }}
+                                </span>
+                            </div>
+                            <div v-if="task.due_date" class="flex items-center gap-2">
+                                <Calendar class="h-4 w-4 text-gray-500" />
+                                <span>Due: {{ new Date(task.due_date).toLocaleDateString() }}</span>
+                            </div>
                         </div>
-                        <div v-if="task.due_date" class="flex items-center gap-2">
-                            <Calendar class="h-4 w-4 text-gray-500" />
-                            <span>Due: {{ new Date(task.due_date).toLocaleDateString() }}</span>
+                        <!-- Task sizing for iterative projects -->
+                        <div v-if="project.project_type === 'iterative'">
+                            <TaskSizing :task="task" @updated="refreshTask" />
                         </div>
                     </div>
                 </CardContent>
@@ -434,6 +440,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
+import TaskSizing from '@/components/TaskSizing.vue';
 import {
     ArrowLeft,
     Sparkles,
@@ -458,6 +465,7 @@ interface Project {
     id: number;
     title: string;
     description: string;
+    project_type: 'finite' | 'iterative';
 }
 
 interface Task {
@@ -471,6 +479,11 @@ interface Task {
     is_leaf: boolean;
     is_top_level: boolean;
     depth: number;
+    // Iterative project fields
+    size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+    initial_story_points?: number;
+    current_story_points?: number;
+    story_points_change_count?: number;
 }
 
 interface Props {
@@ -722,6 +735,11 @@ const cancelRegeneration = () => {
 const closePromptModal = () => {
     showPromptModal.value = false;
     showFullPrompt.value = false; // Reset full prompt visibility when modal closes
+};
+
+// Refresh task data from server
+const refreshTask = () => {
+    router.reload({ only: ['task'] });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [

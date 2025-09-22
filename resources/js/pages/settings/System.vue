@@ -35,13 +35,22 @@
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form @submit.prevent="updateDefaultAISettings" class="space-y-6">
+                    <!-- No Configured Providers Warning -->
+                    <div v-if="Object.keys(configuredProviders).length === 0" class="text-center py-8 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <Zap class="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <h3 class="text-lg font-medium text-yellow-800 mb-2">No AI Providers Configured</h3>
+                        <p class="text-sm text-yellow-700 mb-4">
+                            Configure at least one AI provider below to set system defaults.
+                        </p>
+                    </div>
+
+                    <form v-else @submit.prevent="updateDefaultAISettings" class="space-y-6">
                         <!-- Default Provider Selection -->
                         <div class="space-y-3">
                             <Label class="text-sm font-medium">Default AI Provider for New Projects</Label>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <label
-                                    v-for="(provider, key) in availableProviders"
+                                    v-for="(provider, key) in configuredProviders"
                                     :key="key"
                                     class="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                                     :class="{ 'border-purple-500 bg-purple-50': defaultForm.provider === key }"
@@ -62,7 +71,7 @@
                         </div>
 
                         <!-- Default Model Selection -->
-                        <div v-if="defaultForm.provider && availableProviders[defaultForm.provider]?.models" class="space-y-2">
+                        <div v-if="defaultForm.provider && configuredProviders[defaultForm.provider]?.models" class="space-y-2">
                             <Label :for="`default-model-${defaultForm.provider}`">Default Model</Label>
                             <select
                                 :id="`default-model-${defaultForm.provider}`"
@@ -71,7 +80,7 @@
                             >
                                 <option value="">Select a model...</option>
                                 <option
-                                    v-for="(modelName, modelKey) in availableProviders[defaultForm.provider].models"
+                                    v-for="(modelName, modelKey) in configuredProviders[defaultForm.provider].models"
                                     :key="modelKey"
                                     :value="modelKey"
                                 >
@@ -88,7 +97,7 @@
                                     <div class="text-sm text-blue-800">
                                         <p class="font-medium">Project Inheritance</p>
                                         <p class="mt-1">
-                                            New projects will automatically use this provider and model. 
+                                            New projects will automatically use this provider and model.
                                             API credentials are configured by Super Admins in the provider-specific section.
                                         </p>
                                     </div>
@@ -124,7 +133,16 @@
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form @submit.prevent="updateOrganizationAISettings" class="space-y-6">
+                    <!-- No Configured Providers Warning for Organization -->
+                    <div v-if="Object.keys(configuredProviders).length === 0" class="text-center py-8 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <Zap class="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <h3 class="text-lg font-medium text-yellow-800 mb-2">No AI Providers Configured</h3>
+                        <p class="text-sm text-yellow-700 mb-4">
+                            Configure at least one AI provider below to set organization defaults.
+                        </p>
+                    </div>
+
+                    <form v-else @submit.prevent="updateOrganizationAISettings" class="space-y-6">
                         <!-- Organization Provider Selection -->
                         <div class="space-y-3">
                             <Label for="org-provider">AI Provider</Label>
@@ -133,7 +151,7 @@
                                     <SelectValue placeholder="Select AI provider" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem v-for="(provider, key) in props.availableProviders" :key="key" :value="key">
+                                    <SelectItem v-for="(provider, key) in configuredProviders" :key="key" :value="key">
                                         <div class="flex items-center gap-2">
                                             <div class="w-2 h-2 rounded-full bg-blue-500"></div>
                                             <div>
@@ -156,7 +174,7 @@
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
-                                        v-for="(modelName, modelKey) in props.availableProviders[organizationForm.provider]?.models || {}"
+                                        v-for="(modelName, modelKey) in configuredProviders[organizationForm.provider]?.models || {}"
                                         :key="modelKey"
                                         :value="modelKey"
                                     >
@@ -349,6 +367,7 @@ interface Props {
     organizationAISettings: OrganizationAISettings | null;
     providerConfigs: Record<string, ProviderConfig>;
     availableProviders: Record<string, ProviderInfo>;
+    configuredProviders: Record<string, ProviderInfo>;
     permissions: {
         canAccessProviderConfig: boolean;
         canAccessDefaultConfig: boolean;

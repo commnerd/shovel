@@ -2,13 +2,15 @@
 
 namespace App\Services;
 
+use App\Services\AI\Facades\AI;
+
 class AIConfigurationService
 {
     /**
-     * Get the available AI providers and their models.
-     * This ensures consistency across all forms (system settings, project creation, project edit).
+     * Get all possible AI providers and their models (for settings/configuration).
+     * This includes both configured and unconfigured providers.
      */
-    public static function getAvailableProviders(): array
+    public static function getAllProviders(): array
     {
         return [
             'cerebrus' => [
@@ -57,5 +59,42 @@ class AIConfigurationService
                 ],
             ],
         ];
+    }
+
+    /**
+     * Get only the configured and available AI providers.
+     * This filters out providers that don't have API keys set.
+     */
+    public static function getAvailableProviders(): array
+    {
+        $allProviders = self::getAllProviders();
+        $configuredProviders = [];
+
+        try {
+            // Get providers that are actually configured from the AI manager
+            $aiProviders = AI::getAvailableProviders();
+
+            foreach ($aiProviders as $providerKey => $providerData) {
+                // Only include providers that are configured (have API keys)
+                if (isset($providerData['configured']) && $providerData['configured'] === true) {
+                    // Merge AI manager data with our static provider info
+                    if (isset($allProviders[$providerKey])) {
+                        $configuredProviders[$providerKey] = array_merge(
+                            $allProviders[$providerKey],
+                            [
+                                'configured' => true,
+                                'config' => $providerData['config'] ?? [],
+                            ]
+                        );
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // If AI manager fails, log the error but don't break the application
+            \Log::warning('Failed to get configured AI providers: ' . $e->getMessage());
+            return [];
+        }
+
+        return $configuredProviders;
     }
 }

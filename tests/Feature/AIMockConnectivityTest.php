@@ -9,7 +9,7 @@ class AIMockConnectivityTest extends TestCase
 {
     public function test_ai_base_url_mock_responds_with_200(): void
     {
-        $baseUrl = config('ai.providers.cerebrus.base_url');
+        $baseUrl = 'https://api.cerebras.ai/v1';
 
         // Mock a successful response
         Http::fake([
@@ -25,7 +25,7 @@ class AIMockConnectivityTest extends TestCase
 
     public function test_ai_chat_endpoint_mock_responds_with_200(): void
     {
-        $baseUrl = config('ai.providers.cerebrus.base_url');
+        $baseUrl = 'https://api.cerebras.ai/v1';
 
         // Mock a successful chat response
         Http::fake([

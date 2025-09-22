@@ -434,12 +434,19 @@ class ProjectsController extends Controller
      */
     public function store(Request $request)
     {
+        // Get configured providers for validation
+        $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
+        $configuredProviderKeys = array_keys($availableProviders);
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'group_id' => 'nullable|exists:groups,id',
-            'ai_provider' => 'nullable|string|in:cerebrus,openai,anthropic',
+            'project_type' => 'nullable|string|in:finite,iterative',
+            'default_iteration_length_weeks' => 'nullable|integer|min:1|max:12',
+            'auto_create_iterations' => 'nullable|boolean',
+            'ai_provider' => $configuredProviderKeys ? 'nullable|string|in:' . implode(',', $configuredProviderKeys) : 'nullable|string',
             'ai_model' => 'nullable|string|max:100',
             'tasks' => 'nullable|array',
             'tasks.*.title' => 'required|string|max:255',
@@ -499,13 +506,21 @@ class ProjectsController extends Controller
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
                 'status' => 'active',
+                'project_type' => $validated['project_type'] ?? 'iterative',
+                'default_iteration_length_weeks' => $validated['default_iteration_length_weeks'] ?? null,
+                'auto_create_iterations' => $validated['auto_create_iterations'] ?? false,
                 'ai_provider' => $validated['ai_provider'] ?? null,
                 'ai_model' => $validated['ai_model'] ?? null,
             ]);
 
-            // Apply default AI configuration if not explicitly set
-            if (empty($validated['ai_provider'])) {
+            // Apply default AI configuration if not explicitly set and providers are available
+            if (empty($validated['ai_provider']) && !empty($configuredProviderKeys)) {
                 $project->applyDefaultAIConfiguration();
+            }
+
+            // Create first iteration for iterative projects if auto-creation is enabled
+            if ($project->isIterative() && $project->auto_create_iterations) {
+                $project->createNextIterationIfNeeded();
             }
 
             // Create tasks if provided
