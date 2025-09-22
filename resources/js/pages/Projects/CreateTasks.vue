@@ -100,6 +100,14 @@ const form = useForm({
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
 });
 
+// Debug: Log the form initialization values
+console.log('Form initialized with:', {
+    title: form.title,
+    description: form.description,
+    projectData: props.projectData,
+    defaultGroupId: props.defaultGroupId
+});
+
 const editingTaskIndex = ref<number | null>(null);
 const newTaskTitle = ref('');
 const newTaskDescription = ref('');
@@ -218,11 +226,30 @@ const createProject = () => {
     // Update the form with cleaned data
     form.tasks = cleanedTasks;
 
-    // Ensure all required fields are valid before submission
-    if (!form.title || !form.description) {
-        console.error('Missing required fields');
+    // Ensure required fields are valid before submission
+    // Note: title is optional (backend will generate one if not provided)
+    if (!form.description) {
+        console.error('Missing required field:', {
+            title: form.title,
+            description: form.description,
+            descriptionEmpty: !form.description
+        });
+
+        alert('Please provide a project description before creating the project.');
         return;
     }
+
+    // Debug: Log the form data being sent
+    console.log('Submitting project with data:', {
+        title: form.title,
+        description: form.description,
+        due_date: form.due_date,
+        group_id: form.group_id,
+        ai_provider: form.ai_provider,
+        ai_model: form.ai_model,
+        tasksCount: form.tasks.length,
+        tasks: form.tasks
+    });
 
     // Submit using form.post
     form.post('/dashboard/projects', {

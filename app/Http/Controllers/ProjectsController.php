@@ -454,6 +454,10 @@ class ProjectsController extends Controller
             'tasks.*.status' => 'nullable|string|in:pending,in_progress,completed',
             'tasks.*.due_date' => 'nullable|date|after_or_equal:today',
             'tasks.*.sort_order' => 'nullable|integer|min:1',
+            'tasks.*.size' => 'nullable|string|in:xs,s,m,l,xl',
+            'tasks.*.initial_story_points' => 'nullable|integer|min:1|max:100',
+            'tasks.*.current_story_points' => 'nullable|integer|min:1|max:100',
+            'tasks.*.story_points_change_count' => 'nullable|integer|min:0',
         ]);
 
         try {
@@ -535,6 +539,10 @@ class ProjectsController extends Controller
                         'status' => $taskData['status'] ?? 'pending',
                         'due_date' => $taskData['due_date'] ?? null,
                         'sort_order' => $taskData['sort_order'] ?? 1,
+                        'size' => $taskData['size'] ?? null,
+                        'initial_story_points' => $taskData['initial_story_points'] ?? null,
+                        'current_story_points' => $taskData['current_story_points'] ?? null,
+                        'story_points_change_count' => $taskData['story_points_change_count'] ?? 0,
                     ]);
                 }
             }
