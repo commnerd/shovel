@@ -63,13 +63,19 @@ class OrganizationSecurityTest extends TestCase
         ]);
         $regularUser->assignRole($roles['user']);
 
+        // Create a test user to use in the routes
+        $testUser = User::factory()->create([
+            'organization_id' => $organization->id,
+            'pending_approval' => false,
+        ]);
+
         $adminRoutes = [
             ['GET', '/admin/users'],
-            ['POST', '/admin/users/1/approve'],
-            ['POST', '/admin/users/1/assign-role'],
-            ['DELETE', '/admin/users/1/remove-role'],
-            ['POST', '/admin/users/1/add-to-group'],
-            ['DELETE', '/admin/users/1/remove-from-group'],
+            ['POST', "/admin/users/{$testUser->id}/approve"],
+            ['POST', "/admin/users/{$testUser->id}/assign-role"],
+            ['DELETE', "/admin/users/{$testUser->id}/remove-role"],
+            ['POST', "/admin/users/{$testUser->id}/add-to-group"],
+            ['DELETE', "/admin/users/{$testUser->id}/remove-from-group"],
         ];
 
         foreach ($adminRoutes as [$method, $route]) {

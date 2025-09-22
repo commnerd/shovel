@@ -1,12 +1,12 @@
 services:
     laravel.test:
         build:
-            context: './vendor/laravel/sail/runtimes/8.4'
+            context: ./vendor/laravel/sail/runtimes/8.4
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
                 MYSQL_CLIENT: mariadb-client
-        image: 'sail-8.4/app'
+        image: sail-8.4/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -24,6 +24,7 @@ services:
             - sail
         depends_on:
             - mariadb
+            - redis
     mariadb:
         image: 'mariadb:11'
         ports:
@@ -58,9 +59,26 @@ services:
             - '4444:4444'
         networks:
             - sail
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'sail-redis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
 networks:
     sail:
         driver: bridge
 volumes:
     sail-mariadb:
+        driver: local
+    sail-redis:
         driver: local

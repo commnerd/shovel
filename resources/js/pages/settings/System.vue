@@ -380,22 +380,22 @@ const props = defineProps<Props>();
 
 // Default AI settings form (provider and model only)
 const defaultForm = useForm({
-    provider: props.defaultAISettings?.provider || 'cerebras',
+    provider: props.defaultAISettings?.provider || 'cerebrus',
     model: props.defaultAISettings?.model || '',
 });
 
 // Organization AI settings form
 const organizationForm = useForm({
-    provider: props.organizationAISettings?.provider || 'cerebras',
+    provider: props.organizationAISettings?.provider || 'cerebrus',
     model: props.organizationAISettings?.model || '',
 });
 
 // Provider-specific settings form
 const form = useForm({
-    provider: props.defaultAISettings?.provider || 'cerebras',
-    cerebras_api_key: props.providerConfigs?.cerebras?.api_key || '',
-    cerebras_base_url: props.providerConfigs?.cerebras?.base_url || '',
-    cerebras_model: props.providerConfigs?.cerebras?.model || '',
+    provider: props.defaultAISettings?.provider || 'cerebrus',
+    cerebrus_api_key: props.providerConfigs?.cerebrus?.api_key || '',
+    cerebrus_base_url: props.providerConfigs?.cerebrus?.base_url || '',
+    cerebrus_model: props.providerConfigs?.cerebrus?.model || '',
     openai_api_key: props.providerConfigs?.openai?.api_key || '',
     openai_base_url: props.providerConfigs?.openai?.base_url || '',
     openai_model: props.providerConfigs?.openai?.model || '',
@@ -409,7 +409,7 @@ const connectionTestResult = ref<{ success: boolean; message: string } | null>(n
 
 const getDefaultBaseUrl = (provider: string): string => {
     const defaults: Record<string, string> = {
-        cerebras: 'https://api.cerebras.ai/v1',
+        cerebrus: 'https://api.cerebras.ai/v1',
         openai: 'https://api.openai.com/v1',
         anthropic: 'https://api.anthropic.com/v1',
     };
@@ -418,7 +418,7 @@ const getDefaultBaseUrl = (provider: string): string => {
 
 const getFieldPlaceholder = (provider: string, field: string): string => {
     const placeholders: Record<string, Record<string, string>> = {
-        cerebras: {
+        cerebrus: {
             api_key: 'Enter your Cerebras API key',
             base_url: 'https://api.cerebras.ai/v1',
             model: 'llama3.1-8b',

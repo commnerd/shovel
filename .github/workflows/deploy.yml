@@ -81,6 +81,24 @@ jobs:
           docker rm foca-scheduler 2>/dev/null || true
           docker stop foca-queue 2>/dev/null || true
           docker rm foca-queue 2>/dev/null || true
+          docker stop foca-redis 2>/dev/null || true
+          docker rm foca-redis 2>/dev/null || true
+
+          # Run Redis container
+          docker run -d \
+            --network web \
+            --name foca-redis \
+            --restart unless-stopped \
+            --volume foca-redis-data:/data \
+            redis:alpine
+
+          # Wait for Redis to be ready
+          echo "Waiting for Redis to be ready..."
+          until docker exec foca-redis redis-cli ping; do
+            echo "Redis is not ready yet, waiting..."
+            sleep 2
+          done
+          echo "Redis is ready!"
 
           # Run the main web application container
           docker run -d \
@@ -89,6 +107,11 @@ jobs:
             --restart unless-stopped \
             --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
             --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
+            --env REDIS_HOST=foca-redis \
+            --env REDIS_PORT=6379 \
+            --env REDIS_PASSWORD=null \
+            --env SESSION_DRIVER=redis \
+            --env CACHE_STORE=redis \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }}
 
           # Run the scheduler container
@@ -98,6 +121,11 @@ jobs:
             --restart unless-stopped \
             --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
             --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
+            --env REDIS_HOST=foca-redis \
+            --env REDIS_PORT=6379 \
+            --env REDIS_PASSWORD=null \
+            --env SESSION_DRIVER=redis \
+            --env CACHE_STORE=redis \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }} \
             php artisan schedule:work
 
@@ -108,6 +136,11 @@ jobs:
             --restart unless-stopped \
             --volume /home/admin/docker/foca-app/database.sqlite:/var/www/html/database/database.sqlite \
             --env CEREBRUS_API_KEY=${{ secrets.CEREBRUS_API_KEY }} \
+            --env REDIS_HOST=foca-redis \
+            --env REDIS_PORT=6379 \
+            --env REDIS_PASSWORD=null \
+            --env SESSION_DRIVER=redis \
+            --env CACHE_STORE=redis \
             ${{ env.DOCKER_IMAGE }}:${{ needs.build-and-push.outputs.git-tag }} \
             php artisan queue:work --sleep=3 --tries=3 --max-time=3600
 
@@ -116,6 +149,10 @@ jobs:
 
           # Run database migrations
           docker exec foca-app php artisan migrate --force
+
+          # Test Redis connectivity
+          echo "Testing Redis connectivity..."
+          docker exec foca-app php artisan tinker --execute="Cache::put('deployment_test', 'Redis is working!', 60); echo 'Redis test: ' . Cache::get('deployment_test');"
 
           # Clean up old garbage
 

@@ -69,7 +69,12 @@ CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
     {
       "title": "Task title",
       "description": "Detailed task description",
-      "status": "pending"
+      "status": "pending",
+      "sort_order": 1,
+      "size": "m",
+      "initial_story_points": 5,
+      "current_story_points": 5,
+      "story_points_change_count": 0
     }
   ],
   "summary": "Brief project summary",
@@ -78,7 +83,16 @@ CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
 
 Requirements:
 - Generate 3-8 actionable tasks
-- Each task must have: title, description, status (always "pending")
+- Each task must have: title, description, status (always "pending"), sort_order, size, initial_story_points, current_story_points, story_points_change_count
+- Task sizing guidelines:
+  * "xs" (1-2 story points): Very small tasks, quick fixes, simple changes
+  * "s" (3-5 story points): Small tasks, minor features, simple implementations
+  * "m" (6-8 story points): Medium tasks, moderate complexity, standard features
+  * "l" (9-13 story points): Large tasks, complex features, significant work
+  * "xl" (14+ story points): Extra large tasks, major features, complex implementations
+- Set initial_story_points and current_story_points to the same value based on size
+- Set story_points_change_count to 0 for new tasks
+- Set sort_order sequentially (1, 2, 3, etc.)
 - Tasks should be logical, sequential, and comprehensive
 - Include a brief summary of the project
 - Add helpful notes with insights or suggestions
@@ -628,7 +642,16 @@ Each subtask in your response must include a "size" field with one of these valu
         $prompt .= "2. Each subtask should be specific and actionable\n";
         $prompt .= "3. Consider the project context and existing tasks\n";
         $prompt .= "4. Assign appropriate status (pending)\n";
-        $prompt .= "5. Include estimated due dates relative to the project timeline\n\n";
+        $prompt .= "5. Include estimated due dates relative to the project timeline\n";
+        $prompt .= "6. Assign appropriate T-shirt sizes and story points based on complexity:\n";
+        $prompt .= "   - XS (1-2 story points): Very small tasks, quick fixes\n";
+        $prompt .= "   - S (3-5 story points): Small tasks, minor features\n";
+        $prompt .= "   - M (6-8 story points): Medium tasks, standard features\n";
+        $prompt .= "   - L (9-13 story points): Large tasks, complex features\n";
+        $prompt .= "   - XL (14+ story points): Extra large tasks, major features\n";
+        $prompt .= "7. Set initial_story_points and current_story_points to the same value\n";
+        $prompt .= "8. Set story_points_change_count to 0 for new subtasks\n";
+        $prompt .= "9. Set sort_order sequentially (1, 2, 3, etc.)\n\n";
 
         $prompt .= "**Response Format:**\n";
         $prompt .= "Return ONLY a valid JSON object with this exact structure:\n";
@@ -638,6 +661,11 @@ Each subtask in your response must include a "size" field with one of these valu
         $prompt .= '      "title": "Specific subtask title",'."\n";
         $prompt .= '      "description": "Detailed description of what needs to be done",'."\n";
         $prompt .= '      "status": "pending",'."\n";
+        $prompt .= '      "sort_order": 1,'."\n";
+        $prompt .= '      "size": "m",'."\n";
+        $prompt .= '      "initial_story_points": 5,'."\n";
+        $prompt .= '      "current_story_points": 5,'."\n";
+        $prompt .= '      "story_points_change_count": 0,'."\n";
         $prompt .= '      "due_date": "YYYY-MM-DD"'."\n";
         $prompt .= '    }'."\n";
         $prompt .= '  ],'."\n";
