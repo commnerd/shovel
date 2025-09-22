@@ -36,10 +36,10 @@ class TaskPageWorkflowTest extends TestCase
 
         // Mock AI configuration
         config([
-            'ai.default' => 'cerebrus',
-            'ai.providers.cerebrus' => [
+            'ai.default' => 'cerebras',
+            'ai.providers.cerebras' => [
                 'api_key' => 'test-key',
-                'base_url' => 'https://api.cerebrus.ai',
+                'base_url' => 'https://api.cerebras.ai',
                 'model' => 'gpt-4',
                 'max_tokens' => 4000,
                 'temperature' => 0.7,

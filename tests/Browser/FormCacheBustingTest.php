@@ -140,8 +140,8 @@ class FormCacheBustingTest extends DuskTestCase
                 ->visit('/settings/system')
                 ->assertHeader('X-Cache-Bust-Timestamp')
                 ->assertHeader('X-Cache-Bust-Version')
-                ->select('select[name="provider"]', 'cerebrus')
-                ->type('input[name="cerebrus_api_key"]', 'test-cache-bust-key')
+                ->select('select[name="provider"]', 'cerebras')
+                ->type('input[name="cerebras_api_key"]', 'test-cache-bust-key')
                 ->press('Save Settings')
                 ->waitForText('Settings saved successfully')
                 ->assertSee('Settings saved successfully');

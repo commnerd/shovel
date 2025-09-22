@@ -18,7 +18,7 @@ class OrganizationEmailWorkflowTest extends TestCase
         parent::setUp();
 
         // Configure AI provider to prevent middleware redirects
-        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+        \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
         // Set up default organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);

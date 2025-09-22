@@ -82,7 +82,7 @@ class ProjectsController extends Controller
 
         // Get default AI settings (system-wide or organization-specific)
         $defaultAISettings = [
-            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebrus'),
+            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebras'),
             'model' => \App\Models\Setting::get('ai.default.model', ''),
         ];
 
@@ -161,7 +161,7 @@ class ProjectsController extends Controller
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'status' => 'sometimes|in:active,completed,archived',
-            'ai_provider' => 'nullable|in:cerebrus,openai,anthropic',
+            'ai_provider' => 'nullable|in:cerebras,openai,anthropic',
             'ai_model' => 'nullable|string|max:100',
         ]);
 
@@ -277,7 +277,7 @@ class ProjectsController extends Controller
             'group_id' => 'nullable|exists:groups,id',
             'regenerate' => 'nullable|boolean',
             'user_feedback' => 'nullable|string|max:2000',
-            'ai_provider' => 'nullable|string|in:cerebrus,openai,anthropic',
+            'ai_provider' => 'nullable|string|in:cerebras,openai,anthropic',
             'ai_model' => 'nullable|string|max:100',
         ]);
 

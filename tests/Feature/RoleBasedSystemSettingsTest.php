@@ -21,7 +21,7 @@ class RoleBasedSystemSettingsTest extends TestCase
         parent::setUp();
 
         // Configure AI provider to prevent middleware redirects
-        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+        \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
         // Create organizations
         $this->organization = Organization::factory()->create([
@@ -149,7 +149,7 @@ class RoleBasedSystemSettingsTest extends TestCase
                     'configured' => true,
                     'config' => ['api_key' => 'test-key'],
                 ],
-                'cerebrus' => [
+                'cerebras' => [
                     'name' => 'Cerebras',
                     'configured' => true,
                     'config' => ['api_key' => 'test-key'],
@@ -217,14 +217,14 @@ class RoleBasedSystemSettingsTest extends TestCase
     {
         $response = $this->actingAs($this->superAdmin)
             ->post('/settings/ai/default', [
-                'provider' => 'cerebrus',
+                'provider' => 'cerebras',
                 'model' => 'llama3.1-70b',
             ]);
 
         $response->assertRedirect('/settings/system');
         $response->assertSessionHas('message');
 
-        $this->assertEquals('cerebrus', Setting::get('ai.default.provider'));
+        $this->assertEquals('cerebras', Setting::get('ai.default.provider'));
         $this->assertEquals('llama3.1-70b', Setting::get('ai.default.model'));
     }
 
@@ -232,7 +232,7 @@ class RoleBasedSystemSettingsTest extends TestCase
     {
         $response = $this->actingAs($this->admin)
             ->post('/settings/ai/default', [
-                'provider' => 'cerebrus',
+                'provider' => 'cerebras',
                 'model' => 'llama3.1-70b',
             ]);
 

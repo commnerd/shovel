@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            $table->string('ai_provider')->default('cerebrus')->after('status');
+            $table->string('ai_provider')->default('cerebras')->after('status');
             $table->string('ai_model')->nullable()->after('ai_provider');
             $table->text('ai_api_key')->nullable()->after('ai_model');
             $table->string('ai_base_url')->nullable()->after('ai_api_key');

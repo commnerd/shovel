@@ -42,7 +42,7 @@ class DailyCurationFactory extends Factory
             ],
             'summary' => $this->faker->sentence(),
             'focus_areas' => ['high_priority', 'overdue_tasks', 'task_optimization'],
-            'ai_provider' => $this->faker->randomElement(['cerebrus', 'openai']),
+            'ai_provider' => $this->faker->randomElement(['cerebras', 'openai']),
             'ai_generated' => true,
             'viewed_at' => null,
             'dismissed_at' => null,

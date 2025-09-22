@@ -16,15 +16,15 @@ class AIConnectivityTest extends TestCase
         parent::setUp();
         
         // Configure AI provider for tests
-        Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
-        Setting::set('ai.cerebrus.base_url', 'https://api.cerebras.ai/v1', 'string', 'Cerebrus Base URL');
-        Setting::set('ai.cerebrus.model', 'llama3.1-8b', 'string', 'Cerebrus Model');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+        Setting::set('ai.cerebras.base_url', 'https://api.cerebras.ai/v1', 'string', 'Cerebrus Base URL');
+        Setting::set('ai.cerebras.model', 'llama3.1-8b', 'string', 'Cerebrus Model');
     }
 
     public function test_ai_base_url_responds_with_200(): void
     {
-        $baseUrl = Setting::get('ai.cerebrus.base_url');
-        $apiKey = Setting::get('ai.cerebrus.api_key');
+        $baseUrl = Setting::get('ai.cerebras.base_url');
+        $apiKey = Setting::get('ai.cerebras.api_key');
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
@@ -52,8 +52,8 @@ class AIConnectivityTest extends TestCase
 
     public function test_ai_chat_endpoint_is_accessible(): void
     {
-        $baseUrl = Setting::get('ai.cerebrus.base_url');
-        $apiKey = Setting::get('ai.cerebrus.api_key');
+        $baseUrl = Setting::get('ai.cerebras.base_url');
+        $apiKey = Setting::get('ai.cerebras.api_key');
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
@@ -66,7 +66,7 @@ class AIConnectivityTest extends TestCase
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->timeout(30)->post($baseUrl.'/chat/completions', [
-                'model' => Setting::get('ai.cerebrus.model'),
+                'model' => Setting::get('ai.cerebras.model'),
                 'messages' => [
                     ['role' => 'user', 'content' => 'Hello'],
                 ],
@@ -94,8 +94,8 @@ class AIConnectivityTest extends TestCase
 
     public function test_ai_service_can_generate_real_tasks(): void
     {
-        $baseUrl = Setting::get('ai.cerebrus.base_url');
-        $apiKey = Setting::get('ai.cerebrus.api_key');
+        $baseUrl = Setting::get('ai.cerebras.base_url');
+        $apiKey = Setting::get('ai.cerebras.api_key');
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
@@ -129,7 +129,7 @@ class AIConnectivityTest extends TestCase
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->timeout(60)->post($baseUrl.'/chat/completions', [
-                'model' => Setting::get('ai.cerebrus.model'),
+                'model' => Setting::get('ai.cerebras.model'),
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are an expert project manager and task breakdown specialist. You must respond with valid JSON only.'],
                     ['role' => 'user', 'content' => $prompt],

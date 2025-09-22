@@ -3,7 +3,7 @@
 namespace App\Services\AI;
 
 use App\Services\AI\Contracts\AIProviderInterface;
-use App\Services\AI\Providers\{CerebrusProvider, OpenAIProvider};
+use App\Services\AI\Providers\{CerebrasProvider, OpenAIProvider};
 use Illuminate\Support\Manager;
 
 class AIManager extends Manager
@@ -13,26 +13,26 @@ class AIManager extends Manager
      */
     public function getDefaultDriver(): string
     {
-        return \App\Models\Setting::get('ai.default.provider', 'cerebrus');
+        return \App\Models\Setting::get('ai.default.provider', 'cerebras');
     }
 
     /**
-     * Create the Cerebrus AI provider.
+     * Create the Cerebras AI provider.
      */
-    protected function createCerebrusDriver(): AIProviderInterface
+    protected function createCerebrasDriver(): AIProviderInterface
     {
         // Get all configuration from database settings
         $config = [
-            'driver' => 'cerebrus',
-            'api_key' => \App\Models\Setting::get('ai.cerebrus.api_key'),
-            'base_url' => \App\Models\Setting::get('ai.cerebrus.base_url', 'https://api.cerebras.ai/v1'),
-            'model' => \App\Models\Setting::get('ai.cerebrus.model', 'llama-4-scout-17b-16e-instruct'),
-            'timeout' => \App\Models\Setting::get('ai.cerebrus.timeout', 30),
-            'max_tokens' => \App\Models\Setting::get('ai.cerebrus.max_tokens', 4000),
-            'temperature' => \App\Models\Setting::get('ai.cerebrus.temperature', 0.7),
+            'driver' => 'cerebras',
+            'api_key' => \App\Models\Setting::get('ai.cerebras.api_key'),
+            'base_url' => \App\Models\Setting::get('ai.cerebras.base_url', 'https://api.cerebras.ai/v1'),
+            'model' => \App\Models\Setting::get('ai.cerebras.model', 'llama-4-scout-17b-16e-instruct'),
+            'timeout' => \App\Models\Setting::get('ai.cerebras.timeout', 30),
+            'max_tokens' => \App\Models\Setting::get('ai.cerebras.max_tokens', 4000),
+            'temperature' => \App\Models\Setting::get('ai.cerebras.temperature', 0.7),
         ];
 
-        return new CerebrusProvider($config);
+        return new CerebrasProvider($config);
     }
 
     /**
@@ -148,7 +148,7 @@ class AIManager extends Manager
      */
     public function hasConfiguredProvider(): bool
     {
-        $providerNames = ['cerebrus', 'openai', 'anthropic', 'gemini'];
+        $providerNames = ['cerebras', 'openai', 'anthropic', 'gemini'];
 
         foreach ($providerNames as $name) {
             try {
@@ -171,7 +171,7 @@ class AIManager extends Manager
     {
         $providers = [];
         // Define available provider names since we no longer use config file
-        $providerNames = ['cerebrus', 'openai', 'anthropic', 'gemini'];
+        $providerNames = ['cerebras', 'openai', 'anthropic', 'gemini'];
 
         foreach ($providerNames as $name) {
             try {

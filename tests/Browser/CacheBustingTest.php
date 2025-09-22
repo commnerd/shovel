@@ -163,8 +163,8 @@ class CacheBustingTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visit('/settings/system')
-                ->select('select[name="provider"]', 'cerebrus')
-                ->type('input[name="cerebrus_api_key"]', 'test-api-key')
+                ->select('select[name="provider"]', 'cerebras')
+                ->type('input[name="cerebras_api_key"]', 'test-api-key')
                 ->press('Save Settings')
                 ->waitForText('Settings saved successfully')
                 ->assertSee('Settings saved successfully');

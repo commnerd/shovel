@@ -15,10 +15,10 @@ beforeEach(function () {
 test('settings page only shows configured providers in default configuration', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
 
-    // Mock only cerebrus as configured
+    // Mock only cerebras as configured
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => true,
                 'config' => ['api_key' => 'test-key'],
@@ -34,10 +34,10 @@ test('settings page only shows configured providers in default configuration', f
 
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) =>
-        $page->has('configuredProviders.cerebrus')
+        $page->has('configuredProviders.cerebras')
              ->missing('configuredProviders.openai')
              ->missing('configuredProviders.anthropic')
-             ->has('availableProviders.cerebrus') // Still available for configuration
+             ->has('availableProviders.cerebras') // Still available for configuration
              ->has('availableProviders.openai')   // Still available for configuration
     );
 });
@@ -45,10 +45,10 @@ test('settings page only shows configured providers in default configuration', f
 test('default AI settings validation only accepts configured providers', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
 
-    // Mock only cerebrus as configured
+    // Mock only cerebras as configured
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => true,
                 'config' => ['api_key' => 'test-key'],
@@ -64,12 +64,12 @@ test('default AI settings validation only accepts configured providers', functio
 
     // Should accept configured provider
     $response = $this->post('/settings/ai/default', [
-        'provider' => 'cerebrus',
+        'provider' => 'cerebras',
         'model' => 'llama3.1-8b',
     ]);
 
     $response->assertRedirect();
-    expect(Setting::get('ai.default.provider'))->toBe('cerebrus');
+    expect(Setting::get('ai.default.provider'))->toBe('cerebras');
 
     // Should reject unconfigured provider
     $response = $this->post('/settings/ai/default', [
@@ -90,7 +90,7 @@ test('default AI settings shows error when no providers configured', function ()
     $this->actingAs($user);
 
     $response = $this->post('/settings/ai/default', [
-        'provider' => 'cerebrus',
+        'provider' => 'cerebras',
         'model' => 'llama3.1-8b',
     ]);
 
@@ -111,10 +111,10 @@ test('organization AI settings validation only accepts configured providers', fu
     $user = User::factory()->create(['organization_id' => $organization->id]);
     $user->assignRole($adminRole);
 
-    // Mock only cerebrus as configured
+    // Mock only cerebras as configured
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => true,
                 'config' => ['api_key' => 'test-key'],
@@ -130,12 +130,12 @@ test('organization AI settings validation only accepts configured providers', fu
 
     // Should accept configured provider
     $response = $this->post('/settings/ai/organization', [
-        'provider' => 'cerebrus',
+        'provider' => 'cerebras',
         'model' => 'llama3.1-8b',
     ]);
 
     $response->assertRedirect();
-    expect(Setting::get("ai.organization.{$organization->id}.provider"))->toBe('cerebrus');
+    expect(Setting::get("ai.organization.{$organization->id}.provider"))->toBe('cerebras');
 
     // Should reject unconfigured provider
     $response = $this->post('/settings/ai/organization', [

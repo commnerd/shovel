@@ -19,7 +19,7 @@ return new class extends Migration
             $table->json('suggestions'); // Array of suggestion objects
             $table->text('summary')->nullable();
             $table->json('focus_areas')->nullable(); // Array of focus area strings
-            $table->enum('ai_provider', ['cerebrus', 'openai', 'anthropic', 'gemini'])->nullable();
+            $table->enum('ai_provider', ['cerebras', 'openai', 'anthropic', 'gemini'])->nullable();
             $table->boolean('ai_generated')->default(false);
             $table->timestamp('viewed_at')->nullable();
             $table->timestamp('dismissed_at')->nullable();

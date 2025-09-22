@@ -240,7 +240,7 @@ class AITaskGenerationIntegrationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Mock AI response with valid tasks (validation happens in CerebrusProvider)
+        // Mock AI response with valid tasks (validation happens in CerebrasProvider)
         // The AITaskResponse should contain already-validated tasks
         $mockResponse = AITaskResponse::success(
             tasks: [
@@ -258,7 +258,7 @@ class AITaskGenerationIntegrationTest extends TestCase
                     'status' => 'pending', // Default applied by validation
                     'subtasks' => [],
                 ],
-                // Task without title was filtered out by CerebrusProvider validation
+                // Task without title was filtered out by CerebrasProvider validation
             ]
         );
 
@@ -314,7 +314,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             suggestions: ['Proper array suggestion'] // Already array
         );
 
-        // The CerebrusProvider should handle string to array conversion
+        // The CerebrasProvider should handle string to array conversion
         $this->mock(AIManager::class, function ($mock) use ($mockResponse) {
             $mock->shouldReceive('generateTasks')
                 ->once()

@@ -18,7 +18,7 @@ class AISettingsPermissionsTest extends TestCase
         parent::setUp();
 
         // Configure AI provider for tests to prevent middleware redirects
-        Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
     }
 
     public function test_super_admin_can_access_all_ai_settings()

@@ -14,17 +14,17 @@ beforeEach(function () {
 
 test('ai providers use settings from database for configuration', function () {
     // Set API key in database settings
-    Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
     Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
 
     $providers = AI::getAvailableProviders();
 
     // Both providers should now be configured
-    expect($providers)->toHaveKey('cerebrus');
+    expect($providers)->toHaveKey('cerebras');
     expect($providers)->toHaveKey('openai');
-    expect($providers['cerebrus']['configured'])->toBe(true);
+    expect($providers['cerebras']['configured'])->toBe(true);
     expect($providers['openai']['configured'])->toBe(true);
-    expect($providers['cerebrus']['config']['api_key'])->toBe('test-cerebrus-key');
+    expect($providers['cerebras']['config']['api_key'])->toBe('test-cerebras-key');
     expect($providers['openai']['config']['api_key'])->toBe('test-openai-key');
 });
 
@@ -46,16 +46,16 @@ test('settings page shows configured providers in default configuration', functi
     $user = User::factory()->create(['is_super_admin' => true]);
     
     // Set API key in database settings
-    Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
     $response = $this->actingAs($user)->get('/settings/system');
 
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) =>
-        $page->has('configuredProviders.cerebrus')
-             ->where('configuredProviders.cerebrus.configured', true)
+        $page->has('configuredProviders.cerebras')
+             ->where('configuredProviders.cerebras.configured', true)
              ->missing('configuredProviders.openai') // Should not be there since no API key
-             ->has('availableProviders.cerebrus') // Still available for configuration
+             ->has('availableProviders.cerebras') // Still available for configuration
              ->has('availableProviders.openai')   // Still available for configuration
     );
 });
@@ -64,25 +64,25 @@ test('default ai configuration accepts configured providers', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
     
     // Set API key in database settings
-    Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
     $this->actingAs($user);
 
     $response = $this->post('/settings/ai/default', [
-        'provider' => 'cerebrus',
+        'provider' => 'cerebras',
         'model' => 'llama3.1-8b',
     ]);
 
     $response->assertRedirect('/settings/system');
-    expect(Setting::get('ai.default.provider'))->toBe('cerebrus');
+    expect(Setting::get('ai.default.provider'))->toBe('cerebras');
     expect(Setting::get('ai.default.model'))->toBe('llama3.1-8b');
 });
 
 test('default ai configuration rejects unconfigured providers', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
     
-    // Only set cerebrus, leave openai unconfigured
-    Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    // Only set cerebras, leave openai unconfigured
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
     Setting::where('key', 'ai.openai.api_key')->delete();
 
     $this->actingAs($user);
@@ -96,21 +96,21 @@ test('default ai configuration rejects unconfigured providers', function () {
 });
 
 test('ai configuration service correctly filters based on database settings', function () {
-    // Set only cerebrus API key
-    Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    // Set only cerebras API key
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
     Setting::where('key', 'ai.openai.api_key')->delete();
     Setting::where('key', 'ai.anthropic.api_key')->delete();
 
     $availableProviders = AIConfigurationService::getAvailableProviders();
     $allProviders = AIConfigurationService::getAllProviders();
 
-    // Available should only include cerebrus
-    expect($availableProviders)->toHaveKey('cerebrus');
+    // Available should only include cerebras
+    expect($availableProviders)->toHaveKey('cerebras');
     expect($availableProviders)->not->toHaveKey('openai');
     expect($availableProviders)->not->toHaveKey('anthropic');
 
     // All should include everything (for configuration UI)
-    expect($allProviders)->toHaveKey('cerebrus');
+    expect($allProviders)->toHaveKey('cerebras');
     expect($allProviders)->toHaveKey('openai');
     expect($allProviders)->toHaveKey('anthropic');
 });

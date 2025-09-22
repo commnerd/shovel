@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\AI\AIManager;
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\CerebrasProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -18,10 +18,10 @@ class AITaskGenerationTest extends TestCase
 
         // Mock AI configuration
         config([
-            'ai.default' => 'cerebrus',
-            'ai.providers.cerebrus' => [
+            'ai.default' => 'cerebras',
+            'ai.providers.cerebras' => [
                 'api_key' => 'test-key',
-                'base_url' => 'https://api.cerebrus.ai',
+                'base_url' => 'https://api.cerebras.ai',
                 'model' => 'gpt-4',
                 'max_tokens' => 4000,
                 'temperature' => 0.7,
@@ -73,11 +73,11 @@ class AITaskGenerationTest extends TestCase
         $this->assertEquals('pending', $response->getTasks()[0]['status']);
     }
 
-    public function test_cerebrus_provider_can_create_fallback_tasks()
+    public function test_cerebras_provider_can_create_fallback_tasks()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
-            'base_url' => 'https://api.cerebrus.ai',
+            'base_url' => 'https://api.cerebras.ai',
             'model' => 'gpt-4',
             'max_tokens' => 4000,
             'temperature' => 0.7,
@@ -103,7 +103,7 @@ class AITaskGenerationTest extends TestCase
     public function test_ai_manager_handles_provider_failures_gracefully()
     {
         // Mock a provider that throws an exception
-        $mockProvider = Mockery::mock(CerebrusProvider::class);
+        $mockProvider = Mockery::mock(CerebrasProvider::class);
         $mockProvider->shouldReceive('generateTasks')
             ->andThrow(new \Exception('API connection failed'));
 
@@ -121,9 +121,9 @@ class AITaskGenerationTest extends TestCase
 
     public function test_task_generation_validates_input()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
-            'base_url' => 'https://api.cerebrus.ai',
+            'base_url' => 'https://api.cerebras.ai',
             'model' => 'gpt-4',
             'max_tokens' => 4000,
             'temperature' => 0.7,
@@ -144,9 +144,9 @@ class AITaskGenerationTest extends TestCase
 
     public function test_generated_tasks_have_proper_structure()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
-            'base_url' => 'https://api.cerebrus.ai',
+            'base_url' => 'https://api.cerebras.ai',
             'model' => 'gpt-4',
             'max_tokens' => 4000,
             'temperature' => 0.7,
@@ -172,17 +172,17 @@ class AITaskGenerationTest extends TestCase
     public function test_ai_provider_configuration_validation()
     {
         // Test with missing API key
-        $provider = new CerebrusProvider([
-            'base_url' => 'https://api.cerebrus.ai',
+        $provider = new CerebrasProvider([
+            'base_url' => 'https://api.cerebras.ai',
             'model' => 'gpt-4',
         ]);
 
         $this->assertFalse($provider->isConfigured());
 
         // Test with complete configuration
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
-            'base_url' => 'https://api.cerebrus.ai',
+            'base_url' => 'https://api.cerebras.ai',
             'model' => 'gpt-4',
             'max_tokens' => 4000,
             'temperature' => 0.7,
@@ -190,7 +190,7 @@ class AITaskGenerationTest extends TestCase
         ]);
 
         $this->assertTrue($provider->isConfigured());
-        $this->assertEquals('cerebrus', $provider->getName());
+        $this->assertEquals('cerebras', $provider->getName());
     }
 
     protected function tearDown(): void

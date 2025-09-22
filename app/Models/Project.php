@@ -121,7 +121,7 @@ class Project extends Model
     public function getAIConfiguration(): array
     {
         return [
-            'provider' => $this->ai_provider ?? 'cerebrus',
+            'provider' => $this->ai_provider ?? 'cerebras',
             'model' => $this->ai_model,
             'api_key' => $this->ai_api_key,
             'base_url' => $this->ai_base_url,
@@ -135,7 +135,7 @@ class Project extends Model
     public function setAIConfiguration(array $config): void
     {
         $this->update([
-            'ai_provider' => $config['provider'] ?? 'cerebrus',
+            'ai_provider' => $config['provider'] ?? 'cerebras',
             'ai_model' => $config['model'] ?? null,
             'ai_api_key' => $config['api_key'] ?? null,
             'ai_base_url' => $config['base_url'] ?? null,
@@ -243,7 +243,7 @@ class Project extends Model
         // Only apply provider and model from defaults
         // API keys and base URLs should be read from system provider configuration
         $defaultConfig = [
-            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebrus'),
+            'provider' => \App\Models\Setting::get('ai.default.provider', 'cerebras'),
             'model' => \App\Models\Setting::get('ai.default.model'),
             'api_key' => null, // Don't store API keys per-project
             'base_url' => null, // Don't store base URLs per-project

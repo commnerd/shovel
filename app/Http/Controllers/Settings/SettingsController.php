@@ -24,7 +24,7 @@ class SettingsController extends Controller
         $canAccessOrganizationConfig = $user->isAdmin() && $user->organization && !$user->organization->is_default;
         // Get current default AI configuration for new projects (provider and model only)
         $defaultAISettings = [
-            'provider' => Setting::get('ai.default.provider', 'cerebrus'),
+            'provider' => Setting::get('ai.default.provider', 'cerebras'),
             'model' => Setting::get('ai.default.model'),
         ];
 
@@ -33,16 +33,16 @@ class SettingsController extends Controller
         if ($canAccessOrganizationConfig && $user->organization) {
             $orgId = $user->organization->id;
             $organizationAISettings = [
-                'provider' => Setting::get("ai.organization.{$orgId}.provider", 'cerebrus'),
+                'provider' => Setting::get("ai.organization.{$orgId}.provider", 'cerebras'),
                 'model' => Setting::get("ai.organization.{$orgId}.model"),
             ];
         }
 
         // Get provider-specific configurations (API keys and base URLs only)
         $providerConfigs = [
-            'cerebrus' => [
-                'api_key' => Setting::get('ai.cerebrus.api_key', ''),
-                'base_url' => Setting::get('ai.cerebrus.base_url', 'https://api.cerebras.ai/v1'),
+            'cerebras' => [
+                'api_key' => Setting::get('ai.cerebras.api_key', ''),
+                'base_url' => Setting::get('ai.cerebras.base_url', 'https://api.cerebras.ai/v1'),
             ],
             'openai' => [
                 'api_key' => Setting::get('ai.openai.api_key', ''),
@@ -90,9 +90,9 @@ class SettingsController extends Controller
             abort(403, 'Only Super Admins can access provider-specific configurations.');
         }
         $validated = $request->validate([
-            'provider' => 'required|in:cerebrus,openai,anthropic',
-            'cerebrus_api_key' => 'nullable|string|max:255',
-            'cerebrus_base_url' => 'nullable|url|max:255',
+            'provider' => 'required|in:cerebras,openai,anthropic',
+            'cerebras_api_key' => 'nullable|string|max:255',
+            'cerebras_base_url' => 'nullable|url|max:255',
             'openai_api_key' => 'nullable|string|max:255',
             'openai_base_url' => 'nullable|url|max:255',
             'anthropic_api_key' => 'nullable|string|max:255',
@@ -103,7 +103,7 @@ class SettingsController extends Controller
         Setting::set('ai.provider', $validated['provider'], 'string', 'Active AI provider');
 
         // Update provider-specific settings
-        foreach (['cerebrus', 'openai', 'anthropic'] as $provider) {
+        foreach (['cerebras', 'openai', 'anthropic'] as $provider) {
             if (! empty($validated["{$provider}_api_key"])) {
                 Setting::set("ai.{$provider}.api_key", $validated["{$provider}_api_key"], 'string', "{$provider} API key");
             }
@@ -202,7 +202,7 @@ class SettingsController extends Controller
             abort(403, 'You do not have permission to test AI configurations.');
         }
         $validated = $request->validate([
-            'provider' => 'required|in:cerebrus,openai,anthropic',
+            'provider' => 'required|in:cerebras,openai,anthropic',
             'api_key' => 'required|string',
             'base_url' => 'required|url',
         ]);

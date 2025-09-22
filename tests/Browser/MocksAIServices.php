@@ -88,7 +88,7 @@ trait MocksAIServices
 
                 public function getAvailableProviders(): array
                 {
-                    return ['cerebrus', 'openai', 'anthropic'];
+                    return ['cerebras', 'openai', 'anthropic'];
                 }
 
                 public function testProvider(string $name = null): array

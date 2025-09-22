@@ -19,7 +19,7 @@ test('getAvailableProviders only returns configured providers', function () {
     // Mock AI facade to return providers with different configuration states
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => true,
                 'config' => ['api_key' => 'test-key'],
@@ -39,22 +39,22 @@ test('getAvailableProviders only returns configured providers', function () {
     $availableProviders = AIConfigurationService::getAvailableProviders();
 
     // Should only include configured providers
-    expect($availableProviders)->toHaveKey('cerebrus');
+    expect($availableProviders)->toHaveKey('cerebras');
     expect($availableProviders)->not->toHaveKey('openai');
     expect($availableProviders)->not->toHaveKey('anthropic');
 
     // Should include provider metadata
-    expect($availableProviders['cerebrus'])->toHaveKey('name');
-    expect($availableProviders['cerebrus'])->toHaveKey('models');
-    expect($availableProviders['cerebrus'])->toHaveKey('configured');
-    expect($availableProviders['cerebrus']['configured'])->toBe(true);
+    expect($availableProviders['cerebras'])->toHaveKey('name');
+    expect($availableProviders['cerebras'])->toHaveKey('models');
+    expect($availableProviders['cerebras'])->toHaveKey('configured');
+    expect($availableProviders['cerebras']['configured'])->toBe(true);
 });
 
 test('getAvailableProviders returns empty array when no providers configured', function () {
     // Mock AI facade to return no configured providers
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => false,
                 'error' => 'No API key configured',
@@ -86,14 +86,14 @@ test('getAllProviders returns all providers regardless of configuration', functi
     $allProviders = AIConfigurationService::getAllProviders();
 
     // Should include all known providers
-    expect($allProviders)->toHaveKey('cerebrus');
+    expect($allProviders)->toHaveKey('cerebras');
     expect($allProviders)->toHaveKey('openai');
     expect($allProviders)->toHaveKey('anthropic');
 
     // Should have expected structure
-    expect($allProviders['cerebrus'])->toHaveKey('name');
-    expect($allProviders['cerebrus'])->toHaveKey('models');
-    expect($allProviders['cerebrus'])->toHaveKey('fields');
+    expect($allProviders['cerebras'])->toHaveKey('name');
+    expect($allProviders['cerebras'])->toHaveKey('models');
+    expect($allProviders['cerebras'])->toHaveKey('fields');
 });
 
 test('project creation validates only configured providers', function () {
@@ -103,10 +103,10 @@ test('project creation validates only configured providers', function () {
 
     $user->update(['organization_id' => $organization->id]);
 
-    // Mock only cerebrus as configured
+    // Mock only cerebras as configured
     AI::shouldReceive('getAvailableProviders')
         ->andReturn([
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'configured' => true,
                 'config' => ['api_key' => 'test-key'],
@@ -125,7 +125,7 @@ test('project creation validates only configured providers', function () {
         'title' => 'Test Project',
         'description' => 'A test project description',
         'group_id' => $group->id,
-        'ai_provider' => 'cerebrus',
+        'ai_provider' => 'cerebras',
         'ai_model' => 'llama-4-scout-17b-16e-instruct',
         'project_type' => 'iterative',
     ]);

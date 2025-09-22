@@ -953,8 +953,8 @@ class TasksController extends Controller
             // Get the AI provider instance to access its prompt building methods
             $aiProvider = \App\Services\AI\Facades\AI::provider($provider);
 
-            // For CerebrusProvider, we can call the protected methods via reflection
-            if ($aiProvider instanceof \App\Services\AI\Providers\CerebrusProvider) {
+            // For CerebrasProvider, we can call the protected methods via reflection
+            if ($aiProvider instanceof \App\Services\AI\Providers\CerebrasProvider) {
                 $reflection = new \ReflectionClass($aiProvider);
 
                 // Get system prompt

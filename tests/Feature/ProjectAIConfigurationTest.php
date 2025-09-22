@@ -26,7 +26,7 @@ class ProjectAIConfigurationTest extends TestCase
         // Mock AI providers as configured
         \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
             ->andReturn([
-                'cerebrus' => [
+                'cerebras' => [
                     'name' => 'Cerebras',
                     'configured' => true,
                     'config' => ['api_key' => 'test-key'],
@@ -51,10 +51,10 @@ class ProjectAIConfigurationTest extends TestCase
             $page->component('Projects/Edit')
                  ->has('project')
                  ->has('availableProviders')
-                 ->has('availableProviders.cerebrus')
+                 ->has('availableProviders.cerebras')
                  ->has('availableProviders.openai')
                  ->has('availableProviders.anthropic')
-                 ->has('availableProviders.cerebrus.models')
+                 ->has('availableProviders.cerebras.models')
                  ->has('availableProviders.openai.models')
                  ->has('availableProviders.anthropic.models')
         );
@@ -85,7 +85,7 @@ class ProjectAIConfigurationTest extends TestCase
     {
         // First set some AI configuration
         $this->project->update([
-            'ai_provider' => 'cerebrus',
+            'ai_provider' => 'cerebras',
             'ai_model' => 'llama3.1-8b',
         ]);
 
@@ -196,7 +196,7 @@ class ProjectAIConfigurationTest extends TestCase
         // Mock AI providers as configured
         \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
             ->andReturn([
-                'cerebrus' => [
+                'cerebras' => [
                     'name' => 'Cerebras',
                     'configured' => true,
                     'config' => ['api_key' => 'test-key'],
@@ -218,10 +218,10 @@ class ProjectAIConfigurationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->has('availableProviders.cerebrus')
+            $page->has('availableProviders.cerebras')
                  ->has('availableProviders.openai')
                  ->has('availableProviders.anthropic')
-                 ->where('availableProviders.cerebrus.name', 'Cerebras')
+                 ->where('availableProviders.cerebras.name', 'Cerebras')
                  ->where('availableProviders.openai.name', 'OpenAI')
                  ->where('availableProviders.anthropic.name', 'Anthropic')
         );
@@ -232,7 +232,7 @@ class ProjectAIConfigurationTest extends TestCase
         // Mock AI providers as configured
         \App\Services\AI\Facades\AI::shouldReceive('getAvailableProviders')
             ->andReturn([
-                'cerebrus' => [
+                'cerebras' => [
                     'name' => 'Cerebras',
                     'configured' => true,
                     'config' => ['api_key' => 'test-key'],
@@ -257,13 +257,13 @@ class ProjectAIConfigurationTest extends TestCase
         // Debug the actual structure
         $props = $response->getOriginalContent()->getData()['page']['props'];
         $this->assertArrayHasKey('availableProviders', $props);
-        $this->assertArrayHasKey('cerebrus', $props['availableProviders']);
-        $this->assertArrayHasKey('models', $props['availableProviders']['cerebrus']);
+        $this->assertArrayHasKey('cerebras', $props['availableProviders']);
+        $this->assertArrayHasKey('models', $props['availableProviders']['cerebras']);
 
         // Check that the models exist with correct keys
-        $cerebrusModels = $props['availableProviders']['cerebrus']['models'];
-        $this->assertArrayHasKey('llama3.1-8b', $cerebrusModels);
-        $this->assertEquals('Llama 3.1 8B', $cerebrusModels['llama3.1-8b']);
+        $cerebrasModels = $props['availableProviders']['cerebras']['models'];
+        $this->assertArrayHasKey('llama3.1-8b', $cerebrasModels);
+        $this->assertEquals('Llama 3.1 8B', $cerebrasModels['llama3.1-8b']);
 
         $openaiModels = $props['availableProviders']['openai']['models'];
         $this->assertArrayHasKey('gpt-4', $openaiModels);

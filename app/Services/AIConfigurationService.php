@@ -13,7 +13,7 @@ class AIConfigurationService
     public static function getAllProviders(): array
     {
         return [
-            'cerebrus' => [
+            'cerebras' => [
                 'name' => 'Cerebras',
                 'description' => 'Fast and efficient AI models',
                 'models' => [

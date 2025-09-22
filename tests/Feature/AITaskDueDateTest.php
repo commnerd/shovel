@@ -6,7 +6,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\CerebrasProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -118,9 +118,9 @@ class AITaskDueDateTest extends TestCase
         ]);
     }
 
-    public function test_cerebrus_provider_calculates_task_due_dates_from_project()
+    public function test_cerebras_provider_calculates_task_due_dates_from_project()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
             'base_url' => 'http://test.com',
             'model' => 'test-model',
@@ -149,9 +149,9 @@ class AITaskDueDateTest extends TestCase
         $this->assertLessThanOrEqual($projectDueDate, $result);
     }
 
-    public function test_cerebrus_provider_does_not_set_due_date_for_past_project_dates()
+    public function test_cerebras_provider_does_not_set_due_date_for_past_project_dates()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
             'base_url' => 'http://test.com',
             'model' => 'test-model',

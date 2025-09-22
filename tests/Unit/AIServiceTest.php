@@ -1,36 +1,36 @@
 <?php
 
 use App\Services\AI\Contracts\AIProviderInterface;
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\CerebrasProvider;
 
-it('can create cerebrus provider', function () {
+it('can create cerebras provider', function () {
     $config = [
         'api_key' => 'test-key',
-        'base_url' => 'https://api.cerebrus.ai',
+        'base_url' => 'https://api.cerebras.ai',
         'model' => 'gpt-4',
         'timeout' => 30,
         'max_tokens' => 4000,
         'temperature' => 0.7,
     ];
 
-    $provider = new CerebrusProvider($config);
+    $provider = new CerebrasProvider($config);
 
     expect($provider)->toBeInstanceOf(AIProviderInterface::class);
-    expect($provider->getName())->toBe('cerebrus');
+    expect($provider->getName())->toBe('cerebras');
     expect($provider->isConfigured())->toBeTrue();
 });
 
 it('detects unconfigured provider', function () {
     $config = [
         'api_key' => '', // Empty API key
-        'base_url' => 'https://api.cerebrus.ai',
+        'base_url' => 'https://api.cerebras.ai',
         'model' => 'gpt-4',
         'timeout' => 30,
         'max_tokens' => 4000,
         'temperature' => 0.7,
     ];
 
-    $provider = new CerebrusProvider($config);
+    $provider = new CerebrasProvider($config);
 
     expect($provider->isConfigured())->toBeFalse();
 });
@@ -38,14 +38,14 @@ it('detects unconfigured provider', function () {
 it('can get provider configuration', function () {
     $config = [
         'api_key' => 'test-key',
-        'base_url' => 'https://api.cerebrus.ai',
+        'base_url' => 'https://api.cerebras.ai',
         'model' => 'gpt-4',
         'timeout' => 30,
         'max_tokens' => 4000,
         'temperature' => 0.7,
     ];
 
-    $provider = new CerebrusProvider($config);
+    $provider = new CerebrasProvider($config);
 
     expect($provider->getConfig())->toBe($config);
 });
@@ -53,14 +53,14 @@ it('can get provider configuration', function () {
 it('creates fallback tasks when needed', function () {
     $config = [
         'api_key' => 'test-key',
-        'base_url' => 'https://api.cerebrus.ai',
+        'base_url' => 'https://api.cerebras.ai',
         'model' => 'gpt-4',
         'timeout' => 30,
         'max_tokens' => 4000,
         'temperature' => 0.7,
     ];
 
-    $provider = new CerebrusProvider($config);
+    $provider = new CerebrasProvider($config);
 
     // This will use the fallback since we don't have a real API connection
     $tasks = $provider->createFallbackTasks('Test project description');

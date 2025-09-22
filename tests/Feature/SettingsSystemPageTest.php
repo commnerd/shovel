@@ -47,7 +47,7 @@ class SettingsSystemPageTest extends TestCase
         // Set some test data
         Setting::set('ai.default.provider', 'openai');
         Setting::set('ai.default.model', 'gpt-4');
-        Setting::set('ai.cerebrus.api_key', 'test-key');
+        Setting::set('ai.cerebras.api_key', 'test-key');
 
         $response = $this->actingAs($this->user)
             ->get('/settings/system');
@@ -59,7 +59,7 @@ class SettingsSystemPageTest extends TestCase
             ->has('availableProviders')
             ->where('defaultAISettings.provider', 'openai')
             ->where('defaultAISettings.model', 'gpt-4')
-            ->where('providerConfigs.cerebrus.api_key', 'test-key')
+            ->where('providerConfigs.cerebras.api_key', 'test-key')
         );
     }
 

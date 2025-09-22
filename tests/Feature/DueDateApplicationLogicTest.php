@@ -6,7 +6,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\CerebrasProvider;
 use App\Services\AI\Providers\OpenAIProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -204,9 +204,9 @@ class DueDateApplicationLogicTest extends TestCase
         $this->assertNotEquals($existingDueDate, $result[1]['due_date']);
     }
 
-    public function test_cerebrus_fallback_tasks_without_project_due_date_have_no_due_dates()
+    public function test_cerebras_fallback_tasks_without_project_due_date_have_no_due_dates()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
             'base_url' => 'http://test.com',
             'model' => 'test-model',
@@ -232,9 +232,9 @@ class DueDateApplicationLogicTest extends TestCase
         }
     }
 
-    public function test_cerebrus_fallback_tasks_with_project_due_date_have_calculated_due_dates()
+    public function test_cerebras_fallback_tasks_with_project_due_date_have_calculated_due_dates()
     {
-        $provider = new CerebrusProvider([
+        $provider = new CerebrasProvider([
             'api_key' => 'test-key',
             'base_url' => 'http://test.com',
             'model' => 'test-model',

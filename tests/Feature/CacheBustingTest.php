@@ -257,8 +257,8 @@ class CacheBustingTest extends TestCase
         $this->actingAs($this->user);
 
         $response = $this->put('/settings/system', [
-            'provider' => 'cerebrus',
-            'cerebrus_api_key' => 'test-api-key',
+            'provider' => 'cerebras',
+            'cerebras_api_key' => 'test-api-key',
         ]);
 
         $response->assertHeader('X-Cache-Bust-Timestamp');

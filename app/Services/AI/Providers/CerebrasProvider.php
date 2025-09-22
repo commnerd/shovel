@@ -9,7 +9,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class CerebrusProvider implements AIProviderInterface
+class CerebrasProvider implements AIProviderInterface
 {
     protected array $config;
 
@@ -180,7 +180,7 @@ Requirements:
      */
     public function getName(): string
     {
-        return 'cerebrus';
+        return 'cerebras';
     }
 
     /**
@@ -209,7 +209,7 @@ Requirements:
         $response = $client->post($endpoint, $data);
 
         if ($response->failed()) {
-            throw new \Exception('Cerebrus API request failed: '.$response->body());
+            throw new \Exception('Cerebras API request failed: '.$response->body());
         }
 
         return $response->json();
@@ -337,7 +337,7 @@ Requirements:
                     return AITaskResponse::success(
                         tasks: $tasks,
                         projectTitle: null,
-                        notes: ["Generated using Cerebrus (text parsing fallback)"],
+                        notes: ["Generated using Cerebras (text parsing fallback)"],
                         summary: "Task breakdown for: {$projectDescription}",
                         problems: [],
                         suggestions: [],

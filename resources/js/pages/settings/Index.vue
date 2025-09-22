@@ -126,9 +126,9 @@ import type { BreadcrumbItem } from '@/types';
 
 interface AISettings {
     provider: string;
-    cerebrus_api_key: string;
-    cerebrus_base_url: string;
-    cerebrus_model: string;
+    cerebras_api_key: string;
+    cerebras_base_url: string;
+    cerebras_model: string;
     openai_api_key: string;
     openai_base_url: string;
     openai_model: string;
@@ -152,9 +152,9 @@ const props = defineProps<Props>();
 
 const form = useForm({
     provider: props.aiSettings.provider,
-    cerebrus_api_key: props.aiSettings.cerebrus_api_key,
-    cerebrus_base_url: props.aiSettings.cerebrus_base_url,
-    cerebrus_model: props.aiSettings.cerebrus_model,
+    cerebras_api_key: props.aiSettings.cerebras_api_key,
+    cerebras_base_url: props.aiSettings.cerebras_base_url,
+    cerebras_model: props.aiSettings.cerebras_model,
     openai_api_key: props.aiSettings.openai_api_key,
     openai_base_url: props.aiSettings.openai_base_url,
     openai_model: props.aiSettings.openai_model,
@@ -168,7 +168,7 @@ const connectionTestResult = ref<{ success: boolean; message: string } | null>(n
 
 const getFieldPlaceholder = (provider: string, field: string): string => {
     const placeholders: Record<string, Record<string, string>> = {
-        cerebrus: {
+        cerebras: {
             api_key: 'Enter your Cerebras API key',
             base_url: 'https://api.cerebras.ai/v1',
             model: 'llama3.1-8b',

@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Set up AI configuration
-    \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+    \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 });
 
 test('daily curation job calculates weight metrics correctly', function () {

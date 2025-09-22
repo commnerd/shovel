@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Services\AI\Providers\CerebrusProvider;
+use App\Services\AI\Providers\CerebrasProvider;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,13 +11,13 @@ class AITaskDueDateCalculationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private CerebrusProvider $provider;
+    private CerebrasProvider $provider;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->provider = new CerebrusProvider([
+        $this->provider = new CerebrasProvider([
             'api_key' => 'test-key',
             'base_url' => 'http://test.com',
             'model' => 'test-model',

@@ -20,7 +20,7 @@ class SettingsTest extends TestCase
         parent::setUp();
 
         // Configure AI provider to prevent middleware redirects
-        \App\Models\Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+        \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
         // Set up organization structure
         $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
@@ -63,10 +63,10 @@ class SettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
-            ->has('availableProviders.cerebrus')
+            ->has('availableProviders.cerebras')
             ->has('availableProviders.openai')
             ->has('availableProviders.anthropic')
-            ->where('availableProviders.cerebrus.name', 'Cerebras')
+            ->where('availableProviders.cerebras.name', 'Cerebras')
             ->where('availableProviders.openai.name', 'OpenAI')
             ->where('availableProviders.anthropic.name', 'Anthropic')
         );
@@ -111,7 +111,7 @@ class SettingsTest extends TestCase
         $mockAIManager = \Mockery::mock(\App\Services\AI\AIManager::class);
         $mockAIManager->shouldReceive('testProvider')
             ->once()
-            ->with('cerebrus')
+            ->with('cerebras')
             ->andReturn([
                 'success' => true,
                 'message' => 'Connection successful',
@@ -122,7 +122,7 @@ class SettingsTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->postJson('/settings/ai/test', [
-                'provider' => 'cerebrus',
+                'provider' => 'cerebras',
                 'api_key' => 'test-key',
                 'base_url' => 'https://api.cerebras.ai/v1',
                 'model' => 'llama3.1-8b',
@@ -147,7 +147,7 @@ class SettingsTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->postJson('/settings/ai/test', [
-                'provider' => 'cerebrus',
+                'provider' => 'cerebras',
                 'api_key' => 'invalid-key',
                 'base_url' => 'https://api.cerebras.ai/v1',
                 'model' => 'llama3.1-8b',

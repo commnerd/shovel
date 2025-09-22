@@ -138,7 +138,7 @@ class AIConfigurationTest extends TestCase
     public function test_apply_default_ai_configuration_to_existing_project()
     {
         // Set default AI configuration (only provider and model)
-        Setting::set('ai.default.provider', 'cerebrus');
+        Setting::set('ai.default.provider', 'cerebras');
         Setting::set('ai.default.model', 'llama3.1-70b');
 
         $project = Project::factory()->create([
@@ -152,7 +152,7 @@ class AIConfigurationTest extends TestCase
         $project->refresh();
 
         // Verify configuration was applied (only provider and model from defaults)
-        $this->assertEquals('cerebrus', $project->ai_provider);
+        $this->assertEquals('cerebras', $project->ai_provider);
         $this->assertEquals('llama3.1-70b', $project->ai_model);
 
         // API key and base URL should be null (not stored per-project)
@@ -163,7 +163,7 @@ class AIConfigurationTest extends TestCase
     public function test_default_ai_settings_validation()
     {
         // Configure at least one provider so validation can work
-        Setting::set('ai.cerebrus.api_key', 'test-cerebrus-key', 'string', 'Cerebrus API Key');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
 
         $response = $this->actingAs($this->user)
             ->withHeaders(['Accept' => 'application/json'])
@@ -176,7 +176,7 @@ class AIConfigurationTest extends TestCase
         $response->assertJsonValidationErrors(['provider', 'model']);
     }
 
-    public function test_project_ai_configuration_defaults_to_cerebrus()
+    public function test_project_ai_configuration_defaults_to_cerebras()
     {
         $project = Project::factory()->create([
             'user_id' => $this->user->id,
@@ -185,7 +185,7 @@ class AIConfigurationTest extends TestCase
         ]);
 
         $aiConfig = $project->getAIConfiguration();
-        $this->assertEquals('cerebrus', $aiConfig['provider']);
+        $this->assertEquals('cerebras', $aiConfig['provider']);
     }
 
     public function test_system_settings_page_displays_current_configuration()
@@ -193,7 +193,7 @@ class AIConfigurationTest extends TestCase
         // Set some default settings
         Setting::set('ai.default.provider', 'openai');
         Setting::set('ai.default.model', 'gpt-4');
-        Setting::set('ai.cerebrus.api_key', 'cerebrus-key');
+        Setting::set('ai.cerebras.api_key', 'cerebras-key');
         Setting::set('ai.openai.api_key', 'openai-key');
 
         $response = $this->actingAs($this->user)
@@ -203,9 +203,9 @@ class AIConfigurationTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page->component('settings/System')
             ->where('defaultAISettings.provider', 'openai')
             ->where('defaultAISettings.model', 'gpt-4')
-            ->where('providerConfigs.cerebrus.api_key', 'cerebrus-key')
+            ->where('providerConfigs.cerebras.api_key', 'cerebras-key')
             ->where('providerConfigs.openai.api_key', 'openai-key')
-            ->has('availableProviders.cerebrus.models')
+            ->has('availableProviders.cerebras.models')
             ->has('availableProviders.openai.models')
             ->has('availableProviders.anthropic.models')
         );
@@ -224,8 +224,8 @@ class AIConfigurationTest extends TestCase
         $project->applyDefaultAIConfiguration();
         $project->refresh();
 
-        // Should still have cerebrus as default provider
-        $this->assertEquals('cerebrus', $project->ai_provider);
+        // Should still have cerebras as default provider
+        $this->assertEquals('cerebras', $project->ai_provider);
         $this->assertNull($project->ai_model);
         $this->assertNull($project->ai_api_key);
     }
