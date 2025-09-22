@@ -35,19 +35,16 @@ class AITaskDueDateTest extends TestCase
             [
                 'title' => 'Setup Project',
                 'description' => 'Set up the project structure',
-                'priority' => 'high',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Implement Features',
                 'description' => 'Implement core features',
-                'priority' => 'medium',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Testing',
                 'description' => 'Test the application',
-                'priority' => 'low',
                 'status' => 'pending',
             ],
         ];
@@ -139,7 +136,6 @@ class AITaskDueDateTest extends TestCase
 
         $task = [
             'title' => 'Test Task',
-            'priority' => 'high',
         ];
 
         $projectDueDate = '2025-12-31';
@@ -171,7 +167,6 @@ class AITaskDueDateTest extends TestCase
 
         $task = [
             'title' => 'Test Task',
-            'priority' => 'high',
         ];
 
         // Use a past date
@@ -182,7 +177,7 @@ class AITaskDueDateTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_ai_generated_tasks_respect_priority_for_due_date_calculation()
+    public function test_ai_generated_tasks_have_due_dates_when_project_has_due_date()
     {
         $user = User::factory()->create();
         $project = Project::factory()->create([
@@ -191,7 +186,7 @@ class AITaskDueDateTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post('/dashboard/projects/create/tasks', [
-            'description' => 'Build a web application with high priority setup, medium priority features, and low priority testing',
+            'description' => 'Build a web application with setup, features, and testing',
             'due_date' => '2025-12-31',
         ]);
 
@@ -223,7 +218,6 @@ class AITaskDueDateTest extends TestCase
                 [
                     'title' => 'Setup',
                     'description' => 'Set up the project',
-                    'priority' => 'high',
                     'status' => 'pending',
                     'due_date' => '2025-12-15',
                     'sort_order' => 1,
@@ -231,7 +225,6 @@ class AITaskDueDateTest extends TestCase
                 [
                     'title' => 'Development',
                     'description' => 'Develop features',
-                    'priority' => 'medium',
                     'status' => 'pending',
                     'due_date' => '2025-12-25',
                     'sort_order' => 2,

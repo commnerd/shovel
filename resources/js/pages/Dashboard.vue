@@ -19,7 +19,6 @@ interface TaskMetrics {
     completed: number;
     pending: number;
     inProgress: number;
-    highPriority: number;
 }
 
 interface AIUsageMetrics {
@@ -145,10 +144,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <div class="flex justify-between">
                                         <span class="text-gray-600 dark:text-gray-400">In Progress</span>
                                         <span class="font-medium text-blue-600 dark:text-blue-400">{{ taskMetrics.inProgress }}</span>
-                                    </div>
-                                    <div class="flex justify-between" v-if="taskMetrics.highPriority > 0">
-                                        <span class="text-gray-600 dark:text-gray-400">High Priority</span>
-                                        <span class="font-medium text-orange-600 dark:text-orange-400">{{ taskMetrics.highPriority }}</span>
                                     </div>
                                 </div>
                             </div>

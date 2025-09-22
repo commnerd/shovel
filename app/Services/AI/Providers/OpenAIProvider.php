@@ -442,13 +442,11 @@ class OpenAIProvider implements AIProviderInterface
             [
                 'title' => 'Research and Planning',
                 'description' => "Research requirements and plan approach for: {$taskTitle}",
-                'priority' => 'medium',
                 'status' => 'pending',
             ],
             [
                 'title' => 'Implementation',
                 'description' => "Implement the main functionality for: {$taskTitle}",
-                'priority' => 'medium',
                 'status' => 'pending',
             ],
         ];

@@ -44,10 +44,6 @@ class DashboardController extends Controller
             $query->where('user_id', $user->id);
         })->leaf()->where('status', 'in_progress')->count();
 
-        // Priority tracking removed - using total leaf tasks instead
-        $totalLeafTasks = Task::whereHas('project', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })->leaf()->count();
 
         // Get AI usage metrics for super admins
         $aiUsageMetrics = null;
@@ -82,7 +78,6 @@ class DashboardController extends Controller
                 'completed' => $completedLeafTasks,
                 'pending' => $pendingLeafTasks,
                 'inProgress' => $inProgressLeafTasks,
-                'highPriority' => $totalLeafTasks, // Priority removed - showing total instead
             ],
             'aiUsageMetrics' => $aiUsageMetrics,
         ]);

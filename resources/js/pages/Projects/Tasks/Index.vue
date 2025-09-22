@@ -1266,7 +1266,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             </div>
 
-            <!-- Priority Confirmation Dialog -->
+            <!-- Reordering Confirmation Dialog -->
             <Dialog v-model:open="showConfirmDialog">
                 <DialogContent>
                     <DialogHeader>

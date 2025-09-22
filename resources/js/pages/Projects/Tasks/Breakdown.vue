@@ -34,12 +34,6 @@
                 <CardContent>
                     <div class="flex items-center gap-6 text-sm">
                         <div class="flex items-center gap-2">
-                            <span class="font-medium">Priority:</span>
-                            <span :class="getPriorityColor(task.priority)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
-                                {{ task.priority }}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2">
                             <span class="font-medium">Status:</span>
                             <span :class="getStatusColor(task.status)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
                                 {{ task.status.replace('_', ' ') }}
@@ -198,10 +192,6 @@
                                     </CardHeader>
                                     <CardContent class="pt-0">
                                         <div class="flex items-center gap-4 text-sm">
-                                            <span :class="getPriorityColor(subtask.priority)" class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
-                                                {{ subtask.priority }}
-                                                <span v-if="subtask.priority_adjusted" class="ml-1 text-blue-600" title="Priority adjusted to meet parent task requirements">*</span>
-                                            </span>
                                             <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium text-gray-600">
                                                 {{ subtask.status }}
                                             </span>
@@ -210,9 +200,6 @@
                                                 {{ subtask.due_date }}
                                             </span>
                                         </div>
-                                        <p v-if="subtask.priority_adjusted" class="text-xs text-blue-600 mt-2">
-                                            Priority adjusted from {{ subtask.original_priority }} to meet parent task requirements
-                                        </p>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -358,10 +345,6 @@
                                     <span class="font-medium text-purple-800">Title:</span>
                                     <span class="ml-2 text-purple-900">{{ promptData.parent_task.title }}</span>
                                 </div>
-                                <div>
-                                    <span class="font-medium text-purple-800">Priority:</span>
-                                    <span class="ml-2 text-purple-900">{{ promptData.parent_task.priority }}</span>
-                                </div>
                             </div>
                         </div>
 
@@ -374,7 +357,7 @@
                                 <ul class="space-y-2">
                                     <li v-for="task in promptData.sample_existing_tasks" :key="task.title" class="text-sm">
                                         <span class="font-medium">{{ task.title }}</span>
-                                        <span class="ml-2 text-gray-600">({{ task.priority }}, {{ task.status }})</span>
+                                        <span class="ml-2 text-gray-600">({{ task.status }})</span>
                                     </li>
                                 </ul>
                             </div>
@@ -482,7 +465,6 @@ interface Task {
     title: string;
     description?: string;
     status: 'pending' | 'in_progress' | 'completed';
-    priority: 'low' | 'medium' | 'high';
     due_date?: string;
     parent_id?: number;
     has_children: boolean;
@@ -526,14 +508,6 @@ const getTaskTypeIcon = (task: Task) => {
     return Leaf;
 };
 
-const getPriorityColor = (priority: string) => {
-    switch (priority) {
-        case 'high': return 'border-red-200 bg-red-50 text-red-700';
-        case 'medium': return 'border-yellow-200 bg-yellow-50 text-yellow-700';
-        case 'low': return 'border-green-200 bg-green-50 text-green-700';
-        default: return 'border-gray-200 bg-gray-50 text-gray-700';
-    }
-};
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -561,7 +535,7 @@ const generateBreakdown = async () => {
             body: JSON.stringify({
                 title: props.task.title,
                 description: props.task.description || '',
-                parent_task_id: props.task.id, // Include parent task ID for priority validation
+                parent_task_id: props.task.id,
             }),
         });
 
@@ -576,13 +550,6 @@ const generateBreakdown = async () => {
                 suggestions: data.suggestions || [],
             };
 
-            // Add priority adjustment message if any adjustments were made
-            if (data.priority_adjustments) {
-                aiCommunication.value.notes = [
-                    ...(aiCommunication.value.notes || []),
-                    data.priority_adjustments
-                ];
-            }
 
             // Store prompt data for viewing
             promptData.value = data.prompt_used || null;
@@ -618,7 +585,7 @@ const regenerateWithFeedback = async (feedback: string) => {
                 title: props.task.title,
                 description: props.task.description || '',
                 user_feedback: feedback,
-                parent_task_id: props.task.id, // Include parent task ID for priority validation
+                parent_task_id: props.task.id,
             }),
         });
 
@@ -633,13 +600,6 @@ const regenerateWithFeedback = async (feedback: string) => {
                 suggestions: data.suggestions || [],
             };
 
-            // Add priority adjustment message if any adjustments were made
-            if (data.priority_adjustments) {
-                aiCommunication.value.notes = [
-                    ...(aiCommunication.value.notes || []),
-                    data.priority_adjustments
-                ];
-            }
 
             // Store prompt data for viewing
             promptData.value = data.prompt_used || null;
@@ -675,7 +635,6 @@ const createAllSubtasks = async () => {
                     title: subtask.title,
                     description: subtask.description || '',
                     parent_id: props.task.id,
-                    priority: subtask.priority,
                     status: subtask.status,
                     due_date: subtask.due_date || null,
                 }),

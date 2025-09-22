@@ -36,14 +36,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const getPriorityColor = (priority: string) => {
-    switch (priority) {
-        case 'high': return 'text-red-600 bg-red-50 border-red-200';
-        case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-        case 'low': return 'text-green-600 bg-green-50 border-green-200';
-        default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-};
 
 const getStatusIcon = (status: string) => {
     switch (status) {
@@ -101,9 +93,6 @@ const getStatusIcon = (status: string) => {
                                         <div class="flex-1 min-w-0">
                                             <p class="font-medium text-sm truncate">{{ task.title }}</p>
                                         </div>
-                                        <span class="hidden sm:inline-flex text-xs font-medium px-2 py-1 rounded-full bg-white/50 flex-shrink-0">
-                                            {{ task.priority }}
-                                        </span>
                                     </div>
                                 </div>
                             </div>

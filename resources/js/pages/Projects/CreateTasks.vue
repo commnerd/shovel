@@ -29,7 +29,6 @@ export interface TaskSuggestion {
     title: string;
     description: string;
     status: 'pending' | 'in_progress' | 'completed';
-    priority: 'low' | 'medium' | 'high';
     sort_order: number;
 }
 
@@ -103,15 +102,6 @@ const newTaskDescription = ref('');
 const showRegenerationModal = ref(false);
 const isRegeneratingWithFeedback = ref(false);
 
-// Priority colors
-const getPriorityColor = (priority: string | undefined) => {
-    switch (priority) {
-        case 'high': return 'destructive';
-        case 'medium': return 'default';
-        case 'low': return 'secondary';
-        default: return 'default';
-    }
-};
 
 // Status icons
 const getStatusIcon = (status: string) => {
@@ -145,7 +135,6 @@ const addNewTask = () => {
             title: newTaskTitle.value.trim(),
             description: newTaskDescription.value.trim(),
             status: 'pending',
-            priority: 'medium',
             sort_order: form.tasks.length + 1,
         });
         newTaskTitle.value = '';
@@ -161,13 +150,6 @@ const toggleTaskStatus = (index: number) => {
     task.status = statuses[(currentIndex + 1) % statuses.length] as any;
 };
 
-const changePriority = (index: number) => {
-    const task = form.tasks[index];
-    const priorities = ['low', 'medium', 'high'];
-    const currentPriority = task.priority || 'medium';
-    const currentIndex = priorities.indexOf(currentPriority);
-    task.priority = priorities[(currentIndex + 1) % priorities.length] as any;
-};
 
 const regenerateTasks = () => {
     showRegenerationModal.value = true;
@@ -379,14 +361,6 @@ const createProject = () => {
                                         <h3 class="text-lg font-semibold text-gray-900 mb-3 leading-tight">{{ task.title }}</h3>
                                         <p class="text-base text-gray-700 mb-4 leading-relaxed">{{ task.description }}</p>
                                         <div class="flex items-center gap-3 flex-wrap">
-                                            <Badge
-                                                :variant="getPriorityColor(task.priority)"
-                                                class="cursor-pointer px-3 py-1"
-                                                @click="changePriority(index)"
-                                                :data-testid="`task-priority-${index}`"
-                                            >
-                                                {{ (task.priority || 'medium').toUpperCase() }} PRIORITY
-                                            </Badge>
                                             <Badge variant="outline" class="px-3 py-1">
                                                 {{ (task.status || 'pending').replace('_', ' ').toUpperCase() }}
                                             </Badge>

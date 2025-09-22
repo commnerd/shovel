@@ -99,7 +99,6 @@ import { Sparkles, Loader } from 'lucide-vue-next';
 interface TaskItem {
     title: string;
     description?: string;
-    priority?: string;
     status?: string;
 }
 

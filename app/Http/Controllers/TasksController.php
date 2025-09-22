@@ -894,7 +894,6 @@ class TasksController extends Controller
         if (!empty($context['parent_task'])) {
             $prompt['parent_task'] = [
                 'title' => $context['parent_task']['title'],
-                'priority' => $context['parent_task']['priority'] ?? 'medium',
             ];
         }
 
