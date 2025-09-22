@@ -501,6 +501,33 @@ const promptData = ref<any>(null);
 const fullPromptText = ref<any>(null);
 const showFullPrompt = ref(false);
 
+// Helper function to get CSRF token with error handling and refresh capability
+const getCSRFToken = async (): Promise<string> => {
+    let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    if (!token) {
+        // Try to refresh the token by making a request to a simple endpoint
+        try {
+            const response = await fetch('/dashboard', {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            if (response.ok) {
+                // Token should be refreshed in the meta tag now
+                token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            }
+        } catch (e) {
+            console.error('Failed to refresh CSRF token:', e);
+        }
+    }
+
+    if (!token) {
+        throw new Error('CSRF token not found. Please refresh the page and try again.');
+    }
+
+    return token;
+};
+
 // Helper functions for task display
 const getTaskTypeIcon = (task: Task) => {
     if (task.is_top_level && !task.has_children) return TreePine;
@@ -530,7 +557,7 @@ const generateBreakdown = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 title: props.task.title,
@@ -538,6 +565,13 @@ const generateBreakdown = async () => {
                 parent_task_id: props.task.id,
             }),
         });
+
+        // Handle CSRF errors specifically
+        if (response.status === 419) {
+            alert('Your session has expired. Please refresh the page and try again.');
+            window.location.reload();
+            return;
+        }
 
         const data = await response.json();
 
@@ -579,7 +613,7 @@ const regenerateWithFeedback = async (feedback: string) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 title: props.task.title,
@@ -588,6 +622,13 @@ const regenerateWithFeedback = async (feedback: string) => {
                 parent_task_id: props.task.id,
             }),
         });
+
+        // Handle CSRF errors specifically
+        if (response.status === 419) {
+            alert('Your session has expired. Please refresh the page and try again.');
+            window.location.reload();
+            return;
+        }
 
         const data = await response.json();
 
@@ -629,7 +670,7 @@ const createAllSubtasks = async () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-CSRF-TOKEN': await getCSRFToken(),
                 },
                 body: JSON.stringify({
                     title: subtask.title,
@@ -639,6 +680,13 @@ const createAllSubtasks = async () => {
                     due_date: subtask.due_date || null,
                 }),
             });
+
+            // Handle CSRF errors specifically
+            if (response.status === 419) {
+                alert('Your session has expired. Please refresh the page and try again.');
+                window.location.reload();
+                return;
+            }
 
             // Check if the request was successful (redirect or success status)
             if (!response.ok && response.status !== 302) {

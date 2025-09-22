@@ -66,7 +66,7 @@ class DueDateApplicationLogicTest extends TestCase
         }
     }
 
-    public function test_add_due_dates_to_subtasks_with_project_due_date_calculates_dates()
+    public function test_add_due_dates_to_subtasks_with_project_due_date_but_no_parent_task_does_not_calculate_dates()
     {
         $user = User::factory()->create();
         $project = Project::factory()->create([
@@ -88,27 +88,23 @@ class DueDateApplicationLogicTest extends TestCase
                 'title' => 'Research Phase',
                 'description' => 'Research requirements',
                 'status' => 'pending',
-                // No due_date - should be calculated
+                // No due_date
             ],
             [
                 'title' => 'Implementation Phase',
                 'description' => 'Implement features',
                 'status' => 'pending',
-                // No due_date - should be calculated
+                // No due_date
             ],
         ];
 
         $result = $method->invoke($controller, $subtasks, $parentTask, $project);
 
-        // Should have due dates calculated
+        // Should NOT have due dates calculated because there's no parent task
+        // Even though project has due date, subtasks should only inherit from direct parent
         foreach ($result as $subtask) {
-            $this->assertArrayHasKey('due_date', $subtask);
-            $this->assertNotNull($subtask['due_date']);
-            $this->assertLessThanOrEqual(
-                $project->due_date->format('Y-m-d'),
-                $subtask['due_date'],
-                "Subtask due date should not exceed project due date"
-            );
+            $this->assertArrayNotHasKey('due_date', $subtask,
+                "Subtask should not get due date when there's no parent task, even if project has due date");
         }
     }
 
@@ -168,6 +164,10 @@ class DueDateApplicationLogicTest extends TestCase
             'user_id' => $user->id,
             'due_date' => now()->addDays(30), // Project has due date
         ]);
+        $parentTask = Task::factory()->create([
+            'project_id' => $project->id,
+            'due_date' => now()->addDays(20), // Parent task has due date
+        ]);
 
         // Create a TasksController instance to test the method
         $controller = new \App\Http\Controllers\TasksController();
@@ -189,16 +189,16 @@ class DueDateApplicationLogicTest extends TestCase
                 'title' => 'Implementation Phase',
                 'description' => 'Implement features',
                 'status' => 'pending',
-                // No due_date - should be calculated
+                // No due_date - should be calculated from parent task
             ],
         ];
 
-        $result = $method->invoke($controller, $subtasks, null, $project);
+        $result = $method->invoke($controller, $subtasks, $parentTask, $project);
 
         // First subtask should keep its existing due date
         $this->assertEquals($existingDueDate, $result[0]['due_date']);
 
-        // Second subtask should get a calculated due date
+        // Second subtask should get a calculated due date from parent task
         $this->assertArrayHasKey('due_date', $result[1]);
         $this->assertNotNull($result[1]['due_date']);
         $this->assertNotEquals($existingDueDate, $result[1]['due_date']);

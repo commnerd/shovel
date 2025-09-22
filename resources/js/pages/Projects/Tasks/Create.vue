@@ -58,6 +58,33 @@ const form = useForm({
     due_date: '',
 });
 
+// Helper function to get CSRF token with error handling and refresh capability
+const getCSRFToken = async (): Promise<string> => {
+    let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    if (!token) {
+        // Try to refresh the token by making a request to a simple endpoint
+        try {
+            const response = await fetch('/dashboard', {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            if (response.ok) {
+                // Token should be refreshed in the meta tag now
+                token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            }
+        } catch (e) {
+            console.error('Failed to refresh CSRF token:', e);
+        }
+    }
+
+    if (!token) {
+        throw new Error('CSRF token not found. Please refresh the page and try again.');
+    }
+
+    return token;
+};
+
 const isSubmitting = ref(false);
 
 
@@ -101,13 +128,20 @@ const generateAIBreakdown = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 title: form.title,
                 description: form.description,
             }),
         });
+
+        // Handle CSRF errors specifically
+        if (response.status === 419) {
+            alert('Your session has expired. Please refresh the page and try again.');
+            window.location.reload();
+            return;
+        }
 
         const data = await response.json();
 
@@ -181,7 +215,7 @@ const regenerateWithFeedback = async (feedback: string) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 title: form.title,
@@ -189,6 +223,13 @@ const regenerateWithFeedback = async (feedback: string) => {
                 user_feedback: feedback,
             }),
         });
+
+        // Handle CSRF errors specifically
+        if (response.status === 419) {
+            alert('Your session has expired. Please refresh the page and try again.');
+            window.location.reload();
+            return;
+        }
 
         const data = await response.json();
 

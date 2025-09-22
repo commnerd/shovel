@@ -64,6 +64,60 @@ const isRefreshingSortable = ref(false);
 const kanbanDraggedTask = ref<Task | null>(null);
 const kanbanDragOverColumn = ref<string | null>(null);
 
+// Column refs for height synchronization
+const pendingColumnRef = ref<HTMLElement | null>(null);
+const inProgressColumnRef = ref<HTMLElement | null>(null);
+const completedColumnRef = ref<HTMLElement | null>(null);
+
+// Dynamic column heights
+const columnHeights = ref({
+    pending: 'auto',
+    in_progress: 'auto',
+    completed: 'auto'
+});
+
+// Function to synchronize all column heights to the tallest one
+const synchronizeColumnHeights = () => {
+    if (currentFilter.value !== 'board') return;
+
+    nextTick(() => {
+        const columns = [
+            { ref: pendingColumnRef, key: 'pending' },
+            { ref: inProgressColumnRef, key: 'in_progress' },
+            { ref: completedColumnRef, key: 'completed' }
+        ];
+
+        // Reset heights to auto first to get natural heights
+        columnHeights.value = {
+            pending: 'auto',
+            in_progress: 'auto',
+            completed: 'auto'
+        };
+
+        // Wait for DOM update, then measure
+        nextTick(() => {
+            let maxHeight = 300; // Minimum height
+
+            // Find the tallest column
+            columns.forEach(({ ref: columnRef }) => {
+                if (columnRef.value) {
+                    const height = columnRef.value.offsetHeight;
+                    maxHeight = Math.max(maxHeight, height);
+                }
+            });
+
+            // Apply the max height to all columns
+            const heightPx = `${maxHeight}px`;
+            columnHeights.value = {
+                pending: heightPx,
+                in_progress: heightPx,
+                completed: heightPx
+            };
+        });
+    });
+};
+
+
 const tabOptions = [
     {
         value: 'top-level',
@@ -118,6 +172,32 @@ const getStatusColor = (status: string) => {
     }
 };
 
+// Helper function to get CSRF token with error handling and refresh capability
+const getCSRFToken = async (): Promise<string> => {
+    let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    if (!token) {
+        // Try to refresh the token by making a request to a simple endpoint
+        try {
+            const response = await fetch('/dashboard', {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            if (response.ok) {
+                // Token should be refreshed in the meta tag now
+                token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            }
+        } catch (e) {
+            console.error('Failed to refresh CSRF token:', e);
+        }
+    }
+
+    if (!token) {
+        throw new Error('CSRF token not found. Please refresh the page and try again.');
+    }
+
+    return token;
+};
 
 // Drag and drop functions
 const handleReorder = async (taskId: number, newPosition: number, confirmed = false) => {
@@ -126,7 +206,7 @@ const handleReorder = async (taskId: number, newPosition: number, confirmed = fa
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 new_position: newPosition,
@@ -274,7 +354,7 @@ const toggleTaskStatus = async (task: Task) => {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 status: newStatus,
@@ -371,7 +451,7 @@ const onKanbanDrop = async (event: DragEvent, newStatus: string) => {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': await getCSRFToken(),
             },
             body: JSON.stringify({
                 status: newStatus,
@@ -412,6 +492,9 @@ const onKanbanDrop = async (event: DragEvent, newStatus: string) => {
     } finally {
         kanbanDraggedTask.value = null;
         kanbanDragOverColumn.value = null;
+
+        // Resync column heights after task movement
+        synchronizeColumnHeights();
     }
 };
 
@@ -576,6 +659,25 @@ onMounted(() => {
     setTimeout(() => {
         initializeSortable();
     }, 200);
+});
+
+// Watch for tasks changes to resync column heights
+watch(() => tasks.value, () => {
+    synchronizeColumnHeights();
+}, { deep: true });
+
+// Watch for filter changes to resync when switching to board view
+watch(() => currentFilter.value, (newFilter) => {
+    if (newFilter === 'board') {
+        synchronizeColumnHeights();
+    }
+});
+
+// Sync heights when component mounts and board view is active
+onMounted(() => {
+    if (currentFilter.value === 'board') {
+        synchronizeColumnHeights();
+    }
 });
 
 // Cleanup on unmount
@@ -1070,16 +1172,16 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </span>
                         </div>
                         <div
-                            class="space-y-3 min-h-[200px] kanban-column"
+                            class="space-y-3 kanban-column"
                             data-status="pending"
-                            ref="pendingColumn"
+                            ref="pendingColumnRef"
+                            :style="{ minHeight: columnHeights.pending }"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'pending')"
                             @dragleave="onKanbanDragLeave"
                             @drop="onKanbanDrop($event, 'pending')"
-                            :class="{ 'bg-blue-100 border-2 border-blue-300 border-dashed': kanbanDragOverColumn === 'pending' }"
+                            :class="{ 'bg-blue-100 border-2 border-blue-300 border-dashed rounded-lg': kanbanDragOverColumn === 'pending' }"
                         >
-                            <!-- Tasks -->
                             <div
                                 v-for="task in tasks.filter(t => t.status === 'pending')"
                                 :key="task.id"
@@ -1108,12 +1210,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 </div>
                             </div>
 
-                            <!-- Empty state with drop zone -->
+                            <!-- Empty state message -->
                             <div
                                 v-if="tasks.filter(t => t.status === 'pending').length === 0"
-                                class="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm"
+                                class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
-                                Drop tasks here
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">📋</div>
+                                    <div>Drop tasks here</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1128,16 +1233,16 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </span>
                         </div>
                         <div
-                            class="space-y-3 min-h-[200px] kanban-column"
+                            class="space-y-3 kanban-column"
                             data-status="in_progress"
-                            ref="inProgressColumn"
+                            ref="inProgressColumnRef"
+                            :style="{ minHeight: columnHeights.in_progress }"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'in_progress')"
                             @dragleave="onKanbanDragLeave"
                             @drop="onKanbanDrop($event, 'in_progress')"
-                            :class="{ 'bg-blue-200 border-2 border-blue-400 border-dashed': kanbanDragOverColumn === 'in_progress' }"
+                            :class="{ 'bg-blue-200 border-2 border-blue-400 border-dashed rounded-lg': kanbanDragOverColumn === 'in_progress' }"
                         >
-                            <!-- Tasks -->
                             <div
                                 v-for="task in tasks.filter(t => t.status === 'in_progress')"
                                 :key="task.id"
@@ -1166,15 +1271,18 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 </div>
                             </div>
 
-                            <!-- Empty state with drop zone -->
+                            <!-- Empty state message -->
                             <div
                                 v-if="tasks.filter(t => t.status === 'in_progress').length === 0"
-                                class="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm"
+                                class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
-                                Drop tasks here
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">⏳</div>
+                                    <div>Drop tasks here</div>
+                                </div>
                             </div>
                         </div>
-                                </div>
+                    </div>
 
                     <!-- Done Column -->
                     <div class="bg-green-50 rounded-lg p-4">
@@ -1186,16 +1294,16 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </span>
                         </div>
                         <div
-                            class="space-y-3 min-h-[200px] kanban-column"
+                            class="space-y-3 kanban-column"
                             data-status="completed"
-                            ref="completedColumn"
+                            ref="completedColumnRef"
+                            :style="{ minHeight: columnHeights.completed }"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'completed')"
                             @dragleave="onKanbanDragLeave"
                             @drop="onKanbanDrop($event, 'completed')"
-                            :class="{ 'bg-green-200 border-2 border-green-400 border-dashed': kanbanDragOverColumn === 'completed' }"
+                            :class="{ 'bg-green-200 border-2 border-green-400 border-dashed rounded-lg': kanbanDragOverColumn === 'completed' }"
                         >
-                            <!-- Tasks -->
                             <div
                                 v-for="task in tasks.filter(t => t.status === 'completed')"
                                 :key="task.id"
@@ -1224,12 +1332,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 </div>
                             </div>
 
-                            <!-- Empty state with drop zone -->
+                            <!-- Empty state message -->
                             <div
                                 v-if="tasks.filter(t => t.status === 'completed').length === 0"
-                                class="flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm"
+                                class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
-                                Drop tasks here
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">✅</div>
+                                    <div>Drop tasks here</div>
+                                </div>
                             </div>
                         </div>
                     </div>

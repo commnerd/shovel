@@ -810,20 +810,27 @@ class TasksController extends Controller
 
 
     /**
-     * Add due dates to subtasks based on parent task or project due date.
+     * Add due dates to subtasks based on parent task due date only.
      */
     private function addDueDatesToSubtasks(array $subtasks, ?Task $parentTask, Project $project): array
     {
-        // Determine the reference due date (parent task or project)
+        // Determine the reference due date (only from parent task, not project)
         $referenceDueDate = null;
         if ($parentTask && $parentTask->due_date) {
             $referenceDueDate = $parentTask->due_date->format('Y-m-d');
-        } elseif ($project->due_date) {
-            $referenceDueDate = $project->due_date->format('Y-m-d');
         }
 
         if (!$referenceDueDate) {
-            return $subtasks; // No reference due date, return as-is
+            // Strip any AI-returned due dates since parent task has no due date
+            $strippedSubtasks = [];
+            foreach ($subtasks as $subtask) {
+                // Remove due_date key if it exists
+                if (isset($subtask['due_date'])) {
+                    unset($subtask['due_date']);
+                }
+                $strippedSubtasks[] = $subtask;
+            }
+            return $strippedSubtasks;
         }
 
         $updatedSubtasks = [];
