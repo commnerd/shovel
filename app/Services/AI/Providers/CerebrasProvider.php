@@ -214,7 +214,7 @@ Requirements:
     }
 
     /**
-     * Make an HTTP request to the Cerebrus API.
+     * Make an HTTP request to the Cerebras API.
      */
     protected function makeRequest(string $endpoint, array $data): array
     {

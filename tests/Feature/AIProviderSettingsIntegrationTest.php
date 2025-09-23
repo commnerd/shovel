@@ -14,7 +14,7 @@ beforeEach(function () {
 
 test('ai providers use settings from database for configuration', function () {
     // Set API key in database settings
-    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
     Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
 
     $providers = AI::getAvailableProviders();
@@ -44,9 +44,9 @@ test('ai providers show as unconfigured when no database settings', function () 
 
 test('settings page shows configured providers in default configuration', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
-    
+
     // Set API key in database settings
-    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
     $response = $this->actingAs($user)->get('/settings/system');
 
@@ -62,9 +62,9 @@ test('settings page shows configured providers in default configuration', functi
 
 test('default ai configuration accepts configured providers', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
-    
+
     // Set API key in database settings
-    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
     $this->actingAs($user);
 
@@ -80,9 +80,9 @@ test('default ai configuration accepts configured providers', function () {
 
 test('default ai configuration rejects unconfigured providers', function () {
     $user = User::factory()->create(['is_super_admin' => true]);
-    
+
     // Only set cerebras, leave openai unconfigured
-    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
     Setting::where('key', 'ai.openai.api_key')->delete();
 
     $this->actingAs($user);
@@ -97,7 +97,7 @@ test('default ai configuration rejects unconfigured providers', function () {
 
 test('ai configuration service correctly filters based on database settings', function () {
     // Set only cerebras API key
-    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+    Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
     Setting::where('key', 'ai.openai.api_key')->delete();
     Setting::where('key', 'ai.anthropic.api_key')->delete();
 

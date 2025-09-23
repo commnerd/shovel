@@ -77,7 +77,7 @@ class AIConfigurationTest extends TestCase
     {
         // Configure OpenAI provider first
         Setting::set('ai.openai.api_key', 'test-openai-key', 'string', 'OpenAI API Key');
-        
+
         // Set default AI configuration (only provider and model)
         Setting::set('ai.default.provider', 'openai');
         Setting::set('ai.default.model', 'gpt-4');
@@ -163,7 +163,7 @@ class AIConfigurationTest extends TestCase
     public function test_default_ai_settings_validation()
     {
         // Configure at least one provider so validation can work
-        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
         $response = $this->actingAs($this->user)
             ->withHeaders(['Accept' => 'application/json'])

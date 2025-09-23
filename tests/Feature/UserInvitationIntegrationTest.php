@@ -18,7 +18,7 @@ class UserInvitationIntegrationTest extends TestCase
         parent::setUp();
 
         // Configure AI provider to prevent middleware redirects
-        \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+        \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
     }
 
     public function test_complete_user_invitation_workflow()

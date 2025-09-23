@@ -90,26 +90,15 @@ RUN php artisan migrate --force
 # Create storage link for public files
 RUN php artisan storage:link
 
-# Generate deployment version and clear caches
+# Generate deployment version, clear caches, and build frontend assets
 RUN echo "Setting up deployment..." && \
-    php artisan app:deploy --force
-
-# Generate Wayfinder files for production build
-RUN echo "Generating Wayfinder files for production..." && \
-    WAYFINDER_BUILD=true php artisan wayfinder:generate --with-form && \
-    echo "Checking if RegisteredUserController.ts exists..." && \
-    if [ ! -f "/var/www/html/resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts" ]; then \
-        echo "RegisteredUserController.ts missing, copying from build context..." && \
-        cp /var/www/html/RegisteredUserController.ts /var/www/html/resources/js/actions/App/Http/Controllers/Auth/RegisteredUserController.ts && \
-        echo "Created RegisteredUserController.ts from build context"; \
-    fi && \
-    echo "Checking if routes/index.ts has register export..." && \
-    if ! grep -q "export const register" /var/www/html/resources/js/routes/index.ts; then \
-        echo "Routes missing register export, copying from build context..." && \
-        cp /var/www/html/routes_index.ts /var/www/html/resources/js/routes/index.ts && \
-        echo "Created routes/index.ts from build context"; \
-    fi && \
-    echo "Building assets..." && \
+    php artisan app:deploy --force && \
+    echo "Debug: Listing generated Wayfinder files..." && \
+    find /var/www/html/resources/js/actions -name "*.ts" | head -10 && \
+    find /var/www/html/resources/js/routes -name "*.ts" | head -10 && \
+    echo "Debug: Checking if RegisteredUserController.ts exists..." && \
+    ls -la /var/www/html/resources/js/actions/App/Http/Controllers/Auth/ || echo "Directory does not exist" && \
+    echo "Building frontend assets..." && \
     npm run build
 
 # Set proper permissions
@@ -118,7 +107,6 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache \
     && rm -fR /var/www/html/tests \
-    && rm -fR /var/www/html/public/resources/js \
     && rm -fR /var/www/html/public/resources/css
 
 # Expose port 80

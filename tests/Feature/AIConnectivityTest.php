@@ -14,11 +14,11 @@ class AIConnectivityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Configure AI provider for tests
-        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
-        Setting::set('ai.cerebras.base_url', 'https://api.cerebras.ai/v1', 'string', 'Cerebrus Base URL');
-        Setting::set('ai.cerebras.model', 'llama3.1-8b', 'string', 'Cerebrus Model');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
+        Setting::set('ai.cerebras.base_url', 'https://api.cerebras.ai/v1', 'string', 'Cerebras Base URL');
+        Setting::set('ai.cerebras.model', 'llama3.1-8b', 'string', 'Cerebras Model');
     }
 
     public function test_ai_base_url_responds_with_200(): void
@@ -28,7 +28,7 @@ class AIConnectivityTest extends TestCase
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
-            $this->markTestSkipped('Cerebrus API key not configured');
+            $this->markTestSkipped('Cerebras API key not configured');
         }
 
         try {
@@ -46,7 +46,7 @@ class AIConnectivityTest extends TestCase
             );
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus API: '.$e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebras API: '.$e->getMessage());
         }
     }
 
@@ -57,7 +57,7 @@ class AIConnectivityTest extends TestCase
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
-            $this->markTestSkipped('Cerebrus API key not configured');
+            $this->markTestSkipped('Cerebras API key not configured');
         }
 
         try {
@@ -88,7 +88,7 @@ class AIConnectivityTest extends TestCase
             }
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus chat endpoint: '.$e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebras chat endpoint: '.$e->getMessage());
         }
     }
 
@@ -99,7 +99,7 @@ class AIConnectivityTest extends TestCase
 
         // Skip test if no API key is configured
         if (empty($apiKey)) {
-            $this->markTestSkipped('Cerebrus API key not configured');
+            $this->markTestSkipped('Cerebras API key not configured');
         }
 
         try {
@@ -174,7 +174,7 @@ class AIConnectivityTest extends TestCase
             }
         } catch (\Exception $e) {
             // If we can't reach the API, skip the test rather than fail
-            $this->markTestSkipped('Cannot reach Cerebrus API for task generation: '.$e->getMessage());
+            $this->markTestSkipped('Cannot reach Cerebras API for task generation: '.$e->getMessage());
         }
     }
 }

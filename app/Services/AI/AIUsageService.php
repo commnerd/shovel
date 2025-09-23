@@ -193,6 +193,8 @@ class AIUsageService
         if (!file_exists($logFile)) {
             return [
                 'requests' => 0,
+                'successful_requests' => 0,
+                'failed_requests' => 0,
                 'tokens_estimated' => 0,
                 'cost_estimated' => 0,
             ];

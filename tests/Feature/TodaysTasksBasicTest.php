@@ -27,7 +27,7 @@ class TodaysTasksBasicTest extends TestCase
         parent::setUp();
 
         // Configure AI provider for tests
-        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebrus API Key');
+        Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
         // Create test organization structure
         $this->organization = Organization::factory()->create();
