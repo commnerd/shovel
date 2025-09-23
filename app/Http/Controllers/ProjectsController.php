@@ -19,7 +19,7 @@ class ProjectsController extends Controller
             $userGroupIds = auth()->user()->groups()->pluck('groups.id');
 
             // Get projects from user's groups or created by the user
-            $projects = \App\Models\Project::where(function ($query) use ($userGroupIds) {
+            $allProjects = \App\Models\Project::where(function ($query) use ($userGroupIds) {
                 $query->where('user_id', auth()->id())
                     ->orWhereIn('group_id', $userGroupIds);
             })
@@ -37,18 +37,24 @@ class ProjectsController extends Controller
                         'description' => $project->description,
                         'due_date' => $project->due_date?->format('Y-m-d'),
                         'status' => $project->status,
+                        'project_type' => $project->project_type,
                         'created_at' => $project->created_at->toISOString(),
                         'tasks_count' => $project->tasks_count,
                     ];
                 });
 
+            // Separate projects by type
+            $iterativeProjects = $allProjects->where('project_type', 'iterative')->values();
+            $finiteProjects = $allProjects->where('project_type', 'finite')->values();
+
             // If no projects exist, redirect to create page
-            if ($projects->isEmpty()) {
+            if ($allProjects->isEmpty()) {
                 return redirect()->route('projects.create');
             }
 
             return Inertia::render('Projects/Index', [
-                'projects' => $projects,
+                'iterativeProjects' => $iterativeProjects,
+                'finiteProjects' => $finiteProjects,
             ]);
         } catch (\Exception $e) {
             // If database tables don't exist, redirect to create page

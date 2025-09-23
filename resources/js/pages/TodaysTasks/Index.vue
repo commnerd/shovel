@@ -29,102 +29,93 @@
       </div>
     </template>
 
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+      <div class="space-y-6">
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                  </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-500">Curations</div>
-                  <div class="text-2xl font-bold text-gray-900">{{ stats.total_curations }}</div>
-                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Curations</div>
+                <div class="text-2xl font-bold text-gray-900">{{ stats.total_curations }}</div>
               </div>
             </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                  </div>
+          <div class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-500">Suggestions</div>
-                  <div class="text-2xl font-bold text-gray-900">{{ stats.total_suggestions }}</div>
-                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Suggestions</div>
+                <div class="text-2xl font-bold text-gray-900">{{ stats.total_suggestions }}</div>
               </div>
             </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
+          <div class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-500">Priority Tasks</div>
-                  <div class="text-2xl font-bold text-gray-900">{{ stats.priority_tasks }}</div>
-                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Priority Tasks</div>
+                <div class="text-2xl font-bold text-gray-900">{{ stats.priority_tasks }}</div>
               </div>
             </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
-                  </div>
+          <div class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
                 </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-500">Overdue</div>
-                  <div class="text-2xl font-bold text-gray-900">{{ stats.overdue_tasks }}</div>
-                </div>
+              </div>
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-500">Overdue</div>
+                <div class="text-2xl font-bold text-gray-900">{{ stats.overdue_tasks }}</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Priority Tasks Section -->
-        <div v-if="priorityTasks.length > 0" class="mb-8">
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">
-                🎯 Priority Tasks (Due Today or In Progress)
-              </h3>
-              <div class="space-y-3">
-                <div
-                  v-for="task in priorityTasks"
-                  :key="task.id"
-                  class="flex items-center justify-between p-4 border rounded-lg"
-                  :class="{
-                    'border-red-200 bg-red-50': task.is_overdue,
-                    'border-yellow-200 bg-yellow-50': !task.is_overdue && task.days_until_due <= 1,
-                    'border-blue-200 bg-blue-50': task.status === 'in_progress',
-                    'border-gray-200': !task.is_overdue && task.days_until_due > 1 && task.status !== 'in_progress'
-                  }"
-                >
+        <div v-if="priorityTasks.length > 0">
+          <div class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              🎯 Priority Tasks (Due Today or In Progress)
+            </h3>
+            <div class="space-y-3">
+              <div
+                v-for="task in priorityTasks"
+                :key="task.id"
+                class="flex items-center justify-between p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow"
+                :class="{
+                  'border-red-200 bg-red-50': task.is_overdue,
+                  'border-yellow-200 bg-yellow-50': !task.is_overdue && task.days_until_due <= 1,
+                  'border-blue-200 bg-blue-50': task.status === 'in_progress',
+                  'border-gray-200': !task.is_overdue && task.days_until_due > 1 && task.status !== 'in_progress'
+                }"
+              >
                   <div class="flex-1">
                     <div class="flex items-center space-x-3">
                       <h4 class="font-medium text-gray-900">{{ task.title }}</h4>
@@ -155,14 +146,14 @@
                     <button
                       v-if="task.status !== 'in_progress'"
                       @click="updateTaskStatus(task.id, 'in_progress')"
-                      class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                      class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                     >
                       Start
                     </button>
                     <button
                       v-if="task.status !== 'completed'"
                       @click="completeTask(task.id)"
-                      class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                      class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
                     >
                       Complete
                     </button>
@@ -174,14 +165,12 @@
         </div>
 
         <!-- AI Curations Section -->
-        <div v-if="curations.length > 0">
-          <div class="space-y-6">
-            <div
-              v-for="curation in curations"
-              :key="curation.id"
-              class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
-            >
-              <div class="p-6">
+        <div v-if="curations.length > 0" class="space-y-6">
+          <div
+            v-for="curation in curations"
+            :key="curation.id"
+            class="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+          >
                 <div class="flex items-center justify-between mb-4">
                   <div class="flex items-center space-x-3">
                     <h3 class="text-lg font-medium text-gray-900">
@@ -227,12 +216,12 @@
                   <div
                     v-for="suggestion in curation.suggestions"
                     :key="suggestion.task_id || suggestion.message"
-                    class="flex items-start space-x-3 p-3 rounded-lg"
+                    class="flex items-start space-x-3 p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
                     :class="{
-                      'bg-red-50 border border-red-200': suggestion.type === 'risk',
-                      'bg-yellow-50 border border-yellow-200': suggestion.type === 'priority',
-                      'bg-blue-50 border border-blue-200': suggestion.type === 'optimization',
-                      'bg-gray-50 border border-gray-200': !['risk', 'priority', 'optimization'].includes(suggestion.type)
+                      'bg-red-50 border-red-200': suggestion.type === 'risk',
+                      'bg-yellow-50 border-yellow-200': suggestion.type === 'priority',
+                      'bg-blue-50 border-blue-200': suggestion.type === 'optimization',
+                      'bg-gray-50 border-gray-200': !['risk', 'priority', 'optimization'].includes(suggestion.type)
                     }"
                   >
                     <div class="flex-shrink-0 mt-0.5">
@@ -260,27 +249,27 @@
                         <button
                           v-if="tasks[suggestion.task_id].status !== 'in_progress'"
                           @click="updateTaskStatus(suggestion.task_id, 'in_progress')"
-                          class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                          class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                         >
                           Start Task
                         </button>
                         <button
                           v-if="tasks[suggestion.task_id].status !== 'completed'"
                           @click="completeTask(suggestion.task_id)"
-                          class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                          class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
                         >
                           Mark Complete
                         </button>
                         <Link
                           v-if="tasks[suggestion.task_id]?.project?.id"
                           :href="`/dashboard/projects/${tasks[suggestion.task_id].project.id}/tasks`"
-                          class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
                         >
                           View Project
                         </Link>
                         <span
                           v-else
-                          class="px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded cursor-not-allowed"
+                          class="px-3 py-1 text-xs bg-gray-100 text-gray-500 rounded-md cursor-not-allowed"
                         >
                           View Project
                         </span>
@@ -291,25 +280,26 @@
               </div>
             </div>
           </div>
-        </div>
 
         <!-- Empty State -->
-        <div v-if="curations.length === 0 && priorityTasks.length === 0" class="text-center py-12">
-          <div class="max-w-md mx-auto">
-            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-              </svg>
+        <div v-if="curations.length === 0 && priorityTasks.length === 0" class="flex items-center justify-center min-h-[400px]">
+          <div class="text-center max-w-md mx-auto">
+            <div class="mb-6">
+              <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">No Tasks for Today</h3>
+              <p class="text-gray-500 mb-6">
+                You don't have any curated tasks for today yet. This could mean:
+              </p>
+              <ul class="text-sm text-gray-500 text-left space-y-1 mb-6">
+                <li>• No active projects with pending tasks</li>
+                <li>• Daily curation hasn't run yet (runs at 3:00 AM)</li>
+                <li>• All your tasks are up to date!</li>
+              </ul>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No Tasks for Today</h3>
-            <p class="text-gray-600 mb-4">
-              You don't have any curated tasks for today yet. This could mean:
-            </p>
-            <ul class="text-sm text-gray-500 text-left space-y-1 mb-6">
-              <li>• No active projects with pending tasks</li>
-              <li>• Daily curation hasn't run yet (runs at 3:00 AM)</li>
-              <li>• All your tasks are up to date!</li>
-            </ul>
             <button
               @click="refreshCurations"
               :disabled="isRefreshing"
@@ -321,8 +311,8 @@
         </div>
 
         <!-- No Priority Tasks but Has Curations -->
-        <div v-else-if="priorityTasks.length === 0 && curations.length > 0" class="mb-8">
-          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div v-else-if="priorityTasks.length === 0 && curations.length > 0">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -331,8 +321,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
   </AppLayout>
 </template>
 

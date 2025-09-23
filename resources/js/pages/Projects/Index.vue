@@ -15,15 +15,20 @@ interface Project {
     due_date?: string;
     tasks_count: number;
     created_at: string;
+    project_type?: 'iterative' | 'finite';
+    group_name?: string;
 }
 
 // Removed unused Task interface
 
 const page = usePage();
-const projects = computed(() => page.props.projects as Project[]);
+const iterativeProjects = computed(() => page.props.iterativeProjects as Project[] || []);
+const finiteProjects = computed(() => page.props.finiteProjects as Project[] || []);
 const newProject = computed(() => page.props.flash?.project as Project | undefined);
 
-const hasProjects = computed(() => projects.value.length > 0 || newProject.value);
+// Combine all projects for backward compatibility
+const allProjects = computed(() => [...iterativeProjects.value, ...finiteProjects.value]);
+const hasProjects = computed(() => allProjects.value.length > 0 || newProject.value);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -100,13 +105,17 @@ const getStatusIcon = (status: string) => {
                     </Card>
                 </div>
 
-                <!-- Existing projects list -->
-                <div v-if="projects.length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card
-                        v-for="project in projects"
-                        :key="project.id"
-                        class="hover:shadow-md transition-shadow"
-                    >
+                <!-- Iterative Projects Section -->
+                <div v-if="iterativeProjects.length > 0" class="space-y-4">
+                    <h3 class="text-lg font-semibold text-blue-700 flex items-center gap-2">
+                        🔄 Iterative Projects
+                    </h3>
+                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <Card
+                            v-for="project in iterativeProjects"
+                            :key="project.id"
+                            class="hover:shadow-md transition-shadow"
+                        >
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <Folder class="h-5 w-5" />
@@ -144,7 +153,60 @@ const getStatusIcon = (status: string) => {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
+                        </Card>
+                    </div>
+                </div>
+
+                <!-- Finite Projects Section -->
+                <div v-if="finiteProjects.length > 0" class="space-y-4">
+                    <h3 class="text-lg font-semibold text-green-700 flex items-center gap-2">
+                        🎯 Finite Projects
+                    </h3>
+                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <Card
+                            v-for="project in finiteProjects"
+                            :key="project.id"
+                            class="hover:shadow-md transition-shadow"
+                        >
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Folder class="h-5 w-5" />
+                                    <span>{{ project.title || 'Untitled Project' }}</span>
+                                    <span v-if="!project.title" class="text-xs text-gray-400 font-normal">#{{ project.id }}</span>
+                                </CardTitle>
+                                <CardDescription>{{ project.description }}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-3">
+                                    <div class="space-y-2">
+                                        <div class="text-sm text-gray-500">
+                                            {{ project.tasks_count }} tasks
+                                        </div>
+                                        <div v-if="project.due_date" class="flex items-center gap-2 text-sm text-gray-600">
+                                            <Calendar class="h-4 w-4" />
+                                            Due: {{ new Date(project.due_date).toLocaleDateString() }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Action buttons -->
+                                    <div class="flex gap-2 pt-2">
+                                        <Button size="sm" variant="outline" as-child class="flex-1">
+                                            <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/tasks`" class="flex items-center gap-2">
+                                                <Eye class="h-4 w-4" />
+                                                View Tasks
+                                            </Link>
+                                        </Button>
+                                        <Button size="sm" variant="ghost" as-child>
+                                            <Link v-if="project.id" :href="`/dashboard/projects/${project.id}/edit`" class="flex items-center gap-2">
+                                                <Edit class="h-4 w-4" />
+                                                Edit
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
 
             </div>
