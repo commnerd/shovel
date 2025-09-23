@@ -12,6 +12,14 @@ use PHPUnit\Framework\Attributes\BeforeClass;
 abstract class DuskTestCase extends BaseTestCase
 {
     /**
+     * Override runningInSail to always return false for local development
+     */
+    protected static function runningInSail(): bool
+    {
+        return false;
+    }
+
+    /**
      * Prepare for Dusk test execution.
      */
     #[BeforeClass]

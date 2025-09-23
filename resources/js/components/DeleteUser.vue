@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController.ts';
+// Removed Wayfinder import - using direct form action
 import { Form } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -37,7 +37,8 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                 </DialogTrigger>
                 <DialogContent>
                     <Form
-                        v-bind="ProfileController.destroy.form()"
+                        action="/profile"
+                        method="delete"
                         reset-on-success
                         @error="() => passwordInput?.$el?.focus()"
                         :options="{

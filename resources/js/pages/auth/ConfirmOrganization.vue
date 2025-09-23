@@ -4,7 +4,7 @@ import { useForm } from '@inertiajs/vue3';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { login } from '@/routes';
+// Removed Wayfinder import - using direct route
 import { Head } from '@inertiajs/vue3';
 import { LoaderCircle, Building2, Users, ArrowLeft } from 'lucide-vue-next';
 
@@ -112,7 +112,7 @@ const submitDecline = () => {
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="4">Log in</TextLink>
+                <TextLink href="/login" class="underline underline-offset-4" :tabindex="4">Log in</TextLink>
             </div>
         </div>
     </AuthBase>

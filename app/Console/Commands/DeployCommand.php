@@ -56,7 +56,6 @@ class DeployCommand extends Command
 
         // Clear and rebuild assets
         $this->info('🎨 Rebuilding assets...');
-        $this->call('wayfinder:generate', ['--with-form' => true]);
 
         // Note: npm run build should be run separately in CI/CD
         $this->warn('⚠️  Remember to run "npm run build" to rebuild frontend assets');

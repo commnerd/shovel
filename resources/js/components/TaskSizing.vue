@@ -54,11 +54,11 @@ const isTopLevel = computed(() => props.task.depth === 0);
 const isSubtask = computed(() => props.task.depth > 0);
 const canHaveSize = computed(() => {
     // Only top-level tasks can have T-shirt sizes
-    return isTopLevel.value && !isSubtask.value && props.task.depth === 0;
+    return isTopLevel.value && props.task.depth === 0;
 });
 const canHaveStoryPoints = computed(() => {
     // Only subtasks can have story points
-    return isSubtask.value && !isTopLevel.value && props.task.depth > 0;
+    return isSubtask.value && props.task.depth > 0;
 });
 
 const getSizeDisplayName = (size: string) => {

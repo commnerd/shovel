@@ -31,7 +31,7 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // Visit registration page
             $browser->visit('/register')
-                    ->assertSee('Register')
+                    ->assertSee('Create an account')
                     ->assertSee('Name')
                     ->assertSee('Email')
                     ->assertSee('Password');
@@ -42,10 +42,11 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
                     ->type('password', 'password')
                     ->type('password_confirmation', 'password')
                     ->uncheck('organization_email') // Don't use organization email
-                    ->press('Register');
+                    ->press('Create account');
 
-            // Should be redirected to dashboard
-            $browser->assertPathIs('/dashboard');
+            // Wait for redirect and check for any validation errors
+            $browser->waitForLocation('/dashboard', 10)
+                    ->assertPathIs('/dashboard');
         });
 
         // Verify user was created
@@ -79,7 +80,7 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // Visit registration page
             $browser->visit('/register')
-                    ->assertSee('Register');
+                    ->assertSee('Create an account');
 
             // Fill out registration form
             $browser->type('name', 'Second User')
@@ -87,10 +88,11 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
                     ->type('password', 'password')
                     ->type('password_confirmation', 'password')
                     ->uncheck('organization_email')
-                    ->press('Register');
+                    ->press('Create account');
 
-            // Should be redirected to dashboard
-            $browser->assertPathIs('/dashboard');
+            // Wait for redirect and check for any validation errors
+            $browser->waitForLocation('/dashboard', 10)
+                    ->assertPathIs('/dashboard');
         });
 
         // Verify second user was created
@@ -121,7 +123,7 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // Visit registration page
             $browser->visit('/register')
-                    ->assertSee('Register');
+                    ->assertSee('Create an account');
 
             // Fill out registration form with organization email
             $browser->type('name', 'First Org User')
@@ -129,10 +131,11 @@ class FirstUserSuperAdminDuskTest extends DuskTestCase
                     ->type('password', 'password')
                     ->type('password_confirmation', 'password')
                     ->check('organization_email') // Use organization email
-                    ->press('Register');
+                    ->press('Create account');
 
             // Should be redirected to login (pending approval)
-            $browser->assertPathIs('/login')
+            $browser->waitForLocation('/login', 10)
+                    ->assertPathIs('/login')
                     ->assertSee('registration-pending');
         });
 

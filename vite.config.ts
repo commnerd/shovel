@@ -1,4 +1,3 @@
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -22,14 +21,6 @@ export default defineConfig(({ mode }) => {
             },
         }),
     ];
-
-    // Only add wayfinder plugin in development mode
-    // In production/Docker, we use 'php artisan wayfinder:generate' instead
-    if (mode === 'development') {
-        plugins.splice(2, 0, wayfinder({
-            formVariants: true,
-        }));
-    }
 
     return {
         plugins,

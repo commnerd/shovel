@@ -7,12 +7,12 @@ import { type BreadcrumbItem } from '@/types';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { appearance } from '@/routes';
+// Removed Wayfinder import - using direct route
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
         title: 'Appearance settings',
-        href: appearance().url,
+        href: '/settings/appearance',
     },
 ];
 </script>

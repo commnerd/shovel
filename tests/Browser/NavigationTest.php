@@ -3,19 +3,45 @@
 namespace Tests\Browser;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 class NavigationTest extends DuskTestCase
 {
+    use DatabaseMigrations;
+    
     protected $user;
 
     protected function setUp(): void
     {
         parent::setUp();
         
+        // Run migrations to ensure database is set up
+        $this->artisan('migrate');
+        
         // Clean up any existing test users
         User::where('email', 'like', 'navigation%')->delete();
+        
+        // Create default organization if it doesn't exist
+        $defaultOrg = \App\Models\Organization::where('is_default', true)->first();
+        if (!$defaultOrg) {
+            $defaultOrg = \App\Models\Organization::create([
+                'name' => 'None',
+                'domain' => null,
+                'address' => null,
+                'creator_id' => null,
+                'is_default' => true,
+            ]);
+            
+            // Create the default 'Everyone' group
+            \App\Models\Group::create([
+                'name' => 'Everyone',
+                'description' => 'Default group for individual users',
+                'organization_id' => $defaultOrg->id,
+                'is_default' => true,
+            ]);
+        }
         
         // Create a test user for navigation testing
         $this->user = User::factory()->create([
@@ -24,13 +50,11 @@ class NavigationTest extends DuskTestCase
             'password' => bcrypt('password'),
             'pending_approval' => false,
             'approved_at' => now(),
+            'organization_id' => $defaultOrg->id,
         ]);
         
-        // Assign user to default organization and group
-        $defaultOrg = \App\Models\Organization::where('is_default', true)->first();
+        // Assign user to default group
         $defaultGroup = $defaultOrg->defaultGroup();
-        $this->user->organization_id = $defaultOrg->id;
-        $this->user->save();
         $this->user->groups()->attach($defaultGroup->id, ['joined_at' => now()]);
     }
 
@@ -38,11 +62,10 @@ class NavigationTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->assertSee('Laravel')
-                    ->assertSee('Well begun is half done.')
-                    ->assertSee('Aristotle')
-                    ->assertPresent('a[href="/login"]')
-                    ->assertPresent('a[href="/register"]');
+                    ->assertSee('Foca')
+                    ->assertSee('Seal your focus')
+                    ->assertSee('Get early access')
+                    ->assertPresent('a[href="#waitlist"]');
         });
     }
 
