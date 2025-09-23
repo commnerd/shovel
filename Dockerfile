@@ -82,6 +82,7 @@ RUN echo "APP_NAME=Foca" > .env && \
     echo "QUEUE_CONNECTION=sync" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
     echo "SESSION_LIFETIME=120" >> .env && \
+    echo "WAYFINDER_BUILD=true" >> .env && \
     rm app_key.txt
 
 # Run migrations
@@ -93,6 +94,8 @@ RUN php artisan storage:link
 # Generate deployment version, clear caches, and build frontend assets
 RUN echo "Setting up deployment..." && \
     php artisan app:deploy --force && \
+    echo "Generating Wayfinder files..." && \
+    WAYFINDER_BUILD=true php artisan wayfinder:generate && \
     echo "Debug: Listing generated Wayfinder files..." && \
     find /var/www/html/resources/js/actions -name "*.ts" | head -10 && \
     find /var/www/html/resources/js/routes -name "*.ts" | head -10 && \
@@ -107,7 +110,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache \
     && rm -fR /var/www/html/tests \
-    && rm -fR /var/www/html/public/resources/css
+    && rm -fR /var/www/html/public/resources/css \
+    && rm -fR /var/www/html/public/resources/js
 
 # Expose port 80
 EXPOSE 80
