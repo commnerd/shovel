@@ -349,6 +349,12 @@ class ProjectsController extends Controller
                     $suggestedTitle = $aiResponse->getProjectTitle();
                 }
 
+                // If still no title, generate a simple one from description
+                if (empty($suggestedTitle)) {
+                    $words = str_word_count($validated['description'], 1);
+                    $suggestedTitle = implode(' ', array_slice($words, 0, 4)) . ' Project';
+                }
+
                 // Get AI communication
                 $aiCommunication = $aiResponse->getCommunication();
 
@@ -397,6 +403,12 @@ class ProjectsController extends Controller
                     'sort_order' => 5,
                 ],
             ];
+
+            // Generate a fallback title if none provided
+            if (empty($suggestedTitle)) {
+                $words = str_word_count($validated['description'], 1);
+                $suggestedTitle = implode(' ', array_slice($words, 0, 4)) . ' Project';
+            }
         }
 
         // Get user's available groups for the form
@@ -414,7 +426,7 @@ class ProjectsController extends Controller
 
         return Inertia::render('Projects/CreateTasks', [
             'projectData' => [
-                'title' => $suggestedTitle,
+                'title' => $suggestedTitle ?? '', // Use empty string instead of null
                 'description' => $validated['description'],
                 'due_date' => $validated['due_date'] ?? null,
                 'group_id' => $validated['group_id'] ?? ($defaultGroup['id'] ?? null),
