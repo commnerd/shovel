@@ -447,6 +447,9 @@ Requirements:
                         : 'pending',
                     'due_date' => $dueDate,
                     'size' => $this->extractTaskSize($task),
+                    'initial_story_points' => $task['initial_story_points'] ?? null,
+                    'current_story_points' => $task['current_story_points'] ?? null,
+                    'story_points_change_count' => $task['story_points_change_count'] ?? 0,
                     'subtasks' => $task['subtasks'] ?? [],
                 ];
             }
@@ -461,8 +464,14 @@ Requirements:
     protected function extractTaskSize(array $task): ?string
     {
         // Check if size is explicitly provided
-        if (isset($task['size']) && in_array(strtoupper($task['size']), ['XS', 'S', 'M', 'L', 'XL'])) {
-            return strtoupper($task['size']);
+        if (isset($task['size']) && in_array(strtolower($task['size']), ['xs', 's', 'm', 'l', 'xl'])) {
+            return strtolower($task['size']);
+        }
+
+        // Only generate fallback size for top-level tasks (when no parent_id is implied)
+        // For subtasks, return null as they should use story points instead
+        if (isset($task['parent_id']) || isset($task['is_subtask']) || isset($task['current_story_points'])) {
+            return null;
         }
 
         // Generate fallback size based on task content
@@ -868,5 +877,81 @@ Each subtask in your response must include "initial_story_points" and "current_s
         array_unshift($notes, $serviceInfo);
 
         return $notes;
+    }
+
+    /**
+     * Build system prompt for task generation (used by controller for prompt viewing).
+     */
+    protected function buildTaskGenerationSystemPrompt(array $taskSchema = []): string
+    {
+        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
+
+        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your role is to analyze project descriptions and generate comprehensive, actionable task breakdowns. You must respond with valid JSON only - no explanations, no markdown, no code blocks.';
+
+        $enhancedPrompt = $this->buildSystemPromptWithSchema($basePrompt, $taskSchema);
+
+        return $enhancedPrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
+    }
+
+    /**
+     * Build user prompt for task generation (used by controller for prompt viewing).
+     */
+    protected function buildTaskGenerationUserPrompt(string $projectDescription, array $aiOptions = []): string
+    {
+        $userPrompt = 'Please analyze this project description and generate a comprehensive task breakdown: ' . $projectDescription . '
+
+CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
+{
+  "tasks": [
+    {
+      "title": "Task title",
+      "description": "Detailed task description",
+      "status": "pending",
+      "sort_order": 1,
+      "size": "m",
+      "initial_story_points": null,
+      "current_story_points": null,
+      "story_points_change_count": null
+    }
+  ],
+  "summary": "Brief project summary",
+  "notes": ["Additional insights", "Implementation suggestions"]
+}
+
+Requirements:
+- Generate 3-8 actionable TOP-LEVEL tasks (these will become parent tasks that can have subtasks)
+- Each task must have: title, description, status (always "pending"), sort_order, size
+- For top-level tasks, use T-shirt sizing only (size field):
+  * "xs": Very small tasks, quick fixes, simple changes
+  * "s": Small tasks, minor features, simple implementations
+  * "m": Medium tasks, moderate complexity, standard features
+  * "l": Large tasks, complex features, significant work
+  * "xl": Extra large tasks, major features, complex implementations
+- Set initial_story_points, current_story_points, and story_points_change_count to null (these are only for subtasks)
+- Set sort_order sequentially (1, 2, 3, etc.)
+- Tasks should be logical, sequential, and comprehensive
+- Include a brief summary of the project
+- Add helpful notes with insights or suggestions
+- Respond with valid JSON only - no other text';
+
+        // Add user feedback if provided in options
+        if (!empty($aiOptions['user_feedback'])) {
+            $userPrompt .= "\n\n**User Feedback for Improvement:**\n";
+            $userPrompt .= $aiOptions['user_feedback'] . "\n\n";
+            $userPrompt .= 'Please incorporate this feedback to improve the task generation.';
+        }
+
+        return $userPrompt;
+    }
+
+    /**
+     * Build messages array for chat completion (used by controller for prompt viewing).
+     */
+    protected function buildMessages(string $systemPrompt, string $userPrompt): array
+    {
+        return [
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt],
+        ];
     }
 }

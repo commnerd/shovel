@@ -252,10 +252,10 @@ REASON: [brief explanation]';
 
             // Look for SIZE: pattern
             if (preg_match('/SIZE:\s*(XS|S|M|L|XL)/i', $content, $matches)) {
-                $size = strtoupper($matches[1]);
+                $size = strtolower($matches[1]); // Convert to lowercase for database storage
 
                 // Validate size
-                if (in_array($size, ['XS', 'S', 'M', 'L', 'XL'])) {
+                if (in_array($size, ['xs', 's', 'm', 'l', 'xl'])) {
                     return AITaskResponse::success(
                         tasks: [['size' => $size, 'reason' => $this->extractReason($content)]],
                         notes: ['AI successfully sized the task'],
@@ -266,8 +266,8 @@ REASON: [brief explanation]';
 
             // Fallback: look for just the size anywhere in the response
             if (preg_match('/\b(XS|S|M|L|XL)\b/i', $content, $matches)) {
-                $size = strtoupper($matches[1]);
-                if (in_array($size, ['XS', 'S', 'M', 'L', 'XL'])) {
+                $size = strtolower($matches[1]); // Convert to lowercase for database storage
+                if (in_array($size, ['xs', 's', 'm', 'l', 'xl'])) {
                     return AITaskResponse::success(
                         tasks: [['size' => $size, 'reason' => 'AI suggested size']],
                         notes: ['AI suggested size from response'],
