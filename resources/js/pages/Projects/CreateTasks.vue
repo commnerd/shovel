@@ -22,7 +22,8 @@ import {
     MessageSquare,
     Lightbulb,
     AlertTriangle,
-    Info
+    Info,
+    X
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
@@ -68,6 +69,8 @@ interface Props {
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
     aiCommunication?: AICommunication | null;
+    promptData?: any | null;
+    fullPromptText?: any | null;
     userGroups: Group[];
     defaultGroupId?: number;
 }
@@ -121,6 +124,10 @@ const newTaskDescription = ref('');
 // Regeneration modal state
 const showRegenerationModal = ref(false);
 const isRegeneratingWithFeedback = ref(false);
+
+// Prompt modal state
+const showPromptModal = ref(false);
+const showFullPrompt = ref(false);
 
 
 // Status icons
@@ -199,6 +206,11 @@ const regenerateTasksWithFeedback = (feedback: string) => {
 
 const cancelRegeneration = () => {
     showRegenerationModal.value = false;
+};
+
+const closePromptModal = () => {
+    showPromptModal.value = false;
+    showFullPrompt.value = false;
 };
 
 const goBackToEdit = () => {
@@ -531,6 +543,17 @@ const refreshTasks = () => {
                             Back to Edit Description
                         </Button>
                         <Button
+                            v-if="props.promptData"
+                            @click="showPromptModal = true"
+                            variant="outline"
+                            size="lg"
+                            :disabled="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <MessageSquare class="h-4 w-4" />
+                            View Prompt
+                        </Button>
+                        <Button
                             @click="createProject"
                             :disabled="form.processing || form.tasks.length === 0"
                             size="lg"
@@ -558,5 +581,141 @@ const refreshTasks = () => {
             @regenerate="regenerateTasksWithFeedback"
             @cancel="cancelRegeneration"
         />
+
+        <!-- Prompt Viewing Modal -->
+        <div v-if="showPromptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">AI Prompt Details</h3>
+                    <Button
+                        @click="closePromptModal"
+                        variant="ghost"
+                        size="sm"
+                        class="h-8 w-8 p-0"
+                    >
+                        <X class="h-4 w-4" />
+                    </Button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[60vh]">
+                    <div v-if="props.promptData" class="space-y-6">
+                        <!-- AI Configuration -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">AI Configuration</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="font-medium text-gray-600">Provider:</span>
+                                        <span class="ml-2 text-gray-900">{{ props.promptData.provider }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-600">Model:</span>
+                                        <span class="ml-2 text-gray-900">{{ props.promptData.model }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Information -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Project Information</h4>
+                            <div class="bg-blue-50 p-4 rounded-lg space-y-2">
+                                <div>
+                                    <span class="font-medium text-blue-800">Description:</span>
+                                    <span class="ml-2 text-blue-900">{{ props.promptData.project_description }}</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-blue-800">Project Type:</span>
+                                    <span class="ml-2 text-blue-900">{{ props.promptData.project_type }}</span>
+                                </div>
+                                <div v-if="props.promptData.due_date">
+                                    <span class="font-medium text-blue-800">Due Date:</span>
+                                    <span class="ml-2 text-blue-900">{{ props.promptData.due_date }}</span>
+                                </div>
+                                <div v-if="props.promptData.user_feedback !== 'No specific feedback provided'">
+                                    <span class="font-medium text-blue-800">User Feedback:</span>
+                                    <span class="ml-2 text-blue-900">{{ props.promptData.user_feedback }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Iteration Settings (for iterative projects) -->
+                        <div v-if="props.promptData.iteration_settings">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Iteration Settings</h4>
+                            <div class="bg-green-50 p-4 rounded-lg space-y-2">
+                                <div>
+                                    <span class="font-medium text-green-800">Default Iteration Length:</span>
+                                    <span class="ml-2 text-green-900">{{ props.promptData.iteration_settings.default_iteration_length_weeks || 'Not set' }} weeks</span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-green-800">Auto Create Iterations:</span>
+                                    <span class="ml-2 text-green-900">{{ props.promptData.iteration_settings.auto_create_iterations ? 'Yes' : 'No' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Task Schema -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Expected Task Schema</h4>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <pre class="text-xs text-purple-900 whitespace-pre-wrap font-mono leading-relaxed">{{ JSON.stringify(props.promptData.task_schema, null, 2) }}</pre>
+                            </div>
+                        </div>
+
+                        <!-- Full Prompt Section -->
+                        <div v-if="props.fullPromptText" class="border-t pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-semibold text-gray-800">Full AI Prompt</h4>
+                                <Button
+                                    @click="showFullPrompt = !showFullPrompt"
+                                    variant="outline"
+                                    size="sm"
+                                    class="flex items-center gap-2"
+                                >
+                                    <MessageSquare class="h-3 w-3" />
+                                    {{ showFullPrompt ? 'Hide' : 'Show' }} Full Prompt
+                                </Button>
+                            </div>
+
+                            <div v-if="showFullPrompt" class="space-y-4">
+                                <!-- System Prompt -->
+                                <div v-if="props.fullPromptText.system_prompt">
+                                    <h5 class="text-xs font-semibold text-red-800 mb-2 flex items-center gap-1">
+                                        <MessageSquare class="h-3 w-3" />
+                                        System Prompt
+                                    </h5>
+                                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                        <pre class="text-xs text-red-900 whitespace-pre-wrap font-mono leading-relaxed">{{ props.fullPromptText.system_prompt }}</pre>
+                                    </div>
+                                </div>
+
+                                <!-- User Prompt -->
+                                <div v-if="props.fullPromptText.user_prompt">
+                                    <h5 class="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                                        <MessageSquare class="h-3 w-3" />
+                                        User Prompt
+                                    </h5>
+                                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <pre class="text-xs text-blue-900 whitespace-pre-wrap font-mono leading-relaxed">{{ props.fullPromptText.user_prompt }}</pre>
+                                    </div>
+                                </div>
+
+                                <!-- Messages Format (for developers) -->
+                                <div v-if="props.fullPromptText.messages?.length" class="bg-gray-100 p-4 rounded-lg">
+                                    <h5 class="text-xs font-semibold text-gray-800 mb-2">API Messages Format</h5>
+                                    <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{{ JSON.stringify(props.fullPromptText.messages, null, 2) }}</pre>
+                                </div>
+
+                                <!-- Error or Note -->
+                                <div v-if="props.fullPromptText.error || props.fullPromptText.note" class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <p class="text-xs text-yellow-800">
+                                        {{ props.fullPromptText.error || props.fullPromptText.note }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </AppLayout>
 </template>

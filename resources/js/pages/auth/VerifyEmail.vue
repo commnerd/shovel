@@ -2,12 +2,18 @@
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, router } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
 defineProps<{
     status?: string;
 }>();
+
+const handleLogout = () => {
+    router.post('/logout', {}, {
+        onFinish: () => router.flushAll()
+    });
+};
 </script>
 
 <template>
@@ -24,7 +30,7 @@ defineProps<{
                 Resend verification email
             </Button>
 
-            <TextLink href="/logout" as="button" class="mx-auto block text-sm"> Log out </TextLink>
+            <button @click="handleLogout" class="mx-auto block text-sm text-blue-600 hover:text-blue-800 underline"> Log out </button>
         </Form>
     </AuthLayout>
 </template>

@@ -181,7 +181,7 @@ class NavigationTest extends DuskTestCase
                     ->visit('/dashboard')
                     ->click('button[aria-label="User menu"]')
                     ->waitForText('Log out')
-                    ->clickLink('Log out')
+                    ->click('button:contains("Log out")')
                     ->waitForLocation('/')
                     ->assertPathIs('/')
                     ->assertSee('Laravel');

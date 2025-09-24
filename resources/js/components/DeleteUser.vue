@@ -37,7 +37,7 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                 </DialogTrigger>
                 <DialogContent>
                     <Form
-                        action="/profile"
+                        action="/settings/profile"
                         method="delete"
                         reset-on-success
                         @error="() => passwordInput?.$el?.focus()"

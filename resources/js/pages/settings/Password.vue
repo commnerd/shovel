@@ -14,7 +14,7 @@ import { type BreadcrumbItem } from '@/types';
 const breadcrumbItems: BreadcrumbItem[] = [
     {
         title: 'Password settings',
-        href: '/password',
+        href: '/settings/password',
     },
 ];
 
@@ -31,7 +31,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                 <HeadingSmall title="Update password" description="Ensure your account is using a long, random password to stay secure" />
 
                 <Form
-                    action="/password"
+                    action="/settings/password"
                     method="put"
                     :options="{
                         preserveScroll: true,

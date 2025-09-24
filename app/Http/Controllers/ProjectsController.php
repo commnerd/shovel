@@ -375,6 +375,10 @@ class ProjectsController extends Controller
                 // Get AI communication
                 $aiCommunication = $aiResponse->getCommunication();
 
+                // Generate prompt data for viewing
+                $promptData = $this->generatePromptForViewing($validated, $taskSchema, $aiOptions, $validated['ai_provider'] ?? 'cerebras', $validated['ai_model'] ?? null);
+                $fullPromptText = $this->generateFullPromptText($validated, $taskSchema, $aiOptions, $validated['ai_provider'] ?? 'cerebras', $validated['ai_model'] ?? null);
+
                 \Log::info('AI task generation successful', [
                     'task_count' => count($suggestedTasks),
                     'has_notes' => $aiResponse->hasNotes(),
@@ -476,6 +480,8 @@ class ProjectsController extends Controller
             'suggestedTasks' => $suggestedTasks,
             'aiUsed' => $aiUsed,
             'aiCommunication' => $aiCommunication,
+            'promptData' => $promptData ?? null,
+            'fullPromptText' => $fullPromptText ?? null,
             'userGroups' => $userGroups,
             'defaultGroupId' => $defaultGroup['id'] ?? null,
         ]);
@@ -679,5 +685,85 @@ class ProjectsController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Generate a readable version of the prompt used for AI project task generation.
+     */
+    private function generatePromptForViewing(array $validated, array $taskSchema, array $aiOptions, string $provider, ?string $model): array
+    {
+        $prompt = [
+            'provider' => $provider,
+            'model' => $model ?? 'default',
+            'project_description' => $validated['description'],
+            'project_type' => $validated['project_type'] ?? 'iterative',
+            'due_date' => $validated['due_date'] ?? null,
+            'user_feedback' => $aiOptions['user_feedback'] ?? 'No specific feedback provided',
+            'ai_options' => $aiOptions,
+            'task_schema' => $taskSchema,
+        ];
+
+        // Add project due date if available
+        if (!empty($validated['due_date'])) {
+            $prompt['project_due_date'] = $validated['due_date'];
+        }
+
+        // Add iteration settings for iterative projects
+        if (($validated['project_type'] ?? 'iterative') === 'iterative') {
+            $prompt['iteration_settings'] = [
+                'default_iteration_length_weeks' => $validated['default_iteration_length_weeks'] ?? null,
+                'auto_create_iterations' => $validated['auto_create_iterations'] ?? false,
+            ];
+        }
+
+        return $prompt;
+    }
+
+    /**
+     * Generate the full prompt text that would be sent to the AI service for project task generation.
+     */
+    private function generateFullPromptText(array $validated, array $taskSchema, array $aiOptions, string $provider, ?string $model): array
+    {
+        try {
+            // Get the AI provider instance to access its prompt building methods
+            $aiProvider = \App\Services\AI\Facades\AI::provider($provider);
+
+            // For CerebrasProvider, we can call the protected methods via reflection
+            if ($aiProvider instanceof \App\Services\AI\Providers\CerebrasProvider) {
+                $reflection = new \ReflectionClass($aiProvider);
+
+                // Get system prompt
+                $buildSystemPromptMethod = $reflection->getMethod('buildTaskGenerationSystemPrompt');
+                $buildSystemPromptMethod->setAccessible(true);
+                $systemPrompt = $buildSystemPromptMethod->invoke($aiProvider, $taskSchema);
+
+                // Get user prompt
+                $buildUserPromptMethod = $reflection->getMethod('buildTaskGenerationUserPrompt');
+                $buildUserPromptMethod->setAccessible(true);
+                $userPrompt = $buildUserPromptMethod->invoke($aiProvider, $validated['description'], $aiOptions);
+
+                // Get messages format
+                $buildMessagesMethod = $reflection->getMethod('buildMessages');
+                $buildMessagesMethod->setAccessible(true);
+                $messages = $buildMessagesMethod->invoke($aiProvider, $systemPrompt, $userPrompt);
+
+                return [
+                    'system_prompt' => $systemPrompt,
+                    'user_prompt' => $userPrompt,
+                    'messages' => $messages,
+                ];
+            }
+
+            return [
+                'note' => 'Full prompt text not available for this provider',
+                'provider' => $provider,
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'error' => 'Failed to generate full prompt text: ' . $e->getMessage(),
+                'provider' => $provider,
+            ];
+        }
     }
 }

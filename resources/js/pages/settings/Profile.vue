@@ -22,7 +22,7 @@ defineProps<Props>();
 const breadcrumbItems: BreadcrumbItem[] = [
     {
         title: 'Profile settings',
-        href: '/profile',
+        href: '/settings/profile',
     },
 ];
 
@@ -38,7 +38,7 @@ const user = page.props.auth.user;
             <div class="flex flex-col space-y-6">
                 <HeadingSmall title="Profile information" description="Update your name and email address" />
 
-                <Form action="/profile" method="patch" class="space-y-6" v-slot="{ errors, processing, recentlySuccessful }">
+                <Form action="/settings/profile" method="patch" class="space-y-6" v-slot="{ errors, processing, recentlySuccessful }">
                     <div class="grid gap-2">
                         <Label for="name">Name</Label>
                         <Input
