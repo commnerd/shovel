@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Group {
     id: number;
@@ -39,6 +39,7 @@ interface Props {
     defaultAISettings: DefaultAISettings;
     availableProviders: Record<string, ProviderInfo>;
     formData?: FormData;
+    userOrganizationName: string;
 }
 
 const props = defineProps<Props>();
@@ -85,6 +86,9 @@ const form = useForm({
 });
 
 const isGeneratingTasks = ref(false);
+
+// Hide group selection for users in the 'None' organization
+const shouldShowGroupSelection = computed(() => props.userOrganizationName !== 'None');
 
 const generateTasks = () => {
     if (!form.description.trim() || isGeneratingTasks.value) return;
@@ -193,7 +197,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                     </p>
                 </div>
 
-                <div class="space-y-2">
+                <div v-if="shouldShowGroupSelection" class="space-y-2">
                     <Label for="group_id" class="flex items-center gap-2">
                         <Users class="h-4 w-4" />
                         Assign to Group

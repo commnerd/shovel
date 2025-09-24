@@ -123,6 +123,7 @@ class ProjectsController extends Controller
             'defaultAISettings' => $defaultAISettings,
             'availableProviders' => $availableProviders,
             'formData' => $formData,
+            'userOrganizationName' => $user->organization?->name ?? 'None',
         ]);
     }
 
@@ -487,11 +488,12 @@ class ProjectsController extends Controller
     {
         // Ensure we have a fresh user object from the database
         $user = auth()->user();
-        if (!$user || !$user->organization_id) {
+        if (!$user || !$user->organization_id || $user->organization?->name === 'None') {
             // Refresh user from database to ensure we have latest data
-            $user = \App\Models\User::find(auth()->id());
-            if ($user) {
-                auth()->setUser($user);
+            $freshUser = \App\Models\User::find(auth()->id());
+            if ($freshUser) {
+                auth()->setUser($freshUser);
+                $user = $freshUser;
             }
         }
 

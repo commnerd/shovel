@@ -41,6 +41,7 @@ interface Props {
     defaultAISettings: DefaultAISettings;
     availableProviders: Record<string, ProviderInfo>;
     formData?: FormData;
+    userOrganizationName: string;
 }
 
 defineProps<Props>();
@@ -91,6 +92,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         :defaultAISettings="defaultAISettings"
                         :availableProviders="availableProviders"
                         :formData="formData"
+                        :userOrganizationName="userOrganizationName"
                     />
                 </div>
             </div>

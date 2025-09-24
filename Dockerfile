@@ -101,8 +101,7 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache \
     && rm -fR /var/www/html/tests \
-    && rm -fR /var/www/html/public/resources/css \
-    && rm -fR /var/www/html/public/resources/js
+    && rm -fR /var/www/html/storage/testing
 
 # Expose port 80
 EXPOSE 80
