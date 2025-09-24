@@ -463,9 +463,12 @@ Requirements:
      */
     protected function extractTaskSize(array $task): ?string
     {
-        // Check if size is explicitly provided
-        if (isset($task['size']) && in_array(strtolower($task['size']), ['xs', 's', 'm', 'l', 'xl'])) {
-            return strtolower($task['size']);
+        // Check if size is explicitly provided (accept both uppercase and lowercase)
+        if (isset($task['size'])) {
+            $size = strtolower($task['size']);
+            if (in_array($size, ['xs', 's', 'm', 'l', 'xl'])) {
+                return $size; // Return lowercase for database storage
+            }
         }
 
         // Only generate fallback size for top-level tasks (when no parent_id is implied)

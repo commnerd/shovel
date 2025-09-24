@@ -520,11 +520,14 @@ class Task extends Model
             throw new \InvalidArgumentException('Only top-level tasks can have a T-shirt size');
         }
 
-        if (!array_key_exists($size, self::SIZES)) {
+        // Normalize size to lowercase for database storage
+        $normalizedSize = strtolower($size);
+
+        if (!array_key_exists($normalizedSize, self::SIZES)) {
             throw new \InvalidArgumentException('Invalid size. Must be one of: ' . implode(', ', array_keys(self::SIZES)));
         }
 
-        $this->update(['size' => $size]);
+        $this->update(['size' => $normalizedSize]);
     }
 
     /**
