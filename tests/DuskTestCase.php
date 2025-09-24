@@ -12,11 +12,11 @@ use PHPUnit\Framework\Attributes\BeforeClass;
 abstract class DuskTestCase extends BaseTestCase
 {
     /**
-     * Override runningInSail to always return false for local development
+     * Override runningInSail to always return true when running Dusk tests
      */
     protected static function runningInSail(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -65,7 +65,7 @@ abstract class DuskTestCase extends BaseTestCase
     protected function baseUrl()
     {
         return static::runningInSail()
-            ? 'http://172.19.0.4'
+            ? 'http://laravel.test'
             : config('app.url');
     }
 

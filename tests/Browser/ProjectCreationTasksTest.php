@@ -134,8 +134,8 @@ class ProjectCreationTasksTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
                 ->visit('/dashboard/projects/create/tasks')
-                ->waitForText('Project Task Generation')
-                ->assertSee('Project Task Generation')
+                ->waitForText('AI Generated Tasks')
+                ->assertSee('AI Generated Tasks')
                 ->type('#description', 'I want to build a business')
                 ->select('#ai_provider', 'cerebras')
                 ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')
@@ -259,8 +259,8 @@ class ProjectCreationTasksTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
                 ->visit('/dashboard/projects/create/tasks')
-                ->waitForText('Project Task Generation')
-                ->assertSee('Project Task Generation')
+                ->waitForText('AI Generated Tasks')
+                ->assertSee('AI Generated Tasks')
                 ->type('#description', 'I want to build a business')
                 ->select('#ai_provider', 'cerebras')
                 ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')
@@ -390,8 +390,8 @@ class ProjectCreationTasksTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
                 ->visit('/dashboard/projects/create/tasks')
-                ->waitForText('Project Task Generation')
-                ->assertSee('Project Task Generation')
+                ->waitForText('AI Generated Tasks')
+                ->assertSee('AI Generated Tasks')
                 ->type('#description', 'I want to build a business')
                 ->select('#ai_provider', 'cerebras')
                 ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')

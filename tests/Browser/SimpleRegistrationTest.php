@@ -8,14 +8,16 @@ use Tests\DuskTestCase;
 
 class SimpleRegistrationTest extends DuskTestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, MocksAIServices;
 
     protected function setUp(): void
     {
         parent::setUp();
+        // Mock AI services to prevent real API calls
+        $this->mockAIServices();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     /**

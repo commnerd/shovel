@@ -9,20 +9,23 @@ use Tests\DuskTestCase;
 
 class NavigationTest extends DuskTestCase
 {
-    use DatabaseMigrations;
-    
+    use DatabaseMigrations, MocksAIServices;
+
     protected $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
+        // Mock AI services to prevent real API calls
+        $this->mockAIServices();
+
         // Run migrations to ensure database is set up
         $this->artisan('migrate');
-        
+
         // Clean up any existing test users
         User::where('email', 'like', 'navigation%')->delete();
-        
+
         // Create default organization if it doesn't exist
         $defaultOrg = \App\Models\Organization::where('is_default', true)->first();
         if (!$defaultOrg) {
@@ -33,7 +36,7 @@ class NavigationTest extends DuskTestCase
                 'creator_id' => null,
                 'is_default' => true,
             ]);
-            
+
             // Create the default 'Everyone' group
             \App\Models\Group::create([
                 'name' => 'Everyone',
@@ -42,7 +45,7 @@ class NavigationTest extends DuskTestCase
                 'is_default' => true,
             ]);
         }
-        
+
         // Create a test user for navigation testing
         $this->user = User::factory()->create([
             'name' => 'Navigation Test User',
@@ -52,7 +55,7 @@ class NavigationTest extends DuskTestCase
             'approved_at' => now(),
             'organization_id' => $defaultOrg->id,
         ]);
-        
+
         // Assign user to default group
         $defaultGroup = $defaultOrg->defaultGroup();
         $this->user->groups()->attach($defaultGroup->id, ['joined_at' => now()]);
@@ -302,10 +305,10 @@ class NavigationTest extends DuskTestCase
             $this->user->groups()->detach();
             $this->user->delete();
         }
-        
+
         // Clean up any remaining test users
         User::where('email', 'like', 'navigation%')->delete();
-        
+
         parent::tearDown();
     }
 }
