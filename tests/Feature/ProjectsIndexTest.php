@@ -104,6 +104,9 @@ class ProjectsIndexTest extends TestCase
             'due_date' => now()->addDays(30)
         ]);
 
+        // Add small delay to ensure different timestamps
+        sleep(1);
+
         Project::factory()->create([
             'user_id' => $user->id,
             'group_id' => $group->id,
@@ -121,8 +124,8 @@ class ProjectsIndexTest extends TestCase
             ->component('Projects/Index')
             ->has('iterativeProjects', 0)
             ->has('finiteProjects', 2)
-            ->where('finiteProjects.0.title', 'Finite Project 1') // First created
-            ->where('finiteProjects.1.title', 'Finite Project 2')
+            ->where('finiteProjects.0.title', 'Finite Project 2') // Latest first due to ->latest()
+            ->where('finiteProjects.1.title', 'Finite Project 1')
         );
     }
 
