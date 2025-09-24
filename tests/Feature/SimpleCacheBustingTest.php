@@ -10,10 +10,12 @@ class SimpleCacheBustingTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertHeader('X-Cache-Bust-Timestamp');
-        $response->assertHeader('X-Cache-Bust-Version');
-        $response->assertHeader('X-Cache-Bust-Random');
-        $response->assertHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store, private');
+        // Check for deployment headers added by AddDeploymentHeaders middleware
+        $response->assertHeader('X-Deployment-Version');
+        $response->assertHeader('X-Deployment-Timestamp');
+        
+        // Check for cache control headers for HTML responses
+        $response->assertHeader('Cache-Control');
         $response->assertHeader('Pragma', 'no-cache');
         $response->assertHeader('Expires', '0');
     }

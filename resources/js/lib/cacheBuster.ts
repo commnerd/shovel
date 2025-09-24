@@ -181,8 +181,65 @@ class CacheBuster {
      */
     public getCacheBustedUrl(url: string): string {
         const version = this.getCurrentVersion();
+        const timestamp = Date.now();
         const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}v=${version}`;
+        return `${url}${separator}v=${version}&t=${timestamp}`;
+    }
+
+    /**
+     * Aggressively clear all browser caches
+     */
+    public async clearAllBrowserCaches(): Promise<void> {
+        try {
+            // Clear service worker caches
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            // Clear all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+            }
+
+            // Clear localStorage
+            localStorage.clear();
+
+            // Clear sessionStorage
+            sessionStorage.clear();
+
+            // Clear IndexedDB
+            if ('indexedDB' in window) {
+                const databases = await indexedDB.databases();
+                for (const db of databases) {
+                    if (db.name) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                }
+            }
+
+            console.log('All browser caches cleared');
+        } catch (error) {
+            console.warn('Failed to clear some browser caches:', error);
+        }
+    }
+
+    /**
+     * Force reload with aggressive cache busting
+     */
+    public async forceReloadWithCacheBusting(): Promise<void> {
+        await this.clearAllBrowserCaches();
+        
+        // Add cache busting parameter to current URL
+        const url = new URL(window.location.href);
+        url.searchParams.set('_cb', Date.now().toString());
+        
+        window.location.href = url.toString();
     }
 }
 

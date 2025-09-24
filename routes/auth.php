@@ -12,14 +12,12 @@ use App\Http\Controllers\OrganizationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // Allow registration in development
-    if (! app()->environment('production')) {
-        Route::get('register', [RegisteredUserController::class, 'create'])
-            ->name('register');
 
-        Route::post('register', [RegisteredUserController::class, 'store'])
-            ->name('register.store');
-    }
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->name('register.store');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

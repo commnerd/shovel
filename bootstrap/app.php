@@ -26,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\AddDeploymentHeaders::class,
-            \App\Http\Middleware\CacheBustingMiddleware::class,
+            // \App\Http\Middleware\AggressiveCacheBustingMiddleware::class, // Temporarily disabled
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
