@@ -485,6 +485,16 @@ class ProjectsController extends Controller
      */
     public function store(Request $request)
     {
+        // Ensure we have a fresh user object from the database
+        $user = auth()->user();
+        if (!$user || !$user->organization_id) {
+            // Refresh user from database to ensure we have latest data
+            $user = \App\Models\User::find(auth()->id());
+            if ($user) {
+                auth()->setUser($user);
+            }
+        }
+
         // Get configured providers for validation
         $availableProviders = \App\Services\AIConfigurationService::getAvailableProviders();
         $configuredProviderKeys = array_keys($availableProviders);
@@ -608,9 +618,13 @@ class ProjectsController extends Controller
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            \Log::error('Project creation failed: '.$e->getMessage());
+            \Log::error('Project creation failed: '.$e->getMessage(), [
+                'user_id' => auth()->id(),
+                'user_org_id' => auth()->user()->organization_id ?? 'null',
+                'request_data' => $request->all()
+            ]);
 
-            return back()->withErrors(['error' => 'Failed to create project. Please try again.']);
+            return back()->withErrors(['error' => 'Failed to create project: ' . $e->getMessage()]);
         }
     }
 
