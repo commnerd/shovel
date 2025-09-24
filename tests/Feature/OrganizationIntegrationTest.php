@@ -25,7 +25,7 @@ class OrganizationIntegrationTest extends TestCase
         \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_complete_organization_lifecycle()

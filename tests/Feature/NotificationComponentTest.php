@@ -29,7 +29,7 @@ class NotificationComponentTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
         $this->organization = Organization::factory()->create([
             'name' => 'Test Organization',

@@ -48,9 +48,7 @@ class TodaysTasksBasicTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
             $page->component('TodaysTasks/Index')
-                ->has('curations')
                 ->has('tasks')
-                ->has('priorityTasks')
                 ->has('activeProjects')
                 ->has('stats')
         );
@@ -69,14 +67,13 @@ class TodaysTasksBasicTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
-            $page->has('curations', 0)
-                ->has('priorityTasks', 0)
-                ->where('stats.total_curations', 0)
-                ->where('stats.priority_tasks', 0)
+            $page->has('tasks', 0)
+                ->where('stats.total_curated_tasks', 0)
+                ->where('stats.pending_tasks', 0)
         );
     }
 
-    public function test_todays_tasks_shows_curations(): void
+    public function test_todays_tasks_shows_curated_tasks(): void
     {
         $project = Project::factory()->create([
             'user_id' => $this->user->id,
@@ -84,9 +81,13 @@ class TodaysTasksBasicTest extends TestCase
             'status' => 'active',
         ]);
 
-        $curation = DailyCuration::factory()->forToday()->create([
-            'user_id' => $this->user->id,
+        $task = Task::factory()->create([
             'project_id' => $project->id,
+        ]);
+
+        $curatedTask = \App\Models\CuratedTasks::factory()->forTask($task)->create([
+            'assigned_to' => $this->user->id,
+            'work_date' => now()->toDateString(),
         ]);
 
         $response = $this->actingAs($this->user)
@@ -94,12 +95,12 @@ class TodaysTasksBasicTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
-            $page->has('curations', 1)
-                ->where('curations.0.id', $curation->id)
+            $page->has('tasks', 1)
+                ->where("tasks.{$task->id}.id", $task->id)
         );
     }
 
-    public function test_todays_tasks_shows_priority_tasks(): void
+    public function test_todays_tasks_shows_stats(): void
     {
         $project = Project::factory()->create([
             'user_id' => $this->user->id,
@@ -107,27 +108,38 @@ class TodaysTasksBasicTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Create overdue task
-        Task::factory()->create([
+        // Create tasks with different statuses
+        $pendingTask = Task::factory()->create([
             'project_id' => $project->id,
-            'title' => 'Overdue Task',
+            'title' => 'Pending Task',
             'status' => 'pending',
-            'due_date' => Carbon::now()->subDay(),
         ]);
 
-        // Create in-progress task
-        Task::factory()->create([
+        $inProgressTask = Task::factory()->create([
             'project_id' => $project->id,
             'title' => 'In Progress Task',
             'status' => 'in_progress',
         ]);
 
+        // Create curated tasks
+        \App\Models\CuratedTasks::factory()->forTask($pendingTask)->create([
+            'assigned_to' => $this->user->id,
+            'work_date' => now()->toDateString(),
+        ]);
+
+        \App\Models\CuratedTasks::factory()->forTask($inProgressTask)->create([
+            'assigned_to' => $this->user->id,
+            'work_date' => now()->toDateString(),
+        ]);
+
         $response = $this->actingAs($this->user)
             ->get('/dashboard/todays-tasks');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
-            $page->has('priorityTasks', 2)
+            $page->where('stats.total_curated_tasks', 2)
+                ->where('stats.pending_tasks', 1)
+                ->where('stats.in_progress_tasks', 1)
         );
     }
 
@@ -210,29 +222,23 @@ class TodaysTasksBasicTest extends TestCase
             'group_id' => $this->group->id,
         ]);
 
-        $otherCuration = DailyCuration::factory()->create([
-            'user_id' => $otherUser->id,
-            'project_id' => $otherProject->id,
-        ]);
-
         $otherTask = Task::factory()->create([
             'project_id' => $otherProject->id,
         ]);
 
-        // Should not see other user's curations
+        $otherCuratedTask = \App\Models\CuratedTasks::factory()->forTask($otherTask)->create([
+            'assigned_to' => $otherUser->id,
+            'work_date' => now()->toDateString(),
+        ]);
+
+        // Should not see other user's curated tasks
         $response = $this->actingAs($this->user)
             ->get('/dashboard/todays-tasks');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
-            $page->has('curations', 0)
+            $page->has('tasks', 0)
         );
-
-        // Should not be able to dismiss other's curation
-        $response = $this->actingAs($this->user)
-            ->post("/dashboard/todays-tasks/curations/{$otherCuration->id}/dismiss");
-
-        $response->assertStatus(403);
 
         // Should not be able to modify other's tasks
         $response = $this->actingAs($this->user)

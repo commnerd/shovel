@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 
 class Task extends Model
@@ -99,6 +100,14 @@ class Task extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Task::class, 'parent_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Get the curated tasks for this task.
+     */
+    public function curatedTasks(): MorphMany
+    {
+        return $this->morphMany(CuratedTasks::class, 'curatable');
     }
 
     /**

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('domain')->nullable(); // Email domain for the organization
             $table->text('address')->nullable();
-            $table->foreignId('creator_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('creator_id')->nullable();
             $table->boolean('is_default')->default(false); // For the 'None' organization
             $table->timestamps();
 

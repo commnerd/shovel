@@ -21,7 +21,7 @@ class DueDateApplicationLogicTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_add_due_dates_to_subtasks_without_reference_due_date_returns_unchanged()

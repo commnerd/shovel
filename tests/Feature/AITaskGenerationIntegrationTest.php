@@ -15,7 +15,7 @@ class AITaskGenerationIntegrationTest extends TestCase
     public function test_ai_task_generation_with_schema_and_communication(): void
     {
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 
@@ -80,7 +80,7 @@ class AITaskGenerationIntegrationTest extends TestCase
     public function test_ai_task_generation_with_schema_validation(): void
     {
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 

@@ -10,7 +10,7 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     // Ensure default organization exists
-    $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+    $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',

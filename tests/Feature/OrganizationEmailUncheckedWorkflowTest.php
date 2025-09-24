@@ -18,7 +18,7 @@ class OrganizationEmailUncheckedWorkflowTest extends TestCase
         parent::setUp();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_organization_email_unchecked_with_matching_domain_shows_confirmation_pane()

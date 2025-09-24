@@ -21,7 +21,7 @@ class ProjectTitleFeatureTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();

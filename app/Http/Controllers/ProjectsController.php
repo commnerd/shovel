@@ -53,6 +53,7 @@ class ProjectsController extends Controller
             }
 
             return Inertia::render('Projects/Index', [
+                'projects' => $allProjects, // Backward compatibility
                 'iterativeProjects' => $iterativeProjects,
                 'finiteProjects' => $finiteProjects,
             ]);

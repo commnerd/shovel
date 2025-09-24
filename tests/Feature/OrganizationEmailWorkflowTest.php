@@ -21,7 +21,7 @@ class OrganizationEmailWorkflowTest extends TestCase
         \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_organization_email_checked_with_unique_domain_shows_organization_form()

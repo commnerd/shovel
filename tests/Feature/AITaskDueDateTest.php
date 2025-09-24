@@ -19,7 +19,7 @@ class AITaskDueDateTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_ai_generates_tasks_with_due_dates_when_project_has_due_date()

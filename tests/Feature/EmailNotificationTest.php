@@ -19,7 +19,7 @@ class EmailNotificationTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_organization_creator_receives_notification_when_new_user_joins_existing_organization()

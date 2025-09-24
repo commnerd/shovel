@@ -19,7 +19,7 @@ class CompleteApprovalWorkflowTest extends TestCase
         parent::setUp();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_complete_organization_member_approval_lifecycle()

@@ -18,7 +18,7 @@ class OrganizationRegistrationTest extends TestCase
         parent::setUp();
 
         // Ensure default organization exists
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_user_can_register_without_organization_email()

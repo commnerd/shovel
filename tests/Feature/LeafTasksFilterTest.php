@@ -28,7 +28,7 @@ class LeafTasksFilterTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
         $this->organization = Organization::getDefault();
         $this->group = $this->organization->defaultGroup();

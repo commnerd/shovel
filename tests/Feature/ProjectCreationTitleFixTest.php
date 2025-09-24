@@ -14,7 +14,7 @@ class ProjectCreationTitleFixTest extends TestCase
     public function test_project_creation_tasks_with_empty_title_uses_fallback_title()
     {
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 
@@ -110,7 +110,7 @@ class ProjectCreationTitleFixTest extends TestCase
     public function test_project_creation_tasks_with_empty_title_uses_ai_generated_title()
     {
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 
@@ -238,7 +238,7 @@ class ProjectCreationTitleFixTest extends TestCase
     public function test_project_creation_tasks_with_user_provided_title()
     {
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
         $organization = \App\Models\Organization::getDefault();
         $group = $organization->defaultGroup();
 

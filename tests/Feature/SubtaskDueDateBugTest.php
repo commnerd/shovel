@@ -18,7 +18,7 @@ class SubtaskDueDateBugTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_subtasks_should_not_get_due_dates_when_parent_task_has_no_due_date_and_project_has_no_due_date()

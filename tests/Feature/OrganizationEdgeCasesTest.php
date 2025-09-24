@@ -20,7 +20,7 @@ class OrganizationEdgeCasesTest extends TestCase
         parent::setUp();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_organization_creation_with_invalid_data()

@@ -15,7 +15,7 @@ class ProductionRegistrationTest extends TestCase
         parent::setUp();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     public function test_registration_routes_are_available_in_testing_environment()

@@ -23,7 +23,7 @@ class TaskCountAndEmptyStateBugfixTest extends TestCase
         parent::setUp();
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
         $organization = Organization::getDefault();
         $group = $organization->createDefaultGroup();

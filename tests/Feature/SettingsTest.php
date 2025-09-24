@@ -23,7 +23,7 @@ class SettingsTest extends TestCase
         \App\Models\Setting::set('ai.cerebras.api_key', 'test-cerebras-key', 'string', 'Cerebras API Key');
 
         // Set up organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
 
         $organization = Organization::getDefault();
         $group = $organization->createDefaultGroup();

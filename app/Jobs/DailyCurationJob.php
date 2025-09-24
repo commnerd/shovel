@@ -7,6 +7,8 @@ use App\Models\Task;
 use App\Models\Project;
 use App\Models\DailyCuration;
 use App\Models\DailyWeightMetric;
+use App\Models\CuratedTasks;
+use App\Models\CurationPrompt;
 use App\Services\AI\Facades\AI;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +16,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class DailyCurationJob implements ShouldQueue
@@ -37,6 +40,9 @@ class DailyCurationJob implements ShouldQueue
     {
         try {
             Log::info('Starting daily curation for user', ['user_id' => $this->user->id]);
+
+            // Clear curation prompts from previous runs (morning cleanup)
+            $this->clearPreviousPrompts();
 
             // Get ALL projects the user can see (owned + group projects)
             $visibleProjects = $this->getVisibleProjects();
@@ -71,11 +77,35 @@ class DailyCurationJob implements ShouldQueue
      */
     protected function getVisibleProjects()
     {
+        // Check if user belongs to a non-default organization
+        $isInOrganization = $this->user->organization_id &&
+                           $this->user->organization &&
+                           !$this->user->organization->is_default;
+
+        Log::info('DailyCurationJob: Processing user projects', [
+            'user_id' => $this->user->id,
+            'organization_id' => $this->user->organization_id,
+            'is_in_organization' => $isInOrganization,
+            'organization_name' => $this->user->organization?->name ?? 'None'
+        ]);
+
         // Get user's own projects
         $ownedProjects = $this->user->projects()
-            ->with(['tasks' => function ($query) {
-                $query->where('status', '!=', 'completed')
-                    ->orderBy('due_date', 'asc')
+            ->with(['tasks' => function ($query) use ($isInOrganization) {
+                $query->where('status', '!=', 'completed');
+
+                // For organization users, only include unassigned tasks (not yet curated)
+                if ($isInOrganization) {
+                    $query->whereNotExists(function ($subQuery) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('curated_tasks')
+                            ->whereColumn('curated_tasks.curatable_id', 'tasks.id')
+                            ->where('curated_tasks.curatable_type', Task::class)
+                            ->where('curated_tasks.work_date', today());
+                    });
+                }
+
+                $query->orderBy('due_date', 'asc')
                     ->orderBy('created_at', 'desc');
             }])
             ->get();
@@ -86,9 +116,21 @@ class DailyCurationJob implements ShouldQueue
                 $userQuery->where('user_id', $this->user->id);
             });
         })
-        ->with(['tasks' => function ($query) {
-            $query->where('status', '!=', 'completed')
-                ->orderBy('due_date', 'asc')
+        ->with(['tasks' => function ($query) use ($isInOrganization) {
+            $query->where('status', '!=', 'completed');
+
+            // For organization users, only include unassigned tasks (not yet curated)
+            if ($isInOrganization) {
+                $query->whereNotExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('curated_tasks')
+                        ->whereColumn('curated_tasks.curatable_id', 'tasks.id')
+                        ->where('curated_tasks.curatable_type', Task::class)
+                        ->where('curated_tasks.work_date', today());
+                });
+            }
+
+            $query->orderBy('due_date', 'asc')
                 ->orderBy('created_at', 'desc');
         }])
         ->get();
@@ -212,6 +254,11 @@ class DailyCurationJob implements ShouldQueue
                 return;
             }
 
+            // Check if user belongs to a non-default organization
+            $isInOrganization = $this->user->organization_id &&
+                               $this->user->organization &&
+                               !$this->user->organization->is_default;
+
             // Prepare context for AI
             $context = [
                 'project' => [
@@ -225,6 +272,7 @@ class DailyCurationJob implements ShouldQueue
                     'timezone' => 'UTC', // Could be enhanced with user timezone
                 ],
                 'current_date' => Carbon::now()->format('Y-m-d'),
+                'is_organization_user' => $isInOrganization,
                 'tasks' => $allTasks->map(function ($task) {
                     return [
                         'id' => $task->id,
@@ -271,6 +319,9 @@ class DailyCurationJob implements ShouldQueue
 
             $prompt = $this->buildCurationPrompt($context);
 
+            // Store the prompt for debugging and tracking
+            $this->storeCurationPrompt($project, $prompt, $context);
+
             $aiResponse = AI::driver($project->ai_provider)->chat([
                 ['role' => 'system', 'content' => $this->getSystemPrompt()],
                 ['role' => 'user', 'content' => $prompt],
@@ -315,7 +366,16 @@ class DailyCurationJob implements ShouldQueue
         $prompt .= "**Project:** {$context['project']['title']}\n";
         $prompt .= "**Type:** {$context['project']['type']}\n";
         $prompt .= "**User:** {$context['user']['name']}\n";
-        $prompt .= "**Current Date:** {$context['current_date']}\n\n";
+        $prompt .= "**Current Date:** {$context['current_date']}\n";
+
+        // Add organization context
+        if ($context['is_organization_user']) {
+            $prompt .= "**User Type:** Organization member (only suggest unassigned tasks)\n";
+        } else {
+            $prompt .= "**User Type:** Individual user (can suggest any tasks)\n";
+        }
+
+        $prompt .= "\n";
 
         if ($context['project']['due_date']) {
             $prompt .= "**Project Due Date:** {$context['project']['due_date']}\n\n";
@@ -336,11 +396,20 @@ class DailyCurationJob implements ShouldQueue
             $prompt .= "\n";
         }
 
-        $prompt .= "\nPlease provide suggestions for:\n";
-        $prompt .= "1. Priority tasks to focus on today\n";
-        $prompt .= "2. Tasks that might be overdue or at risk\n";
-        $prompt .= "3. Recommended task breakdown or optimization\n";
-        $prompt .= "4. Overall project progress insights\n\n";
+        if ($context['is_organization_user']) {
+            $prompt .= "\n**IMPORTANT:** This user is in an organization. Only suggest tasks that are NOT already assigned to someone today.\n";
+            $prompt .= "Please provide suggestions for:\n";
+            $prompt .= "1. Unassigned priority tasks to focus on today\n";
+            $prompt .= "2. Unassigned tasks that might be overdue or at risk\n";
+            $prompt .= "3. Recommended task breakdown or optimization for unassigned tasks\n";
+            $prompt .= "4. Overall project progress insights\n\n";
+        } else {
+            $prompt .= "\nPlease provide suggestions for:\n";
+            $prompt .= "1. Priority tasks to focus on today\n";
+            $prompt .= "2. Tasks that might be overdue or at risk\n";
+            $prompt .= "3. Recommended task breakdown or optimization\n";
+            $prompt .= "4. Overall project progress insights\n\n";
+        }
 
         $prompt .= "Respond with JSON in this format:\n";
         $prompt .= "{\n";
@@ -447,6 +516,19 @@ class DailyCurationJob implements ShouldQueue
                 true // AI generated
             );
 
+            // Populate CuratedTasks table with priority tasks
+            // Only call this if there are actual suggestions with task IDs
+            $hasTaskSuggestions = collect($suggestions['suggestions'] ?? [])
+                ->filter(function ($suggestion) {
+                    return isset($suggestion['task_id']) &&
+                           in_array($suggestion['type'], ['priority', 'risk']);
+                })
+                ->isNotEmpty();
+
+            if ($hasTaskSuggestions) {
+                $this->populateCuratedTasks($project, $suggestions);
+            }
+
             Log::info('Daily curation suggestions stored', [
                 'user_id' => $this->user->id,
                 'project_id' => $project->id,
@@ -469,6 +551,177 @@ class DailyCurationJob implements ShouldQueue
                 'project_id' => $project->id,
                 'suggestions_count' => count($suggestions['suggestions'] ?? []),
                 'summary' => $suggestions['summary'] ?? 'No summary provided'
+            ]);
+        }
+    }
+
+    /**
+     * Populate CuratedTasks table with tasks that should appear on Today's Tasks page.
+     */
+    protected function populateCuratedTasks(Project $project, array $suggestions): void
+    {
+        try {
+            $today = Carbon::now()->toDateString();
+
+            // Get all tasks that were suggested for today
+            $suggestedTaskIds = collect($suggestions['suggestions'] ?? [])
+                ->filter(function ($suggestion) {
+                    return isset($suggestion['task_id']) &&
+                           in_array($suggestion['type'], ['priority', 'risk']);
+                })
+                ->pluck('task_id')
+                ->unique()
+                ->toArray();
+
+            if (empty($suggestedTaskIds)) {
+                Log::info('No priority tasks found for curation', [
+                    'user_id' => $this->user->id,
+                    'project_id' => $project->id
+                ]);
+                return;
+            }
+
+            // Check if user belongs to a non-default organization
+            $isInOrganization = $this->user->organization_id &&
+                               $this->user->organization &&
+                               !$this->user->organization->is_default;
+
+            // Get the tasks from database with organization filtering
+            $query = Task::whereIn('id', $suggestedTaskIds);
+
+            // For organization users, only include unassigned tasks (not yet curated)
+            if ($isInOrganization) {
+                $query->whereNotExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('curated_tasks')
+                        ->whereColumn('curated_tasks.curatable_id', 'tasks.id')
+                        ->where('curated_tasks.curatable_type', Task::class)
+                        ->where('curated_tasks.work_date', today());
+                });
+            }
+
+            $tasks = $query->get();
+
+            if ($tasks->isEmpty()) {
+                Log::warning('No tasks found after organization filtering', [
+                    'user_id' => $this->user->id,
+                    'project_id' => $project->id,
+                    'suggested_task_ids' => $suggestedTaskIds,
+                    'is_in_organization' => $isInOrganization,
+                    'organization_name' => $this->user->organization?->name ?? 'None'
+                ]);
+                return;
+            }
+
+            // For organization users, only clear tasks that are being re-curated
+            // For default organization users, clear all existing tasks for the project
+            if ($isInOrganization) {
+                // Only clear tasks that are in the current suggestion list and are being re-curated
+                if ($tasks->isNotEmpty()) {
+                    CuratedTasks::where('assigned_to', $this->user->id)
+                        ->where('work_date', $today)
+                        ->whereIn('curatable_id', $tasks->pluck('id'))
+                        ->where('curatable_type', Task::class)
+                        ->delete();
+                }
+                // If no tasks to re-curate, don't clear anything
+            } else {
+                // Clear existing curated tasks for today for this user and project
+                CuratedTasks::where('assigned_to', $this->user->id)
+                    ->where('work_date', $today)
+                    ->whereHas('curatable', function ($query) use ($project) {
+                        $query->where('project_id', $project->id);
+                    })
+                    ->delete();
+            }
+
+            // Create new curated tasks
+            $curatedTasksData = [];
+            foreach ($tasks as $index => $task) {
+                $curatedTasksData[] = [
+                    'curatable_type' => Task::class,
+                    'curatable_id' => $task->id,
+                    'work_date' => $today,
+                    'assigned_to' => $this->user->id,
+                    'initial_index' => $index + 1,
+                    'current_index' => $index + 1,
+                    'moved_count' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Batch insert for better performance
+            CuratedTasks::insert($curatedTasksData);
+
+            Log::info('CuratedTasks populated successfully', [
+                'user_id' => $this->user->id,
+                'project_id' => $project->id,
+                'tasks_count' => count($curatedTasksData),
+                'work_date' => $today
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to populate CuratedTasks', [
+                'user_id' => $this->user->id,
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Store the curation prompt for debugging and tracking.
+     */
+    protected function storeCurationPrompt(Project $project, string $prompt, array $context): void
+    {
+        try {
+            CurationPrompt::create([
+                'user_id' => $this->user->id,
+                'project_id' => $project->id,
+                'prompt_text' => $prompt,
+                'ai_provider' => $project->ai_provider,
+                'ai_model' => $project->ai_model ?? null,
+                'is_organization_user' => $context['is_organization_user'] ?? false,
+                'task_count' => count($context['tasks'] ?? []),
+            ]);
+
+            Log::info('Curation prompt stored', [
+                'user_id' => $this->user->id,
+                'project_id' => $project->id,
+                'prompt_length' => strlen($prompt),
+                'task_count' => count($context['tasks'] ?? []),
+                'is_organization_user' => $context['is_organization_user'] ?? false,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to store curation prompt', [
+                'user_id' => $this->user->id,
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'prompt_length' => strlen($prompt),
+            ]);
+        }
+    }
+
+    /**
+     * Clear previous curation prompts for this user (morning cleanup).
+     */
+    protected function clearPreviousPrompts(): void
+    {
+        try {
+            $deletedCount = CurationPrompt::clearForUser($this->user->id);
+
+            Log::info('Cleared previous curation prompts', [
+                'user_id' => $this->user->id,
+                'deleted_count' => $deletedCount,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to clear previous curation prompts', [
+                'user_id' => $this->user->id,
+                'error' => $e->getMessage(),
             ]);
         }
     }

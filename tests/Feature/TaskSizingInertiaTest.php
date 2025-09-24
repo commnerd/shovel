@@ -17,7 +17,7 @@ class TaskSizingInertiaTest extends TestCase
         parent::setUp();
 
         // Set up default organization structure
-        $this->artisan('db:seed', ['--class' => 'OrganizationSeeder']);
+        $this->seed(\Database\Seeders\OrganizationSeeder::class);
     }
 
     /**
