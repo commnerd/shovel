@@ -158,7 +158,7 @@ const tabOptions = [
         value: 'board',
         label: 'Board',
         icon: Kanban,
-        count: taskCounts.value.all,
+        count: taskCounts.value.leaf,
         description: 'Kanban-style board with To Do, In Progress, and Done columns. Drag tasks between columns to update their status.'
     },
 ];
@@ -1059,10 +1059,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 {{ task.title }}
                             </Link>
-                            <!-- Task sizing for iterative projects (parent tasks) -->
-                            <div v-if="project.project_type === 'iterative'" class="ml-2">
-                                <TaskSizing :task="task" @updated="refreshTasks" />
-                            </div>
                             <span
                                 v-else
                                 class="text-sm flex-1"
@@ -1137,13 +1133,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <!-- Todo View (Hierarchical with Actionable Focus) -->
                 <div v-if="currentFilter === 'leaf'" class="space-y-2">
                     <div
-                        v-for="task in tasks"
+                        v-for="task in tasks.filter(t => t.is_leaf)"
                         :key="task.id"
                         class="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-sm transition-all duration-200"
                     >
-                        <!-- Status checkbox - Only for leaf tasks, disabled for parent tasks -->
+                        <!-- Status checkbox for leaf tasks -->
                         <button
-                            v-if="task.is_leaf"
                             @click="toggleTaskStatus(task)"
                             class="flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                             :class="task.status === 'completed'
@@ -1153,28 +1148,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                         >
                             <CheckCircle v-if="task.status === 'completed'" class="h-3 w-3" />
                         </button>
-                        <div v-else class="w-5 h-5 flex items-center justify-center">
-                            <component :is="getTaskTypeIcon(task)"
-                                :class="[
-                                    'h-3 w-3 flex-shrink-0',
-                                    task.is_leaf ? 'text-green-600' : 'text-blue-600'
-                                ]" />
-                        </div>
 
-                        <!-- Task title with hierarchy indicator -->
+                        <!-- Task title -->
                         <div class="flex-1 min-w-0">
-                            <span class="text-sm font-medium text-gray-900 truncate block"
-                                :class="[
-                                    task.is_leaf ? 'text-gray-900' : 'text-gray-600',
-                                    task.is_leaf ? 'font-medium' : 'font-normal'
-                                ]">
+                            <span class="text-sm font-medium text-gray-900 truncate block">
                                 {{ task.title }}
                             </span>
                             <div v-if="project.project_type === 'iterative'" class="mt-1">
                                 <TaskSizing :task="task" @updated="refreshTasks" />
-                            </div>
-                            <div v-if="!task.is_leaf" class="text-xs text-gray-500 mt-1">
-                                Parent task ({{ task.has_children ? 'has subtasks' : 'no subtasks' }})
                             </div>
                         </div>
 
@@ -1203,7 +1184,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <Circle class="h-4 w-4 text-gray-500" />
                             <h3 class="font-medium text-gray-900">To Do</h3>
                             <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
-                                {{ tasks.filter(t => t.status === 'pending').length }}
+                                {{ tasks.filter(t => t.status === 'pending' && t.is_leaf).length }}
                             </span>
                         </div>
                         <div
@@ -1218,7 +1199,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             :class="{ 'bg-blue-100 border-2 border-blue-300 border-dashed rounded-lg': kanbanDragOverColumn === 'pending' }"
                         >
                             <div
-                                v-for="task in tasks.filter(t => t.status === 'pending')"
+                                v-for="task in tasks.filter(t => t.status === 'pending' && t.is_leaf)"
                                 :key="task.id"
                                 :data-task-id="task.id"
                                 class="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move kanban-task"
@@ -1250,7 +1231,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                             <!-- Empty state message -->
                             <div
-                                v-if="tasks.filter(t => t.status === 'pending').length === 0"
+                                v-if="tasks.filter(t => t.status === 'pending' && t.is_leaf).length === 0"
                                 class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
                                 <div class="text-center">
@@ -1267,7 +1248,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <Clock class="h-4 w-4 text-blue-500" />
                             <h3 class="font-medium text-gray-900">In Progress</h3>
                             <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                                {{ tasks.filter(t => t.status === 'in_progress').length }}
+                                {{ tasks.filter(t => t.status === 'in_progress' && t.is_leaf).length }}
                             </span>
                         </div>
                         <div
@@ -1282,7 +1263,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             :class="{ 'bg-blue-200 border-2 border-blue-400 border-dashed rounded-lg': kanbanDragOverColumn === 'in_progress' }"
                         >
                             <div
-                                v-for="task in tasks.filter(t => t.status === 'in_progress')"
+                                v-for="task in tasks.filter(t => t.status === 'in_progress' && t.is_leaf)"
                                 :key="task.id"
                                 :data-task-id="task.id"
                                 class="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move kanban-task"
@@ -1314,7 +1295,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                             <!-- Empty state message -->
                             <div
-                                v-if="tasks.filter(t => t.status === 'in_progress').length === 0"
+                                v-if="tasks.filter(t => t.status === 'in_progress' && t.is_leaf).length === 0"
                                 class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
                                 <div class="text-center">
@@ -1331,7 +1312,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <CheckCircle class="h-4 w-4 text-green-500" />
                             <h3 class="font-medium text-gray-900">Done</h3>
                             <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                                {{ tasks.filter(t => t.status === 'completed').length }}
+                                {{ tasks.filter(t => t.status === 'completed' && t.is_leaf).length }}
                             </span>
                         </div>
                         <div
@@ -1346,7 +1327,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             :class="{ 'bg-green-200 border-2 border-green-400 border-dashed rounded-lg': kanbanDragOverColumn === 'completed' }"
                         >
                             <div
-                                v-for="task in tasks.filter(t => t.status === 'completed')"
+                                v-for="task in tasks.filter(t => t.status === 'completed' && t.is_leaf)"
                                 :key="task.id"
                                 :data-task-id="task.id"
                                 class="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move kanban-task opacity-75"
@@ -1378,7 +1359,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                             <!-- Empty state message -->
                             <div
-                                v-if="tasks.filter(t => t.status === 'completed').length === 0"
+                                v-if="tasks.filter(t => t.status === 'completed' && t.is_leaf).length === 0"
                                 class="flex items-center justify-center h-48 text-gray-400 text-sm"
                             >
                                 <div class="text-center">

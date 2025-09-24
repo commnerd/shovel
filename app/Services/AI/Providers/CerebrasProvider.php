@@ -72,9 +72,9 @@ CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
       "status": "pending",
       "sort_order": 1,
       "size": "m",
-      "initial_story_points": 5,
-      "current_story_points": 5,
-      "story_points_change_count": 0
+      "initial_story_points": null,
+      "current_story_points": null,
+      "story_points_change_count": null
     }
   ],
   "summary": "Brief project summary",
@@ -82,16 +82,15 @@ CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
 }
 
 Requirements:
-- Generate 3-8 actionable tasks
-- Each task must have: title, description, status (always "pending"), sort_order, size, initial_story_points, current_story_points, story_points_change_count
-- Task sizing guidelines:
-  * "xs" (1-2 story points): Very small tasks, quick fixes, simple changes
-  * "s" (3-5 story points): Small tasks, minor features, simple implementations
-  * "m" (6-8 story points): Medium tasks, moderate complexity, standard features
-  * "l" (9-13 story points): Large tasks, complex features, significant work
-  * "xl" (14+ story points): Extra large tasks, major features, complex implementations
-- Set initial_story_points and current_story_points to the same value based on size
-- Set story_points_change_count to 0 for new tasks
+- Generate 3-8 actionable TOP-LEVEL tasks (these will become parent tasks that can have subtasks)
+- Each task must have: title, description, status (always "pending"), sort_order, size
+- For top-level tasks, use T-shirt sizing only (size field):
+  * "xs": Very small tasks, quick fixes, simple changes
+  * "s": Small tasks, minor features, simple implementations
+  * "m": Medium tasks, moderate complexity, standard features
+  * "l": Large tasks, complex features, significant work
+  * "xl": Extra large tasks, major features, complex implementations
+- Set initial_story_points, current_story_points, and story_points_change_count to null (these are only for subtasks)
 - Set sort_order sequentially (1, 2, 3, etc.)
 - Tasks should be logical, sequential, and comprehensive
 - Include a brief summary of the project
@@ -572,14 +571,19 @@ Requirements:
 
         $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.
 
-For each subtask, you must also assign a T-shirt size based on complexity and effort:
-- XS (Extra Small): 1-2 hours, simple tasks, minor changes, quick fixes
-- S (Small): 3-8 hours, straightforward tasks, small features, simple implementations
-- M (Medium): 1-3 days, moderate complexity, standard features, some research needed
-- L (Large): 3-7 days, complex tasks, major features, significant research or integration
-- XL (Extra Large): 1-2 weeks, very complex tasks, major architectural changes, multiple dependencies
+For each subtask, you must also assign Fibonacci story points based on complexity and effort:
+- 1: Very simple tasks, quick fixes, minor changes (15-30 minutes)
+- 2: Simple tasks, small features, straightforward implementations (30-60 minutes)
+- 3: Small tasks, minor features, simple implementations (1-2 hours)
+- 5: Medium tasks, moderate complexity, standard features (2-4 hours)
+- 8: Large tasks, complex features, significant work (4-8 hours)
+- 13: Very large tasks, major features, complex implementations (1-2 days)
+- 21: Extra large tasks, major architectural changes (2-3 days)
+- 34: Massive tasks, complete feature rewrites (3-5 days)
+- 55: Epic tasks, platform-level changes (1-2 weeks)
+- 89: Monumental tasks, complete system overhauls (2+ weeks)
 
-Each subtask in your response must include a "size" field with one of these values.';
+Each subtask in your response must include "initial_story_points" and "current_story_points" fields with the same Fibonacci value, and "story_points_change_count" set to 0. Do NOT include a "size" field for subtasks.';
 
         return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
     }
@@ -643,15 +647,21 @@ Each subtask in your response must include a "size" field with one of these valu
         $prompt .= "3. Consider the project context and existing tasks\n";
         $prompt .= "4. Assign appropriate status (pending)\n";
         $prompt .= "5. Include estimated due dates relative to the project timeline\n";
-        $prompt .= "6. Assign appropriate T-shirt sizes and story points based on complexity:\n";
-        $prompt .= "   - XS (1-2 story points): Very small tasks, quick fixes\n";
-        $prompt .= "   - S (3-5 story points): Small tasks, minor features\n";
-        $prompt .= "   - M (6-8 story points): Medium tasks, standard features\n";
-        $prompt .= "   - L (9-13 story points): Large tasks, complex features\n";
-        $prompt .= "   - XL (14+ story points): Extra large tasks, major features\n";
-        $prompt .= "7. Set initial_story_points and current_story_points to the same value\n";
+        $prompt .= "6. Assign appropriate Fibonacci story points based on complexity:\n";
+        $prompt .= "   - 1: Very simple tasks, quick fixes (15-30 minutes)\n";
+        $prompt .= "   - 2: Simple tasks, small features (30-60 minutes)\n";
+        $prompt .= "   - 3: Small tasks, minor features (1-2 hours)\n";
+        $prompt .= "   - 5: Medium tasks, standard features (2-4 hours)\n";
+        $prompt .= "   - 8: Large tasks, complex features (4-8 hours)\n";
+        $prompt .= "   - 13: Very large tasks, major features (1-2 days)\n";
+        $prompt .= "   - 21: Extra large tasks, architectural changes (2-3 days)\n";
+        $prompt .= "   - 34: Massive tasks, complete rewrites (3-5 days)\n";
+        $prompt .= "   - 55: Epic tasks, platform changes (1-2 weeks)\n";
+        $prompt .= "   - 89: Monumental tasks, system overhauls (2+ weeks)\n";
+        $prompt .= "7. Set initial_story_points and current_story_points to the same Fibonacci value\n";
         $prompt .= "8. Set story_points_change_count to 0 for new subtasks\n";
-        $prompt .= "9. Set sort_order sequentially (1, 2, 3, etc.)\n\n";
+        $prompt .= "9. Set sort_order sequentially (1, 2, 3, etc.)\n";
+        $prompt .= "10. Do NOT include a 'size' field for subtasks (only for top-level tasks)\n\n";
 
         $prompt .= "**Response Format:**\n";
         $prompt .= "Return ONLY a valid JSON object with this exact structure:\n";
@@ -662,7 +672,6 @@ Each subtask in your response must include a "size" field with one of these valu
         $prompt .= '      "description": "Detailed description of what needs to be done",'."\n";
         $prompt .= '      "status": "pending",'."\n";
         $prompt .= '      "sort_order": 1,'."\n";
-        $prompt .= '      "size": "m",'."\n";
         $prompt .= '      "initial_story_points": 5,'."\n";
         $prompt .= '      "current_story_points": 5,'."\n";
         $prompt .= '      "story_points_change_count": 0,'."\n";

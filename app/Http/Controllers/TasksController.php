@@ -1015,6 +1015,9 @@ class TasksController extends Controller
             // Update size if provided (only for top-level tasks)
             if (isset($validated['size'])) {
                 if (!$task->canHaveSize()) {
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => 'Only top-level tasks can have a T-shirt size.'], 422);
+                    }
                     return back()->withErrors(['size' => 'Only top-level tasks can have a T-shirt size.']);
                 }
                 $task->setSize($validated['size']);
@@ -1023,14 +1026,23 @@ class TasksController extends Controller
             // Update story points if provided (only for subtasks)
             if (isset($validated['current_story_points'])) {
                 if (!$task->canHaveStoryPoints()) {
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => 'Only subtasks can have story points.'], 422);
+                    }
                     return back()->withErrors(['current_story_points' => 'Only subtasks can have story points.']);
                 }
                 $task->setStoryPoints($validated['current_story_points']);
             }
 
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => 'Task updated successfully!']);
+            }
             return back()->with('success', 'Task updated successfully!');
 
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
             return back()->withErrors(['general' => $e->getMessage()]);
         } catch (\Exception $e) {
             \Log::error('Failed to update task sizing', [
@@ -1039,6 +1051,9 @@ class TasksController extends Controller
                 'validated_data' => $validated,
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Failed to update task. Please try again.'], 500);
+            }
             return back()->withErrors(['general' => 'Failed to update task. Please try again.']);
         }
     }

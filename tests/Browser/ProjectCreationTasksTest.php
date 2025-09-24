@@ -46,6 +46,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 1,
+                    'size' => 'm',
+                    'initial_story_points' => 8,
+                    'current_story_points' => 8,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Conduct Market Research',
@@ -53,6 +57,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 2,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Create Business Plan',
@@ -60,6 +68,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 3,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Register Business',
@@ -67,6 +79,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 4,
+                    'size' => 's',
+                    'initial_story_points' => 5,
+                    'current_story_points' => 5,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Secure Funding',
@@ -74,6 +90,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 5,
+                    'size' => 'xl',
+                    'initial_story_points' => 21,
+                    'current_story_points' => 21,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Establish Business Operations',
@@ -81,6 +101,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 6,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
             ],
             projectTitle: 'Business Development Project',
@@ -133,16 +157,17 @@ class ProjectCreationTasksTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
-                ->visit('/dashboard/projects/create/tasks')
+                ->visit('/dashboard/projects/create/tasks?' . http_build_query([
+                    'description' => 'I want to build a business',
+                    'ai_provider' => 'cerebras',
+                    'ai_model' => 'llama-4-maverick-17b-128e-instruct',
+                    'project_type' => 'iterative',
+                    'default_iteration_length_weeks' => '2',
+                    'auto_create_iterations' => 'false',
+                    'group_id' => $group->id
+                ]))
                 ->waitForText('AI Generated Tasks')
                 ->assertSee('AI Generated Tasks')
-                ->type('#description', 'I want to build a business')
-                ->select('#ai_provider', 'cerebras')
-                ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')
-                ->select('#project_type', 'iterative')
-                ->type('#default_iteration_length_weeks', '2')
-                ->uncheck('#auto_create_iterations')
-                ->press('Generate Tasks')
                 ->waitForText('Define Business Model', 10)
                 ->assertSee('Define Business Model')
                 ->assertSee('Conduct Market Research')
@@ -258,16 +283,17 @@ class ProjectCreationTasksTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
-                ->visit('/dashboard/projects/create/tasks')
+                ->visit('/dashboard/projects/create/tasks?' . http_build_query([
+                    'description' => 'I want to build a business',
+                    'ai_provider' => 'cerebras',
+                    'ai_model' => 'llama-4-maverick-17b-128e-instruct',
+                    'project_type' => 'iterative',
+                    'default_iteration_length_weeks' => '2',
+                    'auto_create_iterations' => 'false',
+                    'group_id' => $group->id
+                ]))
                 ->waitForText('AI Generated Tasks')
                 ->assertSee('AI Generated Tasks')
-                ->type('#description', 'I want to build a business')
-                ->select('#ai_provider', 'cerebras')
-                ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')
-                ->select('#project_type', 'iterative')
-                ->type('#default_iteration_length_weeks', '2')
-                ->uncheck('#auto_create_iterations')
-                ->press('Generate Tasks')
                 ->waitForText('Project Setup & Planning', 10)
                 ->assertSee('Project Setup & Planning')
                 ->assertSee('Design System Creation')
@@ -302,6 +328,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 1,
+                    'size' => 'm',
+                    'initial_story_points' => 8,
+                    'current_story_points' => 8,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Conduct Market Research',
@@ -309,6 +339,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 2,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Create Business Plan',
@@ -316,6 +350,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 3,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Register Business',
@@ -323,6 +361,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 4,
+                    'size' => 's',
+                    'initial_story_points' => 5,
+                    'current_story_points' => 5,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Secure Funding',
@@ -330,6 +372,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 5,
+                    'size' => 'xl',
+                    'initial_story_points' => 21,
+                    'current_story_points' => 21,
+                    'story_points_change_count' => 0,
                 ],
                 [
                     'title' => 'Establish Business Operations',
@@ -337,6 +383,10 @@ class ProjectCreationTasksTest extends DuskTestCase
                     'status' => 'pending',
                     'due_date' => null,
                     'sort_order' => 6,
+                    'size' => 'l',
+                    'initial_story_points' => 13,
+                    'current_story_points' => 13,
+                    'story_points_change_count' => 0,
                 ],
             ],
             projectTitle: null, // This is the issue - title should be generated
@@ -389,16 +439,17 @@ class ProjectCreationTasksTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($user, $group) {
             $browser->loginAs($user)
-                ->visit('/dashboard/projects/create/tasks')
+                ->visit('/dashboard/projects/create/tasks?' . http_build_query([
+                    'description' => 'I want to build a business',
+                    'ai_provider' => 'cerebras',
+                    'ai_model' => 'llama-4-maverick-17b-128e-instruct',
+                    'project_type' => 'iterative',
+                    'default_iteration_length_weeks' => '2',
+                    'auto_create_iterations' => 'false',
+                    'group_id' => $group->id
+                ]))
                 ->waitForText('AI Generated Tasks')
                 ->assertSee('AI Generated Tasks')
-                ->type('#description', 'I want to build a business')
-                ->select('#ai_provider', 'cerebras')
-                ->type('#ai_model', 'llama-4-maverick-17b-128e-instruct')
-                ->select('#project_type', 'iterative')
-                ->type('#default_iteration_length_weeks', '2')
-                ->uncheck('#auto_create_iterations')
-                ->press('Generate Tasks')
                 ->waitForText('Define Business Model', 10)
                 ->assertSee('Define Business Model')
                 ->assertSee('Conduct Market Research')

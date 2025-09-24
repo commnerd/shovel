@@ -61,6 +61,9 @@ interface Props {
         group_id?: number;
         ai_provider?: string;
         ai_model?: string;
+        project_type?: string;
+        default_iteration_length_weeks?: number;
+        auto_create_iterations?: boolean;
     };
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
@@ -97,6 +100,9 @@ const form = useForm({
     group_id: props.projectData.group_id || props.defaultGroupId || null,
     ai_provider: props.projectData.ai_provider || null,
     ai_model: props.projectData.ai_model || null,
+    project_type: props.projectData.project_type || 'iterative',
+    default_iteration_length_weeks: props.projectData.default_iteration_length_weeks || null,
+    auto_create_iterations: props.projectData.auto_create_iterations || false,
     tasks: [...props.suggestedTasks] as TaskSuggestion[],
 });
 
@@ -216,8 +222,9 @@ const createProject = () => {
         description: task.description || '',
         status: task.status || 'pending',
         sort_order: task.sort_order || 1,
+        // Ensure size is either null or a valid value
+        size: task.size && ['xs', 's', 'm', 'l', 'xl'].includes(task.size) ? task.size : null,
         // Only include optional fields if they have valid values
-        ...(task.size && { size: task.size }),
         ...(task.initial_story_points !== undefined && { initial_story_points: task.initial_story_points }),
         ...(task.current_story_points !== undefined && { current_story_points: task.current_story_points }),
         ...(task.story_points_change_count !== undefined && { story_points_change_count: task.story_points_change_count }),
@@ -247,6 +254,9 @@ const createProject = () => {
         group_id: form.group_id,
         ai_provider: form.ai_provider,
         ai_model: form.ai_model,
+        project_type: form.project_type,
+        default_iteration_length_weeks: form.default_iteration_length_weeks,
+        auto_create_iterations: form.auto_create_iterations,
         tasksCount: form.tasks.length,
         tasks: form.tasks
     });
