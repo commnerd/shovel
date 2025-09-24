@@ -1,3 +1,11 @@
+# Password protect /register path
+<Location "/register">
+    AuthType Basic
+    AuthName "Registration Access Required"
+    AuthUserFile /var/www/html/public/.htpasswd
+    Require valid-user
+</Location>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
