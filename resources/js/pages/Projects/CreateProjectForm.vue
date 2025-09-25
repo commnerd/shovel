@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 interface Group {
     id: number;
@@ -85,6 +85,42 @@ const form = useForm({
     ai_model: props.formData?.ai_model || props.defaultAISettings.model || '',
 });
 
+// Debug logging to track form changes
+watch(() => form.project_type, (newValue, oldValue) => {
+    console.log('Project type changed from', oldValue, 'to', newValue);
+});
+
+// Project type selection handlers
+const selectFiniteProject = () => {
+    console.log('selectFiniteProject called, setting project_type to finite');
+    // Force update the form data
+    form.setData({
+        ...form.data(),
+        project_type: 'finite'
+    });
+    console.log('Form project_type is now:', form.data().project_type);
+};
+
+const selectIterativeProject = () => {
+    console.log('selectIterativeProject called, setting project_type to iterative');
+    // Force update the form data
+    form.setData({
+        ...form.data(),
+        project_type: 'iterative'
+    });
+    console.log('Form project_type is now:', form.data().project_type);
+};
+
+const onProjectTypeChange = (event) => {
+    console.log('Radio button changed to:', event.target.value);
+    // Force update the form data
+    form.setData({
+        ...form.data(),
+        project_type: event.target.value
+    });
+    console.log('Form project_type is now:', form.data().project_type);
+};
+
 const isGeneratingTasks = ref(false);
 
 // Hide group selection for users in the 'None' organization
@@ -101,20 +137,15 @@ const generateTasks = () => {
 
     isGeneratingTasks.value = true;
 
+    // Debug logging to see what's being sent
+    const formData = form.data();
+    console.log('Form submission data:', formData);
+    console.log('Project type being sent:', formData.project_type);
+
     // Redirect to task generation page with project data
     router.visit('/dashboard/projects/create/tasks', {
         method: 'post',
-        data: {
-            title: form.title,
-            description: form.description,
-            due_date: form.due_date,
-            group_id: form.group_id,
-            project_type: form.project_type,
-            default_iteration_length_weeks: form.default_iteration_length_weeks,
-            auto_create_iterations: form.auto_create_iterations,
-            ai_provider: form.ai_provider,
-            ai_model: form.ai_model,
-        },
+        data: formData,
         onFinish: () => {
             isGeneratingTasks.value = false;
         },
@@ -234,7 +265,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                             :class="form.project_type === 'iterative'
                                 ? 'border-blue-500 bg-blue-100'
                                 : 'border-gray-200 hover:border-gray-300'"
-                            @click="form.project_type = 'iterative'"
+                            @click="selectIterativeProject"
                         >
                             <div class="flex items-center gap-2 mb-2">
                                 <input
@@ -243,6 +274,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                     v-model="form.project_type"
                                     value="iterative"
                                     class="h-4 w-4"
+                                    @change="onProjectTypeChange"
                                 />
                                 <Label for="iterative" class="font-medium cursor-pointer">Iterative Project</Label>
                             </div>
@@ -257,7 +289,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                             :class="form.project_type === 'finite'
                                 ? 'border-blue-500 bg-blue-100'
                                 : 'border-gray-200 hover:border-gray-300'"
-                            @click="form.project_type = 'finite'"
+                            @click="selectFiniteProject"
                         >
                             <div class="flex items-center gap-2 mb-2">
                                 <input
@@ -266,6 +298,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                     v-model="form.project_type"
                                     value="finite"
                                     class="h-4 w-4"
+                                    @change="onProjectTypeChange"
                                 />
                                 <Label for="finite" class="font-medium cursor-pointer">Finite Project</Label>
                             </div>

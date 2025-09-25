@@ -62,6 +62,7 @@ class AITaskGenerationIntegrationTest extends TestCase
                 'description' => 'Build a modern web application',
                 'due_date' => '2025-12-31',
                 'group_id' => $user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();
@@ -109,6 +110,7 @@ class AITaskGenerationIntegrationTest extends TestCase
                 'description' => 'Simple project',
                 'due_date' => '2025-12-31',
                 'group_id' => $user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         // Verify schema structure
@@ -137,6 +139,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Test project',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();
@@ -179,6 +182,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Comprehensive test project',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();
@@ -226,6 +230,7 @@ class AITaskGenerationIntegrationTest extends TestCase
                 'description' => 'Project for regeneration',
                 'due_date' => '2025-12-31',
                 'regenerate' => true,
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();
@@ -272,6 +277,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Test validation project',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();
@@ -325,6 +331,7 @@ class AITaskGenerationIntegrationTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'String conversion test',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();

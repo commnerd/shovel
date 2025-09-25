@@ -31,6 +31,7 @@ interface FormData {
     description: string;
     due_date: string;
     group_id?: number;
+    project_type: 'finite' | 'iterative';
     ai_provider: string;
     ai_model: string;
 }

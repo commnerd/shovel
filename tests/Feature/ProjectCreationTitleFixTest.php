@@ -222,6 +222,7 @@ class ProjectCreationTitleFixTest extends TestCase
                 'description' => 'I want to build a business',
                 'due_date' => '',
                 'group_id' => null,
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();

@@ -73,6 +73,7 @@ class AIWorkflowIntegrationTest extends TestCase
                 'description' => 'Build a comprehensive e-commerce platform',
                 'due_date' => '2026-06-30',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200)
@@ -139,6 +140,7 @@ class AIWorkflowIntegrationTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a simple blog application',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200)

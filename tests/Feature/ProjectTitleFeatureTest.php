@@ -72,6 +72,7 @@ class ProjectTitleFeatureTest extends TestCase
                 'title' => 'My Custom Title',
                 'description' => 'Build an e-commerce platform',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk()
@@ -107,6 +108,7 @@ class ProjectTitleFeatureTest extends TestCase
             ->post('/dashboard/projects/create/tasks', [
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk()
@@ -255,6 +257,7 @@ class ProjectTitleFeatureTest extends TestCase
                 'description' => 'Build a web app',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk();

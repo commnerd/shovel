@@ -40,6 +40,13 @@ class Project extends Model
     ];
 
     /**
+     * The model's default values for attributes.
+     */
+    protected $attributes = [
+        'project_type' => 'iterative',
+    ];
+
+    /**
      * Get the user that owns the project.
      */
     public function user(): BelongsTo

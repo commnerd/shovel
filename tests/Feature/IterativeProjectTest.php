@@ -16,7 +16,9 @@ beforeEach(function () {
 
 test('can create iterative project', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -37,7 +39,9 @@ test('can create iterative project', function () {
 
 test('can create finite project', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -54,9 +58,11 @@ test('can create finite project', function () {
 
 test('project defaults to iterative type', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
-    
+
     $user->update(['organization_id' => $organization->id]);
 
     // Test database default by creating without factory
@@ -78,7 +84,9 @@ test('project defaults to iterative type', function () {
 
 test('can create iterations for iterative project', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -165,7 +173,9 @@ test('iteration without capacity limit always has capacity', function () {
 
 test('can create next iteration for project', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -197,7 +207,9 @@ test('can create next iteration for project', function () {
 
 test('project can get current and next iterations', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -224,7 +236,9 @@ test('project can get current and next iterations', function () {
 
 test('project can calculate story points metrics', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -262,7 +276,9 @@ test('project can calculate story points metrics', function () {
 
 test('project can calculate average velocity', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -294,7 +310,9 @@ test('project can calculate average velocity', function () {
 
 test('project with no completed iterations has zero velocity', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -310,7 +328,9 @@ test('project with no completed iterations has zero velocity', function () {
 
 test('can get backlog tasks', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -342,7 +362,9 @@ test('can get backlog tasks', function () {
 
 test('auto create iterations creates next iteration when needed', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -365,7 +387,9 @@ test('auto create iterations creates next iteration when needed', function () {
 
 test('auto create iterations does not create when active iteration exists', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);
@@ -388,7 +412,9 @@ test('auto create iterations does not create when active iteration exists', func
 
 test('finite project does not auto create iterations', function () {
     $user = User::factory()->create();
-    $organization = Organization::factory()->create();
+    $organization = Organization::factory()->create([
+        'domain' => 'iterative-test-' . uniqid() . '.com'
+    ]);
     $group = Group::factory()->create(['organization_id' => $organization->id]);
 
     $user->update(['organization_id' => $organization->id]);

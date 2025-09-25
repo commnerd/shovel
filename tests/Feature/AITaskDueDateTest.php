@@ -52,6 +52,7 @@ class AITaskDueDateTest extends TestCase
         $response = $this->actingAs($user)->post('/dashboard/projects/create/tasks', [
             'description' => 'Build a web application',
             'due_date' => '2025-12-31',
+            'project_type' => 'finite',
         ]);
 
         $response->assertStatus(200);
@@ -188,6 +189,7 @@ class AITaskDueDateTest extends TestCase
         $response = $this->actingAs($user)->post('/dashboard/projects/create/tasks', [
             'description' => 'Build a web application with setup, features, and testing',
             'due_date' => '2025-12-31',
+            'project_type' => 'finite',
         ]);
 
         $response->assertStatus(200);

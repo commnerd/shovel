@@ -163,6 +163,7 @@ class ProjectGroupAssignmentTest extends TestCase
                 'description' => 'Test description',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->group->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertOk()

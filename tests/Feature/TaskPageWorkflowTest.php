@@ -78,6 +78,7 @@ class TaskPageWorkflowTest extends TestCase
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200);
@@ -106,6 +107,7 @@ class TaskPageWorkflowTest extends TestCase
                 'description' => 'Build a simple app',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200);
@@ -163,6 +165,7 @@ class TaskPageWorkflowTest extends TestCase
                 'due_date' => '2025-12-31',
                 'regenerate' => true,
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200);
@@ -235,6 +238,7 @@ class TaskPageWorkflowTest extends TestCase
                 'description' => 'Complex project with detailed requirements',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertInertia(fn ($page) => $page->where('projectData.description', 'Complex project with detailed requirements')

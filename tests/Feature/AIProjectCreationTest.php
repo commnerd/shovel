@@ -82,6 +82,7 @@ class AIProjectCreationTest extends TestCase
                 'description' => 'Build a task management app with Vue.js and Laravel',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200)
@@ -112,6 +113,7 @@ class AIProjectCreationTest extends TestCase
                 'description' => 'Build a web application',
                 'due_date' => '2025-12-31',
                 'group_id' => $this->user->groups->first()->id,
+                'project_type' => 'finite',
             ]);
 
         $response->assertStatus(200)

@@ -242,7 +242,7 @@ class ProjectsController extends Controller
         $user = auth()->user();
         $userGroups = collect();
 
-        if ($user->organization) {
+        if ($user && $user->organization) {
             $userGroups = $user->organization->groups->map(function ($group) {
                 return [
                     'id' => $group->id,
@@ -262,6 +262,7 @@ class ProjectsController extends Controller
                 'description' => $request->get('description', ''),
                 'due_date' => $request->get('due_date'),
                 'group_id' => $request->get('group_id', $defaultGroup['id'] ?? null),
+                'project_type' => $request->get('project_type', 'iterative'),
                 'ai_provider' => $request->get('ai_provider'),
                 'ai_model' => $request->get('ai_model'),
             ],
@@ -283,6 +284,7 @@ class ProjectsController extends Controller
             'description' => 'required|string|max:1000',
             'due_date' => 'nullable|date|after_or_equal:today',
             'group_id' => 'nullable|exists:groups,id',
+            'project_type' => 'required|string|in:finite,iterative',
             'regenerate' => 'nullable|boolean',
             'user_feedback' => 'nullable|string|max:2000',
             'ai_provider' => 'nullable|string|in:cerebras,openai,anthropic',
