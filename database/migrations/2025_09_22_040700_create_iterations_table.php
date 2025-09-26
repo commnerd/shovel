@@ -38,6 +38,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // First, drop any foreign key constraints that reference this table
+        Schema::table('tasks', function (Blueprint $table) {
+            if (Schema::hasColumn('tasks', 'iteration_id')) {
+                $table->dropForeign(['iteration_id']);
+            }
+        });
+
+        // Then drop the table
         Schema::dropIfExists('iterations');
     }
 };

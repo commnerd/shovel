@@ -31,9 +31,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Disable foreign key checks for SQLite
-        \DB::statement('PRAGMA foreign_keys=OFF;');
+        // For MySQL/MariaDB, we need to disable foreign key checks
+        if (\DB::getDriverName() === 'mysql') {
+            \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
+
         Schema::dropIfExists('tasks');
-        \DB::statement('PRAGMA foreign_keys=ON;');
+
+        // Re-enable foreign key checks
+        if (\DB::getDriverName() === 'mysql') {
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
     }
 };

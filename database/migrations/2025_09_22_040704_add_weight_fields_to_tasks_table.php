@@ -35,8 +35,20 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Skip down migration to avoid SQLite issues with indexes and columns
-        // This migration adds weight fields that are essential for the application
-        // and should not be rolled back in normal circumstances
+        Schema::table('tasks', function (Blueprint $table) {
+            // Drop foreign key constraint first
+            $table->dropForeign(['iteration_id']);
+
+            // Drop the iteration_id column
+            $table->dropColumn('iteration_id');
+
+            // Drop other columns
+            $table->dropColumn([
+                'size',
+                'initial_story_points',
+                'current_story_points',
+                'story_points_change_count'
+            ]);
+        });
     }
 };
