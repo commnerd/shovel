@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\WaitlistController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,6 +15,9 @@ Route::get('/', function () {
 })->name('landing');
 
 Route::post('/waitlist', [WaitlistController::class, 'store'])->name('waitlist.store');
+
+// Stripe webhook (must be outside auth middleware)
+Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -268,6 +273,15 @@ Route::get('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordControll
 Route::post('/invitation/{token}', [App\Http\Controllers\Auth\SetPasswordController::class, 'store'])
     ->name('invitation.set-password.store');
 
+// Subscription routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::post('/subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
+    Route::put('/subscriptions', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+    Route::delete('/subscriptions', [SubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
+    Route::post('/subscriptions/resume', [SubscriptionController::class, 'resume'])->name('subscriptions.resume');
+    Route::get('/subscriptions/invoice/{id}', [SubscriptionController::class, 'downloadInvoice'])->name('subscriptions.invoice');
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
