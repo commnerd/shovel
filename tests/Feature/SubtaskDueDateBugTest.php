@@ -60,7 +60,7 @@ class SubtaskDueDateBugTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post("/dashboard/projects/{$project->id}/tasks/breakdown", [
-            'task_id' => $parentTask->id,
+            'parent_task_id' => $parentTask->id,
             'title' => 'Break down this task',
             'description' => 'Need to break this into smaller tasks',
         ]);
@@ -119,7 +119,7 @@ class SubtaskDueDateBugTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post("/dashboard/projects/{$project->id}/tasks/breakdown", [
-            'task_id' => $parentTask->id,
+            'parent_task_id' => $parentTask->id,
             'title' => 'Break down this task',
             'description' => 'Need to break this into smaller tasks',
         ]);
@@ -180,7 +180,7 @@ class SubtaskDueDateBugTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post("/dashboard/projects/{$project->id}/tasks/breakdown", [
-            'task_id' => $parentTask->id,
+            'parent_task_id' => $parentTask->id,
             'title' => 'Break down this task',
             'description' => 'Need to break this into smaller tasks',
         ]);

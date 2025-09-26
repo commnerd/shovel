@@ -320,7 +320,7 @@ class CerebrasProvider implements AIProviderInterface
             }
 
             // Extract tasks, title, and communication
-            $tasks = $data['tasks'] ?? [];
+            $tasks = $data['subtasks'] ?? $data['tasks'] ?? [];
             $projectTitle = $data['project_title'] ?? null;
             $summary = $data['summary'] ?? null;
             $notes = $data['notes'] ?? [];
