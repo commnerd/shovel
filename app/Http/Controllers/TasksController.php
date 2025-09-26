@@ -153,11 +153,17 @@ class TasksController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'nullable|date|after_or_equal:today',
+            'initial_story_points' => 'nullable|integer|min:0',
+            'current_story_points' => 'nullable|integer|min:0',
+            'story_points_change_count' => 'nullable|integer|min:0',
             'subtasks' => 'nullable|array',
             'subtasks.*.title' => 'required|string|max:255',
             'subtasks.*.description' => 'nullable|string|max:1000',
             'subtasks.*.status' => 'required|in:pending,in_progress,completed',
             'subtasks.*.due_date' => 'nullable|date|after_or_equal:today',
+            'subtasks.*.initial_story_points' => 'nullable|integer|min:0',
+            'subtasks.*.current_story_points' => 'nullable|integer|min:0',
+            'subtasks.*.story_points_change_count' => 'nullable|integer|min:0',
         ]);
 
         // If parent_id is provided, ensure it belongs to the same project
@@ -182,6 +188,9 @@ class TasksController extends Controller
             'status' => $validated['status'],
             'due_date' => $validated['due_date'] ?? null,
             'sort_order' => $sortOrder,
+            'initial_story_points' => $validated['initial_story_points'] ?? null,
+            'current_story_points' => $validated['current_story_points'] ?? null,
+            'story_points_change_count' => $validated['story_points_change_count'] ?? 0,
         ]);
 
         // Update hierarchy path and depth
@@ -216,6 +225,11 @@ class TasksController extends Controller
                     'status' => $subtaskData['status'],
                     'due_date' => $subtaskData['due_date'] ?? null,
                     'sort_order' => $index + 1,
+                    'depth' => $task->depth + 1,
+                    'size' => null, // Subtasks don't have T-shirt sizes
+                    'initial_story_points' => $subtaskData['initial_story_points'] ?? null,
+                    'current_story_points' => $subtaskData['current_story_points'] ?? null,
+                    'story_points_change_count' => $subtaskData['story_points_change_count'] ?? 0,
                 ]);
 
                 $subtask->updateHierarchyPath();

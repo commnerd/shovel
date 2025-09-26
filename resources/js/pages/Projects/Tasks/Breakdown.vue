@@ -781,6 +781,9 @@ const createAllSubtasks = async () => {
                     parent_id: props.task.id,
                     status: subtask.status,
                     due_date: subtask.due_date || null,
+                    initial_story_points: subtask.initial_story_points || null,
+                    current_story_points: subtask.current_story_points || null,
+                    story_points_change_count: subtask.story_points_change_count || 0,
                 }),
             });
 
