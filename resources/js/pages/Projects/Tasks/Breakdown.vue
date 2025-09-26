@@ -45,8 +45,8 @@
                                 <span>Due: {{ new Date(task.due_date).toLocaleDateString() }}</span>
                             </div>
                         </div>
-                        <!-- Task sizing for iterative projects -->
-                        <div v-if="project.project_type === 'iterative'">
+                        <!-- Task sizing for all projects -->
+                        <div>
                             <TaskSizing :task="task" @updated="refreshTask" />
                         </div>
                     </div>

@@ -435,7 +435,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <!-- Subtask title -->
                                     <div class="flex-1 min-w-0">
                                         <span class="text-sm font-medium text-gray-900 truncate block">{{ subtask.title }}</span>
-                                        <div v-if="project.project_type === 'iterative'" class="mt-1">
+                                        <div class="mt-1">
                                             <TaskSizing :task="subtask" @updated="refreshSubtasks" />
                                         </div>
                                     </div>

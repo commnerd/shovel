@@ -1070,8 +1070,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 {{ task.title }}
                             </span>
 
-                            <!-- Task sizing for iterative projects -->
-                            <div v-if="project.project_type === 'iterative'" class="ml-2">
+                            <!-- Task sizing for all projects -->
+                            <div class="ml-2">
                                 <TaskSizing :task="task" @updated="refreshTasks" />
                             </div>
 
@@ -1154,7 +1154,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <span class="text-sm font-medium text-gray-900 truncate block">
                                 {{ task.title }}
                             </span>
-                            <div v-if="project.project_type === 'iterative'" class="mt-1">
+                            <div class="mt-1">
                                 <TaskSizing :task="task" @updated="refreshTasks" />
                             </div>
                         </div>
@@ -1210,7 +1210,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
                                 </div>
-                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                <div class="mb-2">
                                     <TaskSizing :task="task" @updated="refreshTasks" />
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
@@ -1274,7 +1274,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1">{{ task.title }}</h4>
                                 </div>
-                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                <div class="mb-2">
                                     <TaskSizing :task="task" @updated="refreshTasks" />
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">
@@ -1338,7 +1338,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <div class="flex items-start justify-between">
                                     <h4 class="text-sm font-medium text-gray-900 mb-1 line-through">{{ task.title }}</h4>
                                 </div>
-                                <div v-if="project.project_type === 'iterative'" class="mb-2">
+                                <div class="mb-2">
                                     <TaskSizing :task="task" @updated="refreshTasks" />
                                 </div>
                                 <div v-if="task.description" class="text-xs text-gray-600 mb-2 line-clamp-2">

@@ -33,10 +33,13 @@ export interface TaskSuggestion {
     status: 'pending' | 'in_progress' | 'completed';
     sort_order: number;
     // Iterative project fields
-    size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+    size?: 'xs' | 's' | 'm' | 'l' | 'xl' | null;
     initial_story_points?: number;
     current_story_points?: number;
     story_points_change_count?: number;
+    // Required for TaskSizing component
+    id?: number;
+    depth?: number;
 }
 
 interface AICommunication {
@@ -290,6 +293,8 @@ const createProject = () => {
 const refreshTasks = () => {
     // In this context, we don't need to reload from server since tasks are local
     // The TaskSizing component will update the local task data
+    // Force reactivity update
+    form.tasks = [...form.tasks];
 };
 </script>
 
@@ -422,7 +427,7 @@ const refreshTasks = () => {
                                             v-model="task.title"
                                             class="w-full px-2 py-1 border rounded text-sm font-medium"
                                             placeholder="Task title"
-                                            @keydown.enter="saveTask(index)"
+                                            @keydown.enter="saveTask()"
                                             @keydown.escape="editingTaskIndex = null"
                                         />
                                         <textarea
@@ -432,7 +437,7 @@ const refreshTasks = () => {
                                             placeholder="Task description"
                                         ></textarea>
                                         <div class="flex gap-2">
-                                            <Button size="sm" @click="saveTask(index)">
+                                            <Button size="sm" @click="saveTask()">
                                                 <Save class="h-3 w-3 mr-1" />
                                                 Save
                                             </Button>
@@ -445,8 +450,8 @@ const refreshTasks = () => {
                                     <!-- Display Mode -->
                                     <div v-else class="w-full">
                                         <h3 class="text-lg font-semibold text-gray-900 mb-3 leading-tight">{{ task.title }}</h3>
-                                        <div v-if="projectData.project_type === 'iterative'" class="mb-3">
-                                            <TaskSizing :task="task" @updated="refreshTasks" />
+                                        <div class="mb-3">
+                                            <TaskSizing :task="{ ...task, id: task.id || 0, depth: task.depth || 0, size: task.size || undefined }" @updated="refreshTasks" />
                                         </div>
                                         <p class="text-base text-gray-700 mb-4 leading-relaxed">{{ task.description }}</p>
                                         <div class="flex items-center gap-3 flex-wrap">
