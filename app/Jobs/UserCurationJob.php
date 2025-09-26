@@ -27,6 +27,14 @@ class UserCurationJob implements ShouldQueue
     protected User $user;
 
     /**
+     * The unique ID of the job.
+     */
+    public function uniqueId(): string
+    {
+        return 'user-curation-' . $this->user->id . '-' . now()->format('Y-m-d');
+    }
+
+    /**
      * Create a new job instance.
      */
     public function __construct(User $user)
@@ -317,16 +325,26 @@ class UserCurationJob implements ShouldQueue
         $dailyVelocity = DailyWeightMetric::getAverageVelocity($this->user, 7);
 
         // Store the metrics
-        DailyWeightMetric::createOrUpdate($this->user, $today, [
-            'total_story_points' => $totalStoryPoints,
-            'total_tasks_count' => $totalTasksCount,
-            'signed_tasks_count' => $signedTasksCount,
-            'unsigned_tasks_count' => $unsignedTasksCount,
-            'average_points_per_task' => $averagePointsPerTask,
-            'daily_velocity' => $dailyVelocity,
-            'project_breakdown' => $projectBreakdown,
-            'size_breakdown' => $sizeBreakdown,
-        ]);
+        try {
+            DailyWeightMetric::createOrUpdate($this->user, $today, [
+                'total_story_points' => $totalStoryPoints,
+                'total_tasks_count' => $totalTasksCount,
+                'signed_tasks_count' => $signedTasksCount,
+                'unsigned_tasks_count' => $unsignedTasksCount,
+                'average_points_per_task' => $averagePointsPerTask,
+                'daily_velocity' => $dailyVelocity,
+                'project_breakdown' => $projectBreakdown,
+                'size_breakdown' => $sizeBreakdown,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create/update DailyWeightMetric', [
+                'user_id' => $this->user->id,
+                'date' => $today->format('Y-m-d'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
 
         Log::info('Daily weight metrics calculated and stored', [
             'user_id' => $this->user->id,

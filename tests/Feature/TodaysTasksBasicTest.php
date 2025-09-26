@@ -96,7 +96,7 @@ class TodaysTasksBasicTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) =>
             $page->has('tasks', 1)
-                ->where("tasks.{$task->id}.id", $task->id)
+                ->where("tasks.0.id", $task->id)
         );
     }
 
@@ -182,8 +182,8 @@ class TodaysTasksBasicTest extends TestCase
                 'status' => 'in_progress',
             ]);
 
-        $response->assertOk();
-        $response->assertJson(['success' => true]);
+        $response->assertStatus(302); // Redirect response for Inertia compatibility
+        $response->assertRedirect();
 
         $task->refresh();
         $this->assertEquals('in_progress', $task->status);

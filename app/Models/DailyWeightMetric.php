@@ -75,13 +75,28 @@ class DailyWeightMetric extends Model
      */
     public static function createOrUpdate(User $user, Carbon $date, array $data): self
     {
-        return static::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'metric_date' => $date->format('Y-m-d'),
-            ],
-            $data
-        );
+        try {
+            return static::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'metric_date' => $date->format('Y-m-d'),
+                ],
+                $data
+            );
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // If we get a unique constraint violation, try to find and update the existing record
+            $existing = static::where('user_id', $user->id)
+                ->whereDate('metric_date', $date->format('Y-m-d'))
+                ->first();
+
+            if ($existing) {
+                $existing->update($data);
+                return $existing->fresh();
+            }
+
+            // If no existing record found, re-throw the exception
+            throw $e;
+        }
     }
 
     /**

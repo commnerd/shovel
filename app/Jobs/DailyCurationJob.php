@@ -24,6 +24,14 @@ class DailyCurationJob implements ShouldQueue
     protected User $user;
 
     /**
+     * The unique ID of the job.
+     */
+    public function uniqueId(): string
+    {
+        return 'daily-curation-' . $this->user->id . '-' . now()->format('Y-m-d');
+    }
+
+    /**
      * Create a new job instance.
      */
     public function __construct(User $user)

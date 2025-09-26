@@ -358,7 +358,9 @@ class TasksController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Parent tasks cannot be marked completed directly. Complete all child tasks instead.',
-            ], 400);
+            ], 400)->withHeaders([
+                'Content-Type' => 'application/json',
+            ]);
         }
 
         $oldStatus = $task->status;
@@ -378,6 +380,8 @@ class TasksController extends Controller
                 'status' => $task->status,
                 'title' => $task->title,
             ],
+        ])->withHeaders([
+            'Content-Type' => 'application/json',
         ]);
     }
 

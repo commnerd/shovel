@@ -282,11 +282,8 @@ class OrganizationCurationTest extends TestCase
         $response = $this->actingAs($user)
             ->post('/dashboard/todays-tasks/refresh');
 
-        $response->assertStatus(200);
-        $response->assertJson([
-            'success' => true,
-            'message' => 'Today\'s tasks refreshed successfully'
-        ]);
+        $response->assertStatus(302); // Redirect response for Inertia compatibility
+        $response->assertRedirect();
 
         // Debug: Check if any curated tasks were created at all
         $curatedTasksCount = CuratedTasks::where('assigned_to', $user->id)

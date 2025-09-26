@@ -68,25 +68,46 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Flash message handling
+const page = usePage();
+const flashMessage = computed(() => page.props.flash?.success || page.props.flash?.message);
+const flashError = computed(() => page.props.flash?.error || page.props.errors?.message);
+
 const isRefreshing = ref(false);
 const viewMode = ref<'kanban' | 'list'>('kanban');
+
+// Column height management
+const columnHeights = ref<Record<string, number>>({});
+const maxColumnHeight = ref(0);
 
 // Kanban drag and drop state
 const kanbanDragOverColumn = ref<string | null>(null);
 const draggedTask = ref<Task | null>(null);
 
+// Mouse-based drag and drop state (fallback) - disabled to prevent interference
+// const isMouseDragging = ref(false);
+// const mouseDragStartPos = ref<{ x: number; y: number } | null>(null);
+
 // Computed properties for task organization
-const tasks = computed(() => props.tasks);
+const tasks = computed(() => Array.isArray(props.tasks) ? props.tasks : []);
 
 const pendingTasks = computed(() => tasks.value.filter(task => task.status === 'pending'));
 const inProgressTasks = computed(() => tasks.value.filter(task => task.status === 'in_progress'));
 const completedTasks = computed(() => tasks.value.filter(task => task.status === 'completed'));
 
-// Kanban column heights for consistent layout
-const columnHeights = ref({
-    pending: 'auto',
-    in_progress: 'auto',
-    completed: 'auto'
+// Watch for changes in tasks to recalculate column heights
+watch([pendingTasks, inProgressTasks, completedTasks], () => {
+    calculateColumnHeights();
+}, { deep: true });
+
+// Watch for changes in the tasks array itself
+watch(() => props.tasks, () => {
+    calculateColumnHeights();
+}, { deep: true });
+
+// Calculate heights when component mounts
+onMounted(() => {
+    calculateColumnHeights();
 });
 
 // Breadcrumbs
@@ -97,23 +118,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 // Task status update functions
 const updateTaskStatus = async (taskId: number, newStatus: string) => {
     try {
-        const response = await fetch(`/dashboard/todays-tasks/tasks/${taskId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        // Use Inertia's router.patch which handles CSRF tokens automatically
+        router.patch(`/dashboard/todays-tasks/tasks/${taskId}/status`, {
+            status: newStatus
+        }, {
+            onSuccess: () => {
+                // Success message will be shown via flash message
             },
-            body: JSON.stringify({ status: newStatus }),
+            onError: (errors) => {
+                // Error message will be shown via flash message
+            }
         });
-
-        if (response.ok) {
-            // Reload the page to get updated data
-            router.reload({ only: ['tasks', 'stats'] });
-        } else {
-            console.error('Failed to update task status');
-        }
     } catch (error) {
-        console.error('Error updating task status:', error);
+        // Error handling - flash message will show the error
     }
 };
 
@@ -121,29 +138,50 @@ const completeTask = async (taskId: number) => {
     await updateTaskStatus(taskId, 'completed');
 };
 
+// Function to calculate and set equal column heights
+const calculateColumnHeights = () => {
+    nextTick(() => {
+        // Add a small delay to ensure DOM is fully rendered
+        setTimeout(() => {
+            const columns = document.querySelectorAll('.kanban-column');
+            const heights: Record<string, number> = {};
+            let maxHeight = 0;
+
+            columns.forEach((column) => {
+                const status = column.getAttribute('data-status');
+                if (status) {
+                    const height = column.scrollHeight;
+                    heights[status] = height;
+                    maxHeight = Math.max(maxHeight, height);
+                }
+            });
+
+            columnHeights.value = heights;
+            maxColumnHeight.value = maxHeight;
+        }, 100);
+    });
+};
+
 // Refresh function
 const refreshCurations = async () => {
     isRefreshing.value = true;
 
     try {
-        const timestamp = Date.now();
-        const response = await fetch(`/dashboard/todays-tasks/refresh?t=${timestamp}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        // Use Inertia's router.post which handles CSRF tokens automatically
+        router.post('/dashboard/todays-tasks/refresh', {}, {
+            onSuccess: (page) => {
+                // The controller redirects back to the same page, so we just need to stop the loading
+                // Success message will be shown via flash message
             },
+            onError: (errors) => {
+                // Error handling disabled - no alerts shown
+            },
+            onFinish: () => {
+                isRefreshing.value = false;
+            }
         });
-
-        if (response.ok) {
-            router.reload({ only: ['tasks', 'stats'] });
-        } else {
-            alert('Failed to refresh tasks. Please try again.');
-        }
     } catch (error) {
-        console.error('Error refreshing tasks:', error);
-        alert('An error occurred while refreshing tasks.');
-    } finally {
+        // Error handling disabled - no alerts shown
         isRefreshing.value = false;
     }
 };
@@ -151,9 +189,10 @@ const refreshCurations = async () => {
 // Kanban drag and drop handlers
 const onKanbanDragStart = (event: DragEvent, task: Task) => {
     draggedTask.value = task;
+
     if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/html', '');
+        event.dataTransfer.setData('text/plain', task.id.toString());
     }
 };
 
@@ -182,14 +221,23 @@ const onKanbanDragLeave = (event: DragEvent) => {
 
 const onKanbanDrop = async (event: DragEvent, newStatus: string) => {
     event.preventDefault();
+    event.stopPropagation();
+
     kanbanDragOverColumn.value = null;
 
     if (draggedTask.value && draggedTask.value.status !== newStatus) {
-        await updateTaskStatus(draggedTask.value.id, newStatus);
+        try {
+            await updateTaskStatus(draggedTask.value.id, newStatus);
+        } catch (error) {
+            console.error('Error updating task status:', error);
+        }
     }
 
     draggedTask.value = null;
 };
+
+// Mouse-based drag and drop handlers disabled to prevent interference with normal clicks
+
 
 // Utility functions
 const formatDate = (dateString: string) => {
@@ -246,6 +294,29 @@ const getTaskSizeLabel = (size?: string) => {
                                 </svg>
                                 {{ isRefreshing ? 'Generating...' : 'Generate Today\'s Tasks' }}
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <div v-if="flashMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <CheckCircle class="h-5 w-5 text-green-400" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-green-800">{{ flashMessage }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="flashError" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <AlertTriangle class="h-5 w-5 text-red-400" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ flashError }}</p>
                         </div>
                     </div>
                 </div>
@@ -321,7 +392,8 @@ const getTaskSizeLabel = (size?: string) => {
                             </span>
                         </div>
                         <div
-                            class="space-y-3 kanban-column"
+                            class="space-y-3 kanban-column border-2 border-dashed border-transparent"
+                            :style="{ minHeight: maxColumnHeight > 0 ? `${maxColumnHeight}px` : '200px' }"
                             data-status="pending"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'pending')"
@@ -335,11 +407,13 @@ const getTaskSizeLabel = (size?: string) => {
                                 draggable="true"
                                 @dragstart="onKanbanDragStart($event, task)"
                                 class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move"
+                                :class="{ 'opacity-50': draggedTask?.id === task.id }"
+                                style="user-select: none; -webkit-user-drag: element;"
                             >
                                 <div class="flex items-start justify-between mb-2">
                                     <h4 class="font-medium text-gray-900 text-sm">{{ task.title }}</h4>
                                     <button
-                                        @click="updateTaskStatus(task.id, 'in_progress')"
+                                        @click.stop="updateTaskStatus(task.id, 'in_progress')"
                                         class="text-gray-400 hover:text-blue-600 transition-colors"
                                         title="Start task"
                                     >
@@ -354,7 +428,7 @@ const getTaskSizeLabel = (size?: string) => {
                                             {{ getTaskSizeLabel(task.size) }}
                                         </span>
                                         <button
-                                            @click="completeTask(task.id)"
+                                            @click.stop="completeTask(task.id)"
                                             class="text-gray-400 hover:text-green-600 transition-colors"
                                             title="Complete task"
                                         >
@@ -376,7 +450,8 @@ const getTaskSizeLabel = (size?: string) => {
                             </span>
                         </div>
                         <div
-                            class="space-y-3 kanban-column"
+                            class="space-y-3 kanban-column border-2 border-dashed border-transparent"
+                            :style="{ minHeight: maxColumnHeight > 0 ? `${maxColumnHeight}px` : '200px' }"
                             data-status="in_progress"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'in_progress')"
@@ -390,11 +465,13 @@ const getTaskSizeLabel = (size?: string) => {
                                 draggable="true"
                                 @dragstart="onKanbanDragStart($event, task)"
                                 class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move"
+                                :class="{ 'opacity-50': draggedTask?.id === task.id }"
+                                style="user-select: none; -webkit-user-drag: element;"
                             >
                                 <div class="flex items-start justify-between mb-2">
                                     <h4 class="font-medium text-gray-900 text-sm">{{ task.title }}</h4>
                                     <button
-                                        @click="updateTaskStatus(task.id, 'pending')"
+                                        @click.stop="updateTaskStatus(task.id, 'pending')"
                                         class="text-gray-400 hover:text-gray-600 transition-colors"
                                         title="Move back to pending"
                                     >
@@ -409,7 +486,7 @@ const getTaskSizeLabel = (size?: string) => {
                                             {{ getTaskSizeLabel(task.size) }}
                                         </span>
                                         <button
-                                            @click="completeTask(task.id)"
+                                            @click.stop="completeTask(task.id)"
                                             class="text-gray-400 hover:text-green-600 transition-colors"
                                             title="Complete task"
                                         >
@@ -431,7 +508,8 @@ const getTaskSizeLabel = (size?: string) => {
                             </span>
                         </div>
                         <div
-                            class="space-y-3 kanban-column"
+                            class="space-y-3 kanban-column border-2 border-dashed border-transparent"
+                            :style="{ minHeight: maxColumnHeight > 0 ? `${maxColumnHeight}px` : '200px' }"
                             data-status="completed"
                             @dragover="onKanbanDragOver"
                             @dragenter="onKanbanDragEnter($event, 'completed')"
@@ -445,11 +523,13 @@ const getTaskSizeLabel = (size?: string) => {
                                 draggable="true"
                                 @dragstart="onKanbanDragStart($event, task)"
                                 class="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-move opacity-75"
+                                :class="{ 'opacity-50': draggedTask?.id === task.id }"
+                                style="user-select: none; -webkit-user-drag: element;"
                             >
                                 <div class="flex items-start justify-between mb-2">
                                     <h4 class="font-medium text-gray-900 text-sm line-through">{{ task.title }}</h4>
                                     <button
-                                        @click="updateTaskStatus(task.id, 'in_progress')"
+                                        @click.stop="updateTaskStatus(task.id, 'in_progress')"
                                         class="text-gray-400 hover:text-blue-600 transition-colors"
                                         title="Reopen task"
                                     >

@@ -35,7 +35,7 @@ class TodaysTasksController extends Controller
         // Extract tasks from curated tasks
         $tasks = $curatedTasks->map(function ($curatedTask) {
             return $curatedTask->curatable;
-        })->filter()->keyBy('id');
+        })->filter()->values(); // Use values() to get array instead of keyed collection
 
         // Get user's active projects for context
         $activeProjects = $user->projects()
@@ -114,6 +114,7 @@ class TodaysTasksController extends Controller
             'message' => 'Curation dismissed successfully',
             'timestamp' => now()->toISOString(),
         ])->withHeaders([
+            'Content-Type' => 'application/json',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -141,6 +142,7 @@ class TodaysTasksController extends Controller
             ],
             'timestamp' => now()->toISOString(),
         ])->withHeaders([
+            'Content-Type' => 'application/json',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -150,11 +152,11 @@ class TodaysTasksController extends Controller
     /**
      * Update task status from the today's tasks view.
      */
-    public function updateTaskStatus(Request $request, Task $task): JsonResponse
+    public function updateTaskStatus(Request $request, Task $task)
     {
         // Ensure user owns this task
         if ($task->project->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return back()->withErrors(['message' => 'Unauthorized access to this task.']);
         }
 
         $validated = $request->validate([
@@ -163,40 +165,35 @@ class TodaysTasksController extends Controller
 
         $task->update(['status' => $validated['status']]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task status updated successfully',
-            'task' => [
-                'id' => $task->id,
-                'status' => $task->status,
-            ],
-            'timestamp' => now()->toISOString(),
-        ])->withHeaders([
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        // Return a redirect back to the same page for Inertia compatibility
+        return back()->with('success', 'Task status updated successfully');
     }
 
     /**
      * Get fresh curations for today (manually trigger).
      */
-    public function refresh(): JsonResponse
+    public function refresh()
     {
         $user = auth()->user();
 
-        // Dispatch curation job for immediate processing
-        \App\Jobs\DailyCurationJob::dispatchSync($user);
+        if (!$user) {
+            return back()->withErrors(['message' => 'User not authenticated']);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Today\'s tasks refreshed successfully',
-            'timestamp' => now()->toISOString(),
-        ])->withHeaders([
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        try {
+            // Dispatch enhanced curation job for immediate processing
+            \App\Jobs\UserCurationJob::dispatchSync($user);
+
+            return back()->with('success', 'Today\'s tasks refreshed successfully');
+        } catch (\Exception $e) {
+            \Log::error('Failed to refresh today\'s tasks', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withErrors(['message' => 'Failed to refresh tasks. Please try again.']);
+        }
     }
 
     /**
@@ -243,6 +240,7 @@ class TodaysTasksController extends Controller
             ...$stats,
             'timestamp' => now()->toISOString(),
         ])->withHeaders([
+            'Content-Type' => 'application/json',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
