@@ -31,6 +31,7 @@ class CompleteApprovalWorkflowTest extends TestCase
             'email' => 'admin@lifecycle.com',
             'pending_approval' => false,
             'approved_at' => now(),
+            'is_super_admin' => false, // Explicitly set to false
         ]);
 
         $organization = Organization::factory()->create([

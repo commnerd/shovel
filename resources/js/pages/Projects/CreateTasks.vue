@@ -128,6 +128,7 @@ const isRegeneratingWithFeedback = ref(false);
 // Prompt modal state
 const showPromptModal = ref(false);
 const showFullPrompt = ref(false);
+const showAIResponse = ref(false);
 
 
 // Status icons
@@ -211,6 +212,7 @@ const cancelRegeneration = () => {
 const closePromptModal = () => {
     showPromptModal.value = false;
     showFullPrompt.value = false;
+    showAIResponse.value = false;
 };
 
 const goBackToEdit = () => {
@@ -665,15 +667,26 @@ const refreshTasks = () => {
                         <div v-if="props.fullPromptText" class="border-t pt-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h4 class="text-sm font-semibold text-gray-800">Full AI Prompt</h4>
-                                <Button
-                                    @click="showFullPrompt = !showFullPrompt"
-                                    variant="outline"
-                                    size="sm"
-                                    class="flex items-center gap-2"
-                                >
-                                    <MessageSquare class="h-3 w-3" />
-                                    {{ showFullPrompt ? 'Hide' : 'Show' }} Full Prompt
-                                </Button>
+                                <div class="flex items-center gap-2">
+                                    <Button
+                                        @click="showAIResponse = !showAIResponse"
+                                        variant="outline"
+                                        size="sm"
+                                        class="flex items-center gap-2"
+                                    >
+                                        <Sparkles class="h-3 w-3" />
+                                        {{ showAIResponse ? 'Hide' : 'Show' }} Response
+                                    </Button>
+                                    <Button
+                                        @click="showFullPrompt = !showFullPrompt"
+                                        variant="outline"
+                                        size="sm"
+                                        class="flex items-center gap-2"
+                                    >
+                                        <MessageSquare class="h-3 w-3" />
+                                        {{ showFullPrompt ? 'Hide' : 'Show' }} Full Prompt
+                                    </Button>
+                                </div>
                             </div>
 
                             <div v-if="showFullPrompt" class="space-y-4">
@@ -710,6 +723,53 @@ const refreshTasks = () => {
                                     <p class="text-xs text-yellow-800">
                                         {{ props.fullPromptText.error || props.fullPromptText.note }}
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- AI Response Section -->
+                            <div v-if="showAIResponse" class="space-y-4 mt-6">
+                                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                    <h5 class="text-xs font-semibold text-green-800 mb-3 flex items-center gap-1">
+                                        <Sparkles class="h-3 w-3" />
+                                        AI Response
+                                    </h5>
+
+                                    <!-- Raw Response JSON -->
+                                    <div class="space-y-3">
+                                        <div>
+                                            <h6 class="text-xs font-medium text-green-700 mb-2">Generated Tasks:</h6>
+                                            <pre class="text-xs bg-white p-3 rounded border overflow-x-auto text-gray-700">{{ JSON.stringify(props.suggestedTasks, null, 2) }}</pre>
+                                        </div>
+
+                                        <!-- AI Communication -->
+                                        <div v-if="props.aiCommunication">
+                                            <h6 class="text-xs font-medium text-green-700 mb-2">AI Communication:</h6>
+                                            <div class="space-y-2">
+                                                <div v-if="props.aiCommunication.summary" class="bg-white p-3 rounded border">
+                                                    <span class="text-xs font-medium text-green-700">Summary:</span>
+                                                    <p class="text-xs text-gray-700 mt-1">{{ props.aiCommunication.summary }}</p>
+                                                </div>
+                                                <div v-if="props.aiCommunication.notes && props.aiCommunication.notes.length > 0" class="bg-white p-3 rounded border">
+                                                    <span class="text-xs font-medium text-green-700">Notes:</span>
+                                                    <ul class="text-xs text-gray-700 mt-1 list-disc list-inside">
+                                                        <li v-for="note in props.aiCommunication.notes" :key="note">{{ note }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div v-if="props.aiCommunication.problems && props.aiCommunication.problems.length > 0" class="bg-white p-3 rounded border">
+                                                    <span class="text-xs font-medium text-green-700">Problems:</span>
+                                                    <ul class="text-xs text-gray-700 mt-1 list-disc list-inside">
+                                                        <li v-for="problem in props.aiCommunication.problems" :key="problem">{{ problem }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div v-if="props.aiCommunication.suggestions && props.aiCommunication.suggestions.length > 0" class="bg-white p-3 rounded border">
+                                                    <span class="text-xs font-medium text-green-700">Suggestions:</span>
+                                                    <ul class="text-xs text-gray-700 mt-1 list-disc list-inside">
+                                                        <li v-for="suggestion in props.aiCommunication.suggestions" :key="suggestion">{{ suggestion }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

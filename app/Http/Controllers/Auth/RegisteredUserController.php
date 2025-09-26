@@ -71,7 +71,7 @@ class RegisteredUserController extends Controller
      */
     private function handleExistingOrganizationRegistration(Request $request, Organization $organization): RedirectResponse
     {
-        // Check if this is the first user in the system
+        // Check if this is the first user in the system (no users exist at all)
         $isFirstUser = User::count() === 0;
 
         $user = User::create([
@@ -193,7 +193,7 @@ class RegisteredUserController extends Controller
             throw new \Exception('Default organization exists but has no default group.');
         }
 
-        // Check if this is the first user in the system
+        // Check if this is the first user in the system (no users exist at all)
         $isFirstUser = User::count() === 0;
 
         $user = User::create([

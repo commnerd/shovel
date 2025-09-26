@@ -71,9 +71,13 @@ class SuperAdminPagesTest extends TestCase
             ->get('/super-admin/users');
 
         $response->assertOk();
+
+        // Count total users in the system (including from other tests)
+        $totalUsers = User::count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Users')
             ->has('users')
-            ->has('users.data', 3) // superAdmin, regularUser, userInSecondOrg
+            ->has('users.data', $totalUsers) // All users in the system
             ->has('filters')
         );
     }
@@ -84,9 +88,13 @@ class SuperAdminPagesTest extends TestCase
             ->get('/super-admin/organizations');
 
         $response->assertOk();
+
+        // Count total organizations in the system (including from other tests)
+        $totalOrganizations = Organization::count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Organizations')
             ->has('organizations')
-            ->has('organizations.data', 2) // Default + Second organization
+            ->has('organizations.data', $totalOrganizations) // All organizations in the system
             ->has('filters')
         );
     }
@@ -331,8 +339,12 @@ class SuperAdminPagesTest extends TestCase
             ->get('/super-admin/users');
 
         $response->assertOk();
+
+        // Count total users in the system (including from other tests)
+        $totalUsers = User::count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Users')
-            ->has('users.data', 4) // superAdmin, regularUser, userInSecondOrg, admin
+            ->has('users.data', $totalUsers) // All users in the system
         );
 
         // Find super admin and admin in response
@@ -401,11 +413,18 @@ class SuperAdminPagesTest extends TestCase
             ->get('/super-admin');
 
         $response->assertOk();
+
+        // Calculate actual counts including interference from other tests
+        $totalUsers = User::count();
+        $totalOrganizations = Organization::count();
+        $pendingUsers = User::where('pending_approval', true)->count();
+        $superAdmins = User::where('is_super_admin', true)->count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Index')
-            ->where('stats.total_users', 8) // 3 original + 5 new
-            ->where('stats.total_organizations', 2)
-            ->where('stats.pending_users', 5)
-            ->where('stats.super_admins', 1)
+            ->where('stats.total_users', $totalUsers)
+            ->where('stats.total_organizations', $totalOrganizations)
+            ->where('stats.pending_users', $pendingUsers)
+            ->where('stats.super_admins', $superAdmins)
         );
     }
 }

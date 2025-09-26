@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\DailyCurationJob;
+use App\Jobs\ScheduleUserCurationJob;
 use App\Jobs\AutoCreateIterationJob;
 use App\Models\User;
 use App\Models\Project;
@@ -16,7 +16,7 @@ class RunDailyCurationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'curation:daily 
+    protected $signature = 'curation:daily
                             {--user-id= : Run for specific user ID only}
                             {--project-id= : Run for specific project ID only}
                             {--dry-run : Show what would be processed without actually running}';
@@ -66,44 +66,32 @@ class RunDailyCurationCommand extends Command
     {
         $this->info('Processing daily curation for users...');
 
-        $usersQuery = User::query()
-            ->whereNotNull('email_verified_at')
-            ->where('pending_approval', false);
-
         if ($specificUserId) {
-            $usersQuery->where('id', $specificUserId);
-        }
-
-        $users = $usersQuery->with(['projects' => function ($query) {
-            $query->where('status', 'active');
-        }])->get();
-
-        $this->info("Found {$users->count()} users to process");
-
-        $processedCount = 0;
-        $skippedCount = 0;
-
-        foreach ($users as $user) {
-            // Skip users without active projects
-            if ($user->projects->isEmpty()) {
-                $skippedCount++;
-                if ($this->output->isVerbose()) {
-                    $this->line("Skipping user {$user->id} ({$user->name}) - no active projects");
-                }
-                continue;
+            // For specific user, we can still dispatch individual UserCurationJob
+            $user = User::find($specificUserId);
+            if (!$user) {
+                $this->error("User with ID {$specificUserId} not found");
+                return;
             }
 
             if ($dryRun) {
-                $this->line("Would process curation for user {$user->id} ({$user->name}) with {$user->projects->count()} active projects");
+                $this->line("Would process curation for specific user {$user->id} ({$user->name})");
             } else {
-                DailyCurationJob::dispatch($user);
+                \App\Jobs\UserCurationJob::dispatch($user);
                 $this->line("Queued curation for user {$user->id} ({$user->name})");
             }
-
-            $processedCount++;
+        } else {
+            // For all users, dispatch the scheduled job
+            if ($dryRun) {
+                $userCount = User::whereNotNull('email_verified_at')
+                    ->where('pending_approval', false)
+                    ->count();
+                $this->line("Would dispatch ScheduleUserCurationJob for {$userCount} users");
+            } else {
+                ScheduleUserCurationJob::dispatch();
+                $this->line("Dispatched ScheduleUserCurationJob to process all users");
+            }
         }
-
-        $this->info("Daily curation: {$processedCount} users processed, {$skippedCount} skipped");
     }
 
     /**
@@ -135,10 +123,10 @@ class RunDailyCurationCommand extends Command
         foreach ($projects as $project) {
             if ($dryRun) {
                 $currentIteration = $project->getCurrentIteration();
-                $status = $currentIteration 
+                $status = $currentIteration
                     ? "Current: {$currentIteration->name} (ends {$currentIteration->end_date})"
                     : "No current iteration";
-                
+
                 $this->line("Would check project {$project->id} ({$project->title}) - {$status}");
             } else {
                 AutoCreateIterationJob::dispatch($project);

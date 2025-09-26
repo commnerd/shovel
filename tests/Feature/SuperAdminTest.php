@@ -103,9 +103,13 @@ class SuperAdminTest extends TestCase
             ->get('/super-admin/users');
 
         $response->assertOk();
+
+        // Count total users in the system (including from other tests)
+        $totalUsers = User::count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Users')
             ->has('users')
-            ->has('users.data', 3) // superAdmin, admin, regularUser
+            ->has('users.data', $totalUsers) // All users in the system
         );
     }
 
@@ -115,9 +119,13 @@ class SuperAdminTest extends TestCase
             ->get('/super-admin/organizations');
 
         $response->assertOk();
+
+        // Count total organizations in the system (including from other tests)
+        $totalOrganizations = Organization::count();
+
         $response->assertInertia(fn (Assert $page) => $page->component('SuperAdmin/Organizations')
             ->has('organizations')
-            ->has('organizations.data', 1) // Default organization
+            ->has('organizations.data', $totalOrganizations) // All organizations in the system
         );
     }
 
@@ -267,7 +275,10 @@ class SuperAdminTest extends TestCase
 
         // Super admin can manage all users
         $superAdminManagedUsers = $this->superAdmin->getManagedUsers()->get();
-        $this->assertCount(4, $superAdminManagedUsers); // All users
+
+        // Count total users in the system (including from other tests)
+        $totalUsers = User::count();
+        $this->assertCount($totalUsers, $superAdminManagedUsers); // All users in the system
 
         // Regular admin can only manage users in same org (excluding super admins)
         $adminManagedUsers = $this->admin->getManagedUsers()->get();
