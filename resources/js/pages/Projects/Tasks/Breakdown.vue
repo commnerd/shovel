@@ -159,6 +159,15 @@
                                 </h4>
                                 <div class="flex gap-2">
                                     <Button
+                                        @click="createSubtasks"
+                                        :disabled="isCreatingSubtasks || isGenerating || isRegeneratingWithFeedback"
+                                        class="flex items-center gap-2"
+                                    >
+                                        <Loader v-if="isCreatingSubtasks" class="h-4 w-4 animate-spin" />
+                                        <Plus v-else class="h-4 w-4" />
+                                        {{ isCreatingSubtasks ? 'Creating...' : 'Create Subtasks' }}
+                                    </Button>
+                                    <Button
                                         variant="outline"
                                         size="sm"
                                         @click="showRegenerationModal = true"
@@ -210,6 +219,9 @@
                                         <div class="flex items-center gap-4 text-sm">
                                             <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium text-gray-600">
                                                 {{ subtask.status }}
+                                            </span>
+                                            <span v-if="subtask.current_story_points" class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                                                {{ subtask.current_story_points }} pts
                                             </span>
                                             <span v-if="subtask.due_date" class="flex items-center gap-1 text-gray-500">
                                                 <Calendar class="h-3 w-3" />
@@ -684,11 +696,10 @@ const generateBreakdown = async () => {
 
             hasGeneratedBreakdown.value = true;
         } else {
-            alert(data.error || 'Failed to generate task breakdown. Please try again.');
+            console.error('Failed to generate task breakdown:', data.error);
         }
     } catch (error) {
         console.error('AI breakdown error:', error);
-        alert('Failed to generate task breakdown. Please check your connection and try again.');
     } finally {
         isGenerating.value = false;
     }
@@ -741,11 +752,10 @@ const regenerateWithFeedback = async (feedback: string) => {
 
             hasGeneratedBreakdown.value = true;
         } else {
-            alert(data.error || 'Failed to regenerate task breakdown. Please try again.');
+            console.error('Failed to regenerate task breakdown:', data.error);
         }
     } catch (error) {
         console.error('AI breakdown error:', error);
-        alert('Failed to regenerate task breakdown. Please check your connection and try again.');
     } finally {
         isRegeneratingWithFeedback.value = false;
     }
@@ -801,7 +811,6 @@ const createAllSubtasks = async () => {
         }
     } catch (error) {
         console.error('Subtask creation error:', error);
-        alert('Failed to create subtasks. Please try again.');
     } finally {
         isCreatingSubtasks.value = false;
     }
@@ -811,6 +820,47 @@ const clearResults = () => {
     suggestedSubtasks.value = [];
     aiCommunication.value = {};
     hasGeneratedBreakdown.value = false;
+};
+
+const createSubtasks = async () => {
+
+    if (!suggestedSubtasks.value || suggestedSubtasks.value.length === 0) {
+        console.warn('No subtasks to create. Please generate subtasks first.');
+        return;
+    }
+
+    isCreatingSubtasks.value = true;
+
+    const requestData = {
+        parent_task_id: props.task.id,
+        subtasks: suggestedSubtasks.value,
+    };
+
+    try {
+        const response = await fetch(`/dashboard/projects/${props.project.id}/tasks/subtasks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Redirect back to the task list to see the new subtasks
+            router.visit(`/dashboard/projects/${props.project.id}/tasks`);
+        } else {
+            console.error('Failed to create subtasks:', data.error);
+            // You could add a toast notification here instead of alert
+        }
+    } catch (error) {
+        console.error('Create subtasks error:', error);
+        // You could add a toast notification here instead of alert
+    } finally {
+        isCreatingSubtasks.value = false;
+    }
 };
 
 const cancelRegeneration = () => {

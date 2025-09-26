@@ -130,6 +130,10 @@ Route::post('/dashboard/projects/{project}/tasks/breakdown', [App\Http\Controlle
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.breakdown');
 
+Route::post('/dashboard/projects/{project}/tasks/subtasks', [App\Http\Controllers\TasksController::class, 'saveSubtasks'])
+    ->middleware(['auth', 'verified'])
+    ->name('projects.tasks.subtasks.save');
+
 Route::get('/dashboard/projects/{project}/tasks/{task}/edit', [App\Http\Controllers\TasksController::class, 'edit'])
     ->middleware(['auth', 'verified'])
     ->name('projects.tasks.edit');

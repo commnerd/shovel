@@ -673,6 +673,78 @@ class TasksController extends Controller
     }
 
     /**
+     * Save AI-generated subtasks to the database.
+     */
+    public function saveSubtasks(Request $request, Project $project)
+    {
+        // Ensure the project belongs to the authenticated user
+        if ($project->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
+        $validated = $request->validate([
+            'parent_task_id' => 'required|exists:tasks,id',
+            'subtasks' => 'required|array|min:1',
+            'subtasks.*.title' => 'required|string|max:255',
+            'subtasks.*.description' => 'nullable|string|max:1000',
+            'subtasks.*.status' => 'required|in:pending,in_progress,completed',
+            'subtasks.*.initial_story_points' => 'nullable|integer|min:0',
+            'subtasks.*.current_story_points' => 'nullable|integer|min:0',
+            'subtasks.*.story_points_change_count' => 'nullable|integer|min:0',
+        ]);
+
+        try {
+            $parentTask = Task::find($validated['parent_task_id']);
+            if (!$parentTask || $parentTask->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Invalid parent task.',
+                ], 400);
+            }
+
+            $createdSubtasks = [];
+            foreach ($validated['subtasks'] as $index => $subtaskData) {
+                $subtask = Task::create([
+                    'project_id' => $project->id,
+                    'parent_id' => $parentTask->id,
+                    'title' => $subtaskData['title'],
+                    'description' => $subtaskData['description'] ?? null,
+                    'status' => $subtaskData['status'],
+                    'sort_order' => $index + 1,
+                    'depth' => $parentTask->depth + 1,
+                    'size' => null, // Subtasks don't have T-shirt sizes
+                    'initial_story_points' => $subtaskData['initial_story_points'] ?? null,
+                    'current_story_points' => $subtaskData['current_story_points'] ?? null,
+                    'story_points_change_count' => $subtaskData['story_points_change_count'] ?? 0,
+                ]);
+
+                $subtask->updateHierarchyPath();
+                $createdSubtasks[] = $subtask;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subtasks created successfully!',
+                'subtasks_count' => count($createdSubtasks),
+                'subtasks' => $createdSubtasks,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to save subtasks', [
+                'error' => $e->getMessage(),
+                'project_id' => $project->id,
+                'parent_task_id' => $validated['parent_task_id'] ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to save subtasks. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
      * Reorder a task within its sibling group.
      */
     public function reorder(Request $request, Project $project, Task $task)
