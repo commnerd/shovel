@@ -165,10 +165,9 @@ class UserCurationJob implements ShouldQueue
             ->where('status', 'completed')
             ->where('updated_at', '>=', $oneMonthAgo)
             ->with(['project', 'curatedTasks' => function ($query) {
-                $query->where('assigned_to', $this->user->id)
-                      ->whereNotNull('completed_at')
-                      ->orderBy('completed_at', 'asc');
+                $query->where('assigned_to', $this->user->id);
             }])
+            ->orderBy('updated_at', 'asc')
             ->get();
 
         $taskTypes = [];
@@ -190,9 +189,9 @@ class UserCurationJob implements ShouldQueue
 
             // Calculate completion time
             $curatedTask = $task->curatedTasks->first();
-            if ($curatedTask && $curatedTask->completed_at) {
+            if ($curatedTask) {
                 $assignedAt = $curatedTask->created_at;
-                $completedAt = $curatedTask->completed_at;
+                $completedAt = $task->updated_at; // Use task's updated_at as completion time
                 $hoursToComplete = $assignedAt->diffInHours($completedAt);
                 $completionTimes[] = $hoursToComplete;
             }
