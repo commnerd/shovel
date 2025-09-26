@@ -80,8 +80,8 @@ class CompleteSubtaskStoryPointsWorkflowTest extends TestCase
                 "description" => "Compare the advantages and disadvantages of each business structure in relation to the company's needs and goals",
                 "status" => "pending",
                 "size" => null,
-                "initial_story_points" => 8,
-                "current_story_points" => 8,
+                "initial_story_points" => 5,
+                "current_story_points" => 5,
                 "story_points_change_count" => 0,
                 "subtasks" => []
             ],
@@ -90,8 +90,8 @@ class CompleteSubtaskStoryPointsWorkflowTest extends TestCase
                 "description" => "Evaluate the legal and tax implications of each business structure option",
                 "status" => "pending",
                 "size" => null,
-                "initial_story_points" => 8,
-                "current_story_points" => 8,
+                "initial_story_points" => 5,
+                "current_story_points" => 5,
                 "story_points_change_count" => 0,
                 "subtasks" => []
             ],

@@ -36,13 +36,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            // Drop indexes first
+            // Drop foreign key constraint first
+            $table->dropForeign(['iteration_id']);
+
+            // Drop indexes after foreign key constraint
             $table->dropIndex(['iteration_id']);
             $table->dropIndex(['size']);
             $table->dropIndex(['current_story_points']);
-
-            // Drop foreign key constraint
-            $table->dropForeign(['iteration_id']);
 
             // Drop the iteration_id column
             $table->dropColumn('iteration_id');

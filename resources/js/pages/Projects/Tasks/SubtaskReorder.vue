@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, CheckCircle, Clock, Circle, Calendar, GripVertical, AlertTriangle, CheckSquare, Edit } from 'lucide-vue-next';
+import { ArrowLeft, CheckCircle, Clock, Circle, Calendar, GripVertical, AlertTriangle, CheckSquare, Edit, Trash2 } from 'lucide-vue-next';
 import { useSortable } from '@vueuse/integrations/useSortable';
 import TaskSizing from '@/components/TaskSizing.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -67,6 +67,8 @@ const confirmationData = ref<any>(null);
 const pendingReorder = ref<{ taskId: number; newPosition: number } | null>(null);
 const errorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
+const showDeleteModal = ref(false);
+const taskToDelete = ref<Subtask | null>(null);
 
 const getStatusIcon = (status: string) => {
     switch (status) {
@@ -318,6 +320,52 @@ const refreshSubtasks = () => {
     router.reload({ only: ['subtasks'] });
 };
 
+// Delete subtask functionality
+const confirmDeleteSubtask = (subtask: Subtask) => {
+    taskToDelete.value = subtask;
+    showDeleteModal.value = true;
+};
+
+const deleteSubtask = async () => {
+    if (!taskToDelete.value) return;
+
+    try {
+        const response = await fetch(`/dashboard/projects/${project.value.id}/tasks/${taskToDelete.value.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+        });
+
+        if (response.ok) {
+            successMessage.value = `Subtask "${taskToDelete.value.title}" has been deleted successfully!`;
+            errorMessage.value = null;
+
+            // Refresh the page to get updated subtasks
+            refreshSubtasks();
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                successMessage.value = null;
+            }, 3000);
+        } else {
+            throw new Error(`Server error (${response.status})`);
+        }
+    } catch (error) {
+        console.error('Failed to delete subtask:', error);
+        errorMessage.value = 'Failed to delete subtask. Please try again.';
+
+        // Clear error message after 5 seconds
+        setTimeout(() => {
+            errorMessage.value = null;
+        }, 5000);
+    } finally {
+        showDeleteModal.value = false;
+        taskToDelete.value = null;
+    }
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -461,6 +509,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                                                 <Edit class="h-3 w-3" />
                                             </Link>
                                         </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            @click="confirmDeleteSubtask(subtask)"
+                                            class="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+                                        >
+                                            <Trash2 class="h-3 w-3" />
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -505,6 +561,23 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <DialogFooter>
                         <Button variant="outline" @click="cancelReorder">Cancel</Button>
                         <Button @click="confirmReorder">Continue</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Delete Confirmation Dialog -->
+            <Dialog v-model:open="showDeleteModal">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Subtask</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{{ taskToDelete?.title }}"? This action cannot be undone.
+                            {{ taskToDelete?.has_children ? 'This will also delete all child subtasks.' : '' }}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
+                        <Button variant="destructive" @click="deleteSubtask">Delete Subtask</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -102,7 +102,14 @@ const submit = () => {
 
     isSubmitting.value = true;
 
+    // Get the return URL from query parameters, fallback to current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('return_url') || window.location.href;
+
     form.post(`/dashboard/projects/${props.project.id}/tasks`, {
+        data: {
+            return_url: returnUrl,
+        },
         onFinish: () => {
             isSubmitting.value = false;
         },
@@ -166,6 +173,10 @@ const createTaskWithSubtasks = async () => {
     isSubmitting.value = true;
 
     try {
+        // Get the return URL from query parameters, fallback to current URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return_url') || window.location.href;
+
         // Create the main task with the subtasks array
         const response = await fetch(`/dashboard/projects/${props.project.id}/tasks`, {
             method: 'POST',
@@ -180,16 +191,13 @@ const createTaskWithSubtasks = async () => {
                 status: form.status,
                 due_date: form.due_date || null,
                 subtasks: suggestedSubtasks.value,
+                return_url: returnUrl,
             }),
         });
 
         if (response.ok) {
-            // Redirect to tasks index
-            if (props.project.id) {
-                window.location.href = `/dashboard/projects/${props.project.id}/tasks`;
-            } else {
-                window.location.href = '/dashboard/projects';
-            }
+            // The server will handle the redirect with the return URL
+            window.location.href = response.url || `/dashboard/projects/${props.project.id}/tasks`;
         } else {
             alert('Failed to create task with subtasks. Please try again.');
         }

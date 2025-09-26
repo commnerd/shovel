@@ -81,8 +81,8 @@ class AISubtaskStoryPointsIntegrationTest extends TestCase
                 "description" => "Compare the advantages and disadvantages of each business structure in relation to the company's needs and goals",
                 "status" => "pending",
                 "size" => null,
-                "initial_story_points" => 8,
-                "current_story_points" => 8,
+                "initial_story_points" => 5,
+                "current_story_points" => 5,
                 "story_points_change_count" => 0,
                 "subtasks" => []
             ],
@@ -91,8 +91,8 @@ class AISubtaskStoryPointsIntegrationTest extends TestCase
                 "description" => "Evaluate the legal and tax implications of each business structure option",
                 "status" => "pending",
                 "size" => null,
-                "initial_story_points" => 8,
-                "current_story_points" => 8,
+                "initial_story_points" => 5,
+                "current_story_points" => 5,
                 "story_points_change_count" => 0,
                 "subtasks" => []
             ],
@@ -190,11 +190,11 @@ class AISubtaskStoryPointsIntegrationTest extends TestCase
 
         $analyzeTask = $savedSubtasks->where('title', 'Analyze Advantages and Disadvantages')->first();
         $this->assertNotNull($analyzeTask);
-        $this->assertEquals(8, $analyzeTask->current_story_points);
+        $this->assertEquals(5, $analyzeTask->current_story_points);
 
         $legalTask = $savedSubtasks->where('title', 'Consider Legal and Tax Implications')->first();
         $this->assertNotNull($legalTask);
-        $this->assertEquals(8, $legalTask->current_story_points);
+        $this->assertEquals(5, $legalTask->current_story_points);
 
         $summarizeTask = $savedSubtasks->where('title', 'Summarize Findings')->first();
         $this->assertNotNull($summarizeTask);

@@ -73,7 +73,14 @@ const submit = () => {
 
     isSubmitting.value = true;
 
+    // Get the return URL from query parameters, fallback to current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('return_url') || window.location.href;
+
     form.put(`/dashboard/projects/${props.project.id}/tasks/${props.task.id}`, {
+        data: {
+            return_url: returnUrl,
+        },
         onFinish: () => {
             isSubmitting.value = false;
         },

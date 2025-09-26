@@ -496,6 +496,18 @@ class Task extends Model
     public const FIBONACCI_POINTS = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
 
     /**
+     * Mapping of T-shirt sizes to maximum story points for subtasks.
+     * Subtasks must be smaller than their parent's maximum.
+     */
+    public const SIZE_TO_MAX_STORY_POINTS = [
+        'xs' => 2,   // Extra Small: max 2 story points (smaller than 3)
+        's' => 3,    // Small: max 3 story points (smaller than 5)
+        'm' => 5,    // Medium: max 5 story points (smaller than 8)
+        'l' => 8,    // Large: max 8 story points (smaller than 13)
+        'xl' => 13,  // Extra Large: max 13 story points (smaller than 21)
+    ];
+
+    /**
      * Check if the task can have a T-shirt size (top-level tasks only).
      */
     public function canHaveSize(): bool
@@ -578,6 +590,18 @@ class Task extends Model
     public function getStoryPointsChangeCount(): int
     {
         return $this->story_points_change_count ?? 0;
+    }
+
+    /**
+     * Get the maximum story points allowed for subtasks of this task.
+     */
+    public function getMaxStoryPointsForSubtasks(): ?int
+    {
+        if (!$this->canHaveSize() || !$this->size) {
+            return null;
+        }
+
+        return self::SIZE_TO_MAX_STORY_POINTS[$this->size] ?? null;
     }
 
     /**

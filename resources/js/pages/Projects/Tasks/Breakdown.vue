@@ -18,6 +18,17 @@
                         <p class="text-sm text-gray-600">Let AI break down "{{ task.title }}" into manageable subtasks</p>
                     </div>
                 </div>
+                <div class="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        @click="showDeleteModal = true"
+                        class="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                        <Trash2 class="h-4 w-4" />
+                        Delete Task
+                    </Button>
+                </div>
             </div>
 
             <!-- Original Task Info -->
@@ -299,6 +310,23 @@
             @cancel="cancelRegeneration"
         />
 
+        <!-- Delete Confirmation Modal -->
+        <Dialog v-model:open="showDeleteModal">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Delete Task</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete "{{ task.title }}"? This action cannot be undone.
+                        {{ task.has_children ? 'This will also delete all subtasks.' : '' }}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
+                    <Button variant="destructive" @click="deleteTask">Delete Task</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
         <!-- Prompt Viewing Modal -->
         <div v-if="showPromptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
@@ -530,6 +558,7 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import RegenerationFeedbackModal from '@/components/RegenerationFeedbackModal.vue';
 import TaskSizing from '@/components/TaskSizing.vue';
 import {
@@ -548,6 +577,7 @@ import {
     AlertTriangle,
     Eye,
     X,
+    Trash2,
     // Removed unused icons: CheckCircle, Clock, Circle
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
@@ -601,6 +631,7 @@ const hasGeneratedBreakdown = ref(false);
 // Modal state
 const showRegenerationModal = ref(false);
 const showPromptModal = ref(false);
+const showDeleteModal = ref(false);
 const promptData = ref<any>(null);
 const fullPromptText = ref<any>(null);
 const showFullPrompt = ref(false);
@@ -800,12 +831,16 @@ const createAllSubtasks = async () => {
             }
         }
 
-        // Redirect back to tasks with success message
+        // Get the return URL from query parameters, fallback to tasks index
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return_url') || `/dashboard/projects/${props.project.id}/tasks`;
+
+        // Redirect back to the return URL with success message
         if (props.project.id) {
-            router.visit(`/dashboard/projects/${props.project.id}/tasks`, {
+            router.visit(returnUrl, {
                 method: 'get',
                 data: {
-                    message: `Successfully created ${suggestedSubtasks.value.length} subtasks for "${props.task.title}"!`
+                    message: `Successfully created ${suggestedSubtasks.value.length} subtasks for "${props.task.title}"!`,
                 }
             });
         } else {
@@ -852,8 +887,12 @@ const createSubtasks = async () => {
         const data = await response.json();
 
         if (data.success) {
-            // Redirect back to the task list to see the new subtasks
-            router.visit(`/dashboard/projects/${props.project.id}/tasks`);
+            // Get the return URL from query parameters, fallback to tasks index
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnUrl = urlParams.get('return_url') || `/dashboard/projects/${props.project.id}/tasks`;
+
+            // Redirect back to the return URL
+            router.visit(returnUrl);
         } else {
             console.error('Failed to create subtasks:', data.error);
             // You could add a toast notification here instead of alert
@@ -879,6 +918,37 @@ const closePromptModal = () => {
 // Refresh task data from server
 const refreshTask = () => {
     router.reload({ only: ['task'] });
+};
+
+// Delete task functionality
+const deleteTask = async () => {
+    try {
+        const response = await fetch(`/dashboard/projects/${props.project.id}/tasks/${props.task.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': await getCSRFToken(),
+            },
+        });
+
+        if (response.ok) {
+            // Redirect back to tasks list with success message
+            router.visit(`/dashboard/projects/${props.project.id}/tasks`, {
+                method: 'get',
+                data: {
+                    message: `Task "${props.task.title}" has been deleted successfully!`,
+                }
+            });
+        } else {
+            console.error('Failed to delete task');
+            alert('Failed to delete task. Please try again.');
+        }
+    } catch (error) {
+        console.error('Delete task error:', error);
+        alert('An error occurred while deleting the task. Please try again.');
+    } finally {
+        showDeleteModal.value = false;
+    }
 };
 
 const breadcrumbs: BreadcrumbItem[] = [

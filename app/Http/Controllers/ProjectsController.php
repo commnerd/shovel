@@ -256,6 +256,16 @@ class ProjectsController extends Controller
 
         $defaultGroup = $userGroups->where('is_default', true)->first();
 
+        // Get project data if project_id is provided
+        $project = null;
+        if ($request->get('project_id')) {
+            $project = Project::find($request->get('project_id'));
+            // Ensure user has access to the project
+            if ($project && $project->user_id !== auth()->id()) {
+                abort(403, 'Unauthorized access to this project.');
+            }
+        }
+
         return Inertia::render('Projects/CreateTasks', [
             'projectData' => [
                 'title' => $request->get('title'),
@@ -265,7 +275,17 @@ class ProjectsController extends Controller
                 'project_type' => $request->get('project_type', 'iterative'),
                 'ai_provider' => $request->get('ai_provider'),
                 'ai_model' => $request->get('ai_model'),
+                'project_id' => $request->get('project_id'),
             ],
+            'project' => $project ? [
+                'id' => $project->id,
+                'title' => $project->title,
+                'description' => $project->description,
+                'due_date' => $project->due_date?->format('Y-m-d'),
+                'status' => $project->status,
+                'project_type' => $project->project_type,
+            ] : null,
+            'returnUrl' => $request->get('return_url'),
             'suggestedTasks' => [],
             'aiUsed' => false,
             'aiCommunication' => null,
@@ -622,6 +642,19 @@ class ProjectsController extends Controller
 
             \Log::info("Project {$project->id} created successfully with ".count($validated['tasks'] ?? []).' tasks');
 
+            // Check if there's a return URL with filters
+            $returnUrl = $request->input('return_url');
+            if ($returnUrl && $this->isValidReturnUrl($returnUrl)) {
+                // If it's a relative URL starting with ?, append it to the project's tasks route
+                if (str_starts_with($returnUrl, '?')) {
+                    $returnUrl = route('projects.tasks.index', $project) . $returnUrl;
+                }
+
+                return redirect($returnUrl)->with([
+                    'message' => 'Project created successfully with '.count($validated['tasks'] ?? []).' tasks!',
+                ]);
+            }
+
             return redirect()->route('projects.index')->with([
                 'message' => 'Project created successfully with '.count($validated['tasks'] ?? []).' tasks!',
             ]);
@@ -636,6 +669,41 @@ class ProjectsController extends Controller
 
             return back()->withErrors(['error' => 'Failed to create project: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Validate that a return URL is safe to redirect to.
+     */
+    private function isValidReturnUrl(string $url): bool
+    {
+        // Parse the URL
+        $parsedUrl = parse_url($url);
+
+        // Check if it's a project tasks URL and user has access
+        if (preg_match('/\/dashboard\/projects\/(\d+)\/tasks/', $url, $matches)) {
+            $projectId = (int) $matches[1];
+            $project = Project::find($projectId);
+
+            // User must own the project or have access to it
+            return $project && $project->user_id === auth()->id();
+        }
+
+        // If it's a relative URL, it's safe (as long as it's not a project URL)
+        if (!isset($parsedUrl['host'])) {
+            return true;
+        }
+
+        // Check if it's an external URL
+        $appUrl = parse_url(config('app.url'));
+        $appHost = $appUrl['host'] ?? 'localhost';
+
+        // Only allow URLs from the same host
+        if ($parsedUrl['host'] !== $appHost) {
+            return false;
+        }
+
+        // Allow other internal URLs
+        return true;
     }
 
     /**

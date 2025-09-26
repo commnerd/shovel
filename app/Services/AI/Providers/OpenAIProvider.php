@@ -4,6 +4,7 @@ namespace App\Services\AI\Providers;
 
 use App\Services\AI\Contracts\{AIProviderInterface, AIResponse, AITaskResponse};
 use App\Services\AI\AIUsageService;
+use App\Services\AI\AIPromptService;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,7 @@ class OpenAIProvider implements AIProviderInterface
     protected array $defaultOptions;
     protected array $config;
     protected ?string $organization;
+    protected ?AIPromptService $promptService = null;
 
     public function __construct(array $config)
     {
@@ -22,6 +24,7 @@ class OpenAIProvider implements AIProviderInterface
         $this->apiKey = $config['api_key'] ?? throw new \InvalidArgumentException('OpenAI API key is required');
         $this->baseUrl = rtrim($config['base_url'] ?? 'https://api.openai.com/v1', '/');
         $this->organization = $config['organization'] ?? null;
+        $this->promptService = new AIPromptService();
 
         $this->defaultOptions = [
             'model' => $config['model'] ?? 'gpt-4',
@@ -82,8 +85,12 @@ class OpenAIProvider implements AIProviderInterface
     public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse
     {
         try {
-            $systemPrompt = $this->buildTaskGenerationSystemPrompt();
-            $userPrompt = $this->buildTaskGenerationUserPrompt($projectDescription);
+            if (!$this->promptService) {
+                $this->promptService = new AIPromptService();
+            }
+
+            $systemPrompt = $this->promptService->buildTaskGenerationSystemPrompt();
+            $userPrompt = $this->promptService->buildTaskGenerationUserPrompt($projectDescription, $options);
 
             $messages = [
                 ['role' => 'system', 'content' => $systemPrompt],
@@ -114,8 +121,12 @@ class OpenAIProvider implements AIProviderInterface
     public function breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = []): AITaskResponse
     {
         try {
-            $systemPrompt = $this->buildTaskBreakdownSystemPrompt();
-            $userPrompt = $this->buildTaskBreakdownUserPrompt($taskTitle, $taskDescription, $context);
+            if (!$this->promptService) {
+                $this->promptService = new AIPromptService();
+            }
+
+            $systemPrompt = $this->promptService->buildTaskBreakdownSystemPrompt();
+            $userPrompt = $this->promptService->buildTaskBreakdownUserPrompt($taskTitle, $taskDescription, $context);
 
             $messages = [
                 ['role' => 'system', 'content' => $systemPrompt],
@@ -215,91 +226,6 @@ class OpenAIProvider implements AIProviderInterface
     }
 
     // Protected helper methods
-    protected function buildTaskGenerationSystemPrompt(): string
-    {
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-
-        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze project descriptions, create compelling project titles, and generate comprehensive, actionable task lists. You must respond with valid JSON only - no additional text, explanations, or markdown formatting.';
-
-        return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
-    }
-
-    protected function buildTaskGenerationUserPrompt(string $projectDescription): string
-    {
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-
-        $basePrompt = str_replace('{description}', $projectDescription,
-            'Based on this project description: "{description}", create a compelling project title and detailed task breakdown.'
-        );
-
-        return "**Current Context:**\nDate and time: {$currentDateTime}\n\n" . $basePrompt;
-    }
-
-    protected function buildTaskBreakdownSystemPrompt(): string
-    {
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-
-        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.';
-
-        return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
-    }
-
-    protected function buildTaskBreakdownUserPrompt(string $taskTitle, string $taskDescription, array $context): string
-    {
-        $basePrompt = 'Please break down the following task into smaller, actionable subtasks:';
-
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-        $prompt = $basePrompt . "\n\n";
-        $prompt .= "**Current Context:**\n";
-        $prompt .= "Date and time: {$currentDateTime}\n\n";
-        $prompt .= "**Task to Break Down:**\n";
-        $prompt .= "Title: {$taskTitle}\n";
-        $prompt .= "Description: {$taskDescription}\n\n";
-
-        // Add user feedback if provided
-        if (!empty($context['user_feedback'])) {
-            $prompt .= "**User Feedback for Improvement:**\n";
-            $prompt .= $context['user_feedback'] . "\n\n";
-            $prompt .= "Please incorporate this feedback to improve the task breakdown.\n\n";
-        }
-
-        // Add project context
-        if (!empty($context['project'])) {
-            $project = $context['project'];
-            $prompt .= "**Project Context:**\n";
-            $prompt .= "Project: {$project['title']}\n";
-            $prompt .= "Description: {$project['description']}\n\n";
-        }
-
-        // Add parent task context if this is a subtask
-        if (!empty($context['parent_task'])) {
-            $parent = $context['parent_task'];
-            $prompt .= "**Parent Task:**\n";
-            $prompt .= "Title: {$parent['title']}\n";
-        }
-
-        // Add existing tasks context
-        if (!empty($context['existing_tasks'])) {
-            $prompt .= "**Existing Project Tasks (for context):**\n";
-            foreach (array_slice($context['existing_tasks'], 0, 5) as $task) {
-                $prompt .= "- {$task['title']} ({$task['status']})\n";
-            }
-            $prompt .= "\n";
-        }
-
-        // Add task statistics
-        if (!empty($context['task_stats'])) {
-            $stats = $context['task_stats'];
-            $prompt .= "**Project Progress:**\n";
-            $prompt .= "Total tasks: {$stats['total']}, Completed: {$stats['completed']}\n\n";
-        }
-
-        $prompt .= "Please provide 2-5 specific, actionable subtasks that would help complete this main task. ";
-        $prompt .= "Each subtask should be clear, measurable, and logically ordered. ";
-        $prompt .= "Format your response as a simple list of subtask titles and descriptions.";
-
-        return $prompt;
-    }
 
     protected function cleanResponseContent(string $content): string
     {
@@ -577,4 +503,9 @@ class OpenAIProvider implements AIProviderInterface
     {
         return $this->config;
     }
+
+    /**
+     * Get maximum story points for a given T-shirt size.
+     * Subtasks must be smaller than their parent's maximum.
+     */
 }

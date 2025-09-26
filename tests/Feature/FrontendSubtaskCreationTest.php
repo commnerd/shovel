@@ -70,8 +70,8 @@ class FrontendSubtaskCreationTest extends TestCase
                 "description" => "Second test subtask",
                 "status" => "pending",
                 "size" => null,
-                "initial_story_points" => 5,
-                "current_story_points" => 5,
+                "initial_story_points" => 3,
+                "current_story_points" => 3,
                 "story_points_change_count" => 0,
                 "subtasks" => []
             ]

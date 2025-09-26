@@ -68,7 +68,17 @@ interface Props {
         project_type?: string;
         default_iteration_length_weeks?: number;
         auto_create_iterations?: boolean;
+        project_id?: number;
     };
+    project?: {
+        id: number;
+        title: string;
+        description: string;
+        due_date?: string;
+        status: string;
+        project_type: string;
+    } | null;
+    returnUrl?: string;
     suggestedTasks: TaskSuggestion[];
     aiUsed: boolean;
     aiCommunication?: AICommunication | null;
@@ -89,13 +99,16 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Projects',
         href: '/dashboard/projects',
     },
-    {
+    ...(props.project ? [{
+        title: props.project.title,
+        href: `/dashboard/projects/${props.project.id}/tasks`,
+    }] : [{
         title: 'Create Project',
         href: '/dashboard/projects/create',
-    },
+    }]),
     {
-        title: 'Review Tasks',
-        href: '/dashboard/projects/create/tasks',
+        title: 'Generate Tasks',
+        href: '#',
     },
 ];
 
@@ -279,7 +292,10 @@ const createProject = () => {
     });
 
     // Submit using form.post
-    form.post('/dashboard/projects', {
+    form.transform((data) => ({
+        ...data,
+        return_url: props.returnUrl,
+    })).post('/dashboard/projects', {
         onSuccess: () => {
             // Project created successfully
         },

@@ -5,6 +5,7 @@ namespace App\Services\AI\Providers;
 use App\Services\AI\Contracts\AIProviderInterface;
 use App\Services\AI\Contracts\AIResponse;
 use App\Services\AI\Contracts\AITaskResponse;
+use App\Services\AI\AIPromptService;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,10 +13,12 @@ use Illuminate\Support\Facades\Log;
 class CerebrasProvider implements AIProviderInterface
 {
     protected array $config;
+    protected ?AIPromptService $promptService = null;
 
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->promptService = new AIPromptService();
     }
 
     /**
@@ -58,57 +61,12 @@ class CerebrasProvider implements AIProviderInterface
      */
     public function generateTasks(string $projectDescription, array $schema = [], array $options = []): AITaskResponse
     {
-        // Define prompts directly in the provider
-        $prompts = [
-            'system' => 'You are an expert project manager and task breakdown specialist. Your role is to analyze project descriptions and generate comprehensive, actionable task breakdowns. You must respond with valid JSON only - no explanations, no markdown, no code blocks.',
-            'user' => 'Please analyze this project description and generate a comprehensive task breakdown: {description}
-
-CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
-{
-  "tasks": [
-    {
-      "title": "Task title",
-      "description": "Detailed task description",
-      "status": "pending",
-      "sort_order": 1,
-      "size": "m",
-      "initial_story_points": null,
-      "current_story_points": null,
-      "story_points_change_count": null
-    }
-  ],
-  "summary": "Brief project summary",
-  "notes": ["Additional insights", "Implementation suggestions"]
-}
-
-Requirements:
-- Generate 3-8 actionable TOP-LEVEL tasks (these will become parent tasks that can have subtasks)
-- Each task must have: title, description, status (always "pending"), sort_order, size
-- For top-level tasks, use T-shirt sizing only (size field):
-  * "xs": Very small tasks, quick fixes, simple changes
-  * "s": Small tasks, minor features, simple implementations
-  * "m": Medium tasks, moderate complexity, standard features
-  * "l": Large tasks, complex features, significant work
-  * "xl": Extra large tasks, major features, complex implementations
-- Set initial_story_points, current_story_points, and story_points_change_count to null (these are only for subtasks)
-- Set sort_order sequentially (1, 2, 3, etc.)
-- Tasks should be logical, sequential, and comprehensive
-- Include a brief summary of the project
-- Add helpful notes with insights or suggestions
-- Respond with valid JSON only - no other text'
-        ];
-
-        // Build enhanced prompt with schema and temporal context
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-        $systemPrompt = $prompts['system']."\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
-        $userPrompt = str_replace('{description}', $projectDescription, $prompts['user']);
-
-        // Add user feedback if provided in options
-        if (! empty($options['user_feedback'])) {
-            $userPrompt .= "\n\n**User Feedback for Improvement:**\n";
-            $userPrompt .= $options['user_feedback']."\n\n";
-            $userPrompt .= 'Please incorporate this feedback to improve the task generation.';
+        if (!$this->promptService) {
+            $this->promptService = new AIPromptService();
         }
+
+        $systemPrompt = $this->promptService->buildTaskGenerationSystemPrompt();
+        $userPrompt = $this->promptService->buildTaskGenerationUserPrompt($projectDescription, $options);
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -539,8 +497,12 @@ Requirements:
     public function breakdownTask(string $taskTitle, string $taskDescription, array $context = [], array $options = []): AITaskResponse
     {
         try {
-            $systemPrompt = $this->buildTaskBreakdownSystemPrompt();
-            $userPrompt = $this->buildTaskBreakdownUserPrompt($taskTitle, $taskDescription, $context);
+            if (!$this->promptService) {
+                $this->promptService = new AIPromptService();
+            }
+
+            $systemPrompt = $this->promptService->buildTaskBreakdownSystemPrompt();
+            $userPrompt = $this->promptService->buildTaskBreakdownUserPrompt($taskTitle, $taskDescription, $context);
 
             $messages = [
                 ['role' => 'system', 'content' => $systemPrompt],
@@ -574,129 +536,7 @@ Requirements:
         }
     }
 
-    /**
-     * Build system prompt for task breakdown.
-     */
-    protected function buildTaskBreakdownSystemPrompt(): string
-    {
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
 
-        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your job is to analyze a given task and break it down into smaller, actionable subtasks. Consider the project context, existing tasks, and completion statuses to provide relevant and practical subtask suggestions.
-
-For each subtask, you must also assign Fibonacci story points based on complexity and effort:
-- 1: Very simple tasks, quick fixes, minor changes (15-30 minutes)
-- 2: Simple tasks, small features, straightforward implementations (30-60 minutes)
-- 3: Small tasks, minor features, simple implementations (1-2 hours)
-- 5: Medium tasks, moderate complexity, standard features (2-4 hours)
-- 8: Large tasks, complex features, significant work (4-8 hours)
-- 13: Very large tasks, major features, complex implementations (1-2 days)
-- 21: Extra large tasks, major architectural changes (2-3 days)
-- 34: Massive tasks, complete feature rewrites (3-5 days)
-- 55: Epic tasks, platform-level changes (1-2 weeks)
-- 89: Monumental tasks, complete system overhauls (2+ weeks)
-
-Each subtask in your response must include "initial_story_points" and "current_story_points" fields with the same Fibonacci value, and "story_points_change_count" set to 0. Do NOT include a "size" field for subtasks.';
-
-        return $basePrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.";
-    }
-
-    /**
-     * Build user prompt for task breakdown with context.
-     */
-    protected function buildTaskBreakdownUserPrompt(string $taskTitle, string $taskDescription, array $context): string
-    {
-        $basePrompt = 'Please break down the following task into smaller, actionable subtasks:';
-
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-        $prompt = $basePrompt."\n\n";
-        $prompt .= "**Current Context:**\n";
-        $prompt .= "Date and time: {$currentDateTime}\n\n";
-        $prompt .= "**Task to Break Down:**\n";
-        $prompt .= "Title: {$taskTitle}\n";
-        $prompt .= "Description: {$taskDescription}\n\n";
-
-        // Add user feedback if provided
-        if (! empty($context['user_feedback'])) {
-            $prompt .= "**User Feedback for Improvement:**\n";
-            $prompt .= $context['user_feedback']."\n\n";
-            $prompt .= "Please incorporate this feedback to improve the task breakdown.\n\n";
-        }
-
-        // Add project context
-        if (! empty($context['project'])) {
-            $project = $context['project'];
-            $prompt .= "**Project Context:**\n";
-            $prompt .= "Project: {$project['title']}\n";
-            $prompt .= "Description: {$project['description']}\n";
-            if (! empty($project['due_date'])) {
-                $prompt .= "Due Date: {$project['due_date']}\n";
-            }
-            $prompt .= "\n";
-        }
-
-        // Add existing tasks context
-        if (! empty($context['existing_tasks'])) {
-            $prompt .= "**Existing Project Tasks:**\n";
-            foreach ($context['existing_tasks'] as $task) {
-                $prompt .= "- {$task['title']} ({$task['status']})\n";
-            }
-            $prompt .= "\n";
-        }
-
-        // Add task completion statistics
-        if (! empty($context['task_stats'])) {
-            $stats = $context['task_stats'];
-            $prompt .= "**Project Progress:**\n";
-            $prompt .= "Total Tasks: {$stats['total']}\n";
-            $prompt .= "Completed: {$stats['completed']}\n";
-            $prompt .= "In Progress: {$stats['in_progress']}\n";
-            $prompt .= "Pending: {$stats['pending']}\n\n";
-        }
-
-        $prompt .= "**Requirements:**\n";
-        $prompt .= "1. Break down the task into 3-7 practical subtasks\n";
-        $prompt .= "2. Each subtask should be specific and actionable\n";
-        $prompt .= "3. Consider the project context and existing tasks\n";
-        $prompt .= "4. Assign appropriate status (pending)\n";
-        $prompt .= "5. Include estimated due dates relative to the project timeline\n";
-        $prompt .= "6. Assign appropriate Fibonacci story points based on complexity:\n";
-        $prompt .= "   - 1: Very simple tasks, quick fixes (15-30 minutes)\n";
-        $prompt .= "   - 2: Simple tasks, small features (30-60 minutes)\n";
-        $prompt .= "   - 3: Small tasks, minor features (1-2 hours)\n";
-        $prompt .= "   - 5: Medium tasks, standard features (2-4 hours)\n";
-        $prompt .= "   - 8: Large tasks, complex features (4-8 hours)\n";
-        $prompt .= "   - 13: Very large tasks, major features (1-2 days)\n";
-        $prompt .= "   - 21: Extra large tasks, architectural changes (2-3 days)\n";
-        $prompt .= "   - 34: Massive tasks, complete rewrites (3-5 days)\n";
-        $prompt .= "   - 55: Epic tasks, platform changes (1-2 weeks)\n";
-        $prompt .= "   - 89: Monumental tasks, system overhauls (2+ weeks)\n";
-        $prompt .= "7. Set initial_story_points and current_story_points to the same Fibonacci value\n";
-        $prompt .= "8. Set story_points_change_count to 0 for new subtasks\n";
-        $prompt .= "9. Set sort_order sequentially (1, 2, 3, etc.)\n";
-        $prompt .= "10. Do NOT include a 'size' field for subtasks (only for top-level tasks)\n\n";
-
-        $prompt .= "**Response Format:**\n";
-        $prompt .= "Return ONLY a valid JSON object with this exact structure:\n";
-        $prompt .= "{\n";
-        $prompt .= '  "tasks": ['."\n";
-        $prompt .= '    {'."\n";
-        $prompt .= '      "title": "Specific subtask title",'."\n";
-        $prompt .= '      "description": "Detailed description of what needs to be done",'."\n";
-        $prompt .= '      "status": "pending",'."\n";
-        $prompt .= '      "sort_order": 1,'."\n";
-        $prompt .= '      "initial_story_points": 5,'."\n";
-        $prompt .= '      "current_story_points": 5,'."\n";
-        $prompt .= '      "story_points_change_count": 0,'."\n";
-        $prompt .= '      "due_date": "YYYY-MM-DD"'."\n";
-        $prompt .= '    }'."\n";
-        $prompt .= '  ],'."\n";
-        $prompt .= '  "notes": ["Analysis note 1", "Analysis note 2"]'."\n";
-        $prompt .= "}\n\n";
-
-        $prompt .= 'Do not include any explanatory text outside the JSON object.';
-
-        return $prompt;
-    }
 
     /**
      * Create fallback task breakdown when AI fails.
@@ -882,70 +722,6 @@ Each subtask in your response must include "initial_story_points" and "current_s
         return $notes;
     }
 
-    /**
-     * Build system prompt for task generation (used by controller for prompt viewing).
-     */
-    protected function buildTaskGenerationSystemPrompt(array $taskSchema = []): string
-    {
-        $currentDateTime = now()->format('l, F j, Y \a\t g:i A T');
-
-        $basePrompt = 'You are an expert project manager and task breakdown specialist. Your role is to analyze project descriptions and generate comprehensive, actionable task breakdowns. You must respond with valid JSON only - no explanations, no markdown, no code blocks.';
-
-        $enhancedPrompt = $this->buildSystemPromptWithSchema($basePrompt, $taskSchema);
-
-        return $enhancedPrompt . "\n\nCurrent date and time: {$currentDateTime}\nUse this temporal context when suggesting deadlines, timeframes, or time-sensitive considerations.\n\nIMPORTANT: You are operating in JSON-only mode. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object.";
-    }
-
-    /**
-     * Build user prompt for task generation (used by controller for prompt viewing).
-     */
-    protected function buildTaskGenerationUserPrompt(string $projectDescription, array $aiOptions = []): string
-    {
-        $userPrompt = 'Please analyze this project description and generate a comprehensive task breakdown: ' . $projectDescription . '
-
-CRITICAL: You must respond with ONLY a valid JSON object in this exact format:
-{
-  "tasks": [
-    {
-      "title": "Task title",
-      "description": "Detailed task description",
-      "status": "pending",
-      "sort_order": 1,
-      "size": "m",
-      "initial_story_points": null,
-      "current_story_points": null,
-      "story_points_change_count": null
-    }
-  ],
-  "summary": "Brief project summary",
-  "notes": ["Additional insights", "Implementation suggestions"]
-}
-
-Requirements:
-- Generate 3-8 actionable TOP-LEVEL tasks (these will become parent tasks that can have subtasks)
-- Each task must have: title, description, status (always "pending"), sort_order, size
-- For top-level tasks, use T-shirt sizing only (size field):
-  * "xs": Very small tasks, quick fixes, simple changes
-  * "s": Small tasks, minor features, simple implementations
-  * "m": Medium tasks, moderate complexity, standard features
-  * "l": Large tasks, complex features, significant work
-  * "xl": Extra large tasks, major features, complex implementations
-- Set initial_story_points, current_story_points, and story_points_change_count to null (these are only for subtasks)
-- Set sort_order sequentially (1, 2, 3, etc.)
-- Tasks should be logical, sequential, and comprehensive
-- Include a brief summary of the project
-- Add helpful notes with insights or suggestions
-- Respond with valid JSON only - no other text';
-
-        // Add user feedback if provided in options
-        if (!empty($aiOptions['user_feedback'])) {
-            $userPrompt .= "\n\n**User Feedback for Improvement:**\n";
-            $userPrompt .= $aiOptions['user_feedback'] . "\n\n";
-            $userPrompt .= 'Please incorporate this feedback to improve the task generation.';
-        }
-
-        return $userPrompt;
-    }
 
     /**
      * Build messages array for chat completion (used by controller for prompt viewing).
@@ -957,4 +733,5 @@ Requirements:
             ['role' => 'user', 'content' => $userPrompt],
         ];
     }
+
 }

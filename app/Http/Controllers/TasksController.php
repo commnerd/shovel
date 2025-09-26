@@ -240,6 +240,19 @@ class TasksController extends Controller
             ? 'Task created successfully with '.count($validated['subtasks']).' subtasks!'
             : 'Task created successfully!';
 
+        // Check if there's a return URL with filters
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl && $this->isValidReturnUrl($returnUrl)) {
+            // If it's a relative URL starting with ?, append it to the current project's tasks route
+            if (str_starts_with($returnUrl, '?')) {
+                $returnUrl = route('projects.tasks.index', $project) . $returnUrl;
+            }
+
+            return redirect($returnUrl)->with([
+                'message' => $message,
+            ]);
+        }
+
         return redirect()->route('projects.tasks.index', $project)->with([
             'message' => $message,
         ]);
@@ -343,9 +356,57 @@ class TasksController extends Controller
         // Update hierarchy path and depth if parent changed
         $task->updateHierarchyPath();
 
+        // Check if there's a return URL with filters
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl && $this->isValidReturnUrl($returnUrl)) {
+            // If it's a relative URL starting with ?, append it to the current project's tasks route
+            if (str_starts_with($returnUrl, '?')) {
+                $returnUrl = route('projects.tasks.index', $project) . $returnUrl;
+            }
+
+            return redirect($returnUrl)->with([
+                'message' => 'Task updated successfully!',
+            ]);
+        }
+
         return redirect()->route('projects.tasks.index', $project)->with([
             'message' => 'Task updated successfully!',
         ]);
+    }
+
+    /**
+     * Validate that a return URL is safe to redirect to.
+     */
+    private function isValidReturnUrl(string $url): bool
+    {
+        // Parse the URL
+        $parsedUrl = parse_url($url);
+
+        // Check if it's a project tasks URL and user has access
+        if (preg_match('/\/dashboard\/projects\/(\d+)\/tasks/', $url, $matches)) {
+            $projectId = (int) $matches[1];
+            $project = Project::find($projectId);
+
+            // User must own the project or have access to it
+            return $project && $project->user_id === auth()->id();
+        }
+
+        // If it's a relative URL, it's safe (as long as it's not a project URL)
+        if (!isset($parsedUrl['host'])) {
+            return true;
+        }
+
+        // Check if it's an external URL
+        $appUrl = parse_url(config('app.url'));
+        $appHost = $appUrl['host'] ?? 'localhost';
+
+        // Only allow URLs from the same host
+        if ($parsedUrl['host'] !== $appHost) {
+            return false;
+        }
+
+        // Allow other internal URLs
+        return true;
     }
 
     /**
@@ -581,6 +642,14 @@ class TasksController extends Controller
                         'error' => 'Invalid parent task.',
                     ], 400);
                 }
+
+                // Prevent breaking down tasks with 1 story point
+                if ($parentTask->current_story_points === 1) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Tasks with 1 story point cannot be broken down further. They are already at the smallest meaningful size.',
+                    ], 400);
+                }
             }
 
             // Gather project context
@@ -612,6 +681,7 @@ class TasksController extends Controller
                 ],
                 'parent_task' => $parentTask ? [
                     'title' => $parentTask->title,
+                    'size' => $parentTask->size,
                 ] : null,
                 'existing_tasks' => $existingTasks,
                 'task_stats' => $taskStats,
@@ -642,6 +712,27 @@ class TasksController extends Controller
 
             // Validate and adjust subtask priorities if parent task exists
             $subtasks = $aiResponse->getTasks();
+
+            // Validate story points against parent constraints
+            if ($parentTask && $parentTask->size) {
+                $maxAllowedPoints = $parentTask->getMaxStoryPointsForSubtasks();
+                if ($maxAllowedPoints) {
+                    $violations = [];
+                    foreach ($subtasks as $index => $subtask) {
+                        if (isset($subtask['initial_story_points']) && $subtask['initial_story_points'] >= $maxAllowedPoints) {
+                            $violations[] = "Subtask '{$subtask['title']}' has {$subtask['initial_story_points']} story points, but maximum allowed is " . ($maxAllowedPoints - 1);
+                        }
+                    }
+                    
+                    if (!empty($violations)) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'AI response violates story point constraints: ' . implode('; ', $violations),
+                            'violations' => $violations,
+                        ], 400);
+                    }
+                }
+            }
 
             // Add due dates to subtasks based on parent task or project due date
             $subtasks = $this->addDueDatesToSubtasks($subtasks, $parentTask, $project);
