@@ -40,17 +40,17 @@ return new class extends Migration
             $table->dropIndex(['iteration_id']);
             $table->dropIndex(['size']);
             $table->dropIndex(['current_story_points']);
-            
+
             // Drop foreign key constraint
             $table->dropForeign(['iteration_id']);
-            
+
             // Drop the iteration_id column
             $table->dropColumn('iteration_id');
-            
+
             // Drop other columns
             $table->dropColumn([
                 'size',
-                'initial_story_points', 
+                'initial_story_points',
                 'current_story_points',
                 'story_points_change_count'
             ]);

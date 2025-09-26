@@ -49,9 +49,9 @@ it('queues curation jobs for all approved users', function () {
     // Debug: Check what users were actually processed
     $pushedJobs = Queue::pushed(UserCurationJob::class);
     $userIds = $pushedJobs->pluck('user.id')->toArray();
-    
+
     // Assert that we got at least the expected number of jobs (allowing for parallel test variations)
-    $this->assertGreaterThanOrEqual($expectedApprovedUsers, $pushedJobs->count(), 
+    $this->assertGreaterThanOrEqual($expectedApprovedUsers, $pushedJobs->count(),
         'Expected at least ' . $expectedApprovedUsers . ' jobs but got: ' . $pushedJobs->count() . ' for user IDs: ' . implode(', ', $userIds));
 
     // Assert that UserCurationJob was queued for approved users only
@@ -60,8 +60,8 @@ it('queues curation jobs for all approved users', function () {
         $userProperty = $reflection->getProperty('user');
         $userProperty->setAccessible(true);
         $user = $userProperty->getValue($job);
-        return $user->email_verified_at !== null 
-            && $user->pending_approval === false 
+        return $user->email_verified_at !== null
+            && $user->pending_approval === false
             && $user->approved_at !== null;
     });
 
@@ -102,15 +102,15 @@ it('handles empty user list gracefully', function () {
         // Use a flexible assertion to handle parallel test variations
         $pushedJobs = Queue::pushed(UserCurationJob::class);
         $this->assertGreaterThanOrEqual($approvedUsersBefore, $pushedJobs->count());
-        
+
         // Verify all pushed jobs are for approved users
         Queue::assertPushed(UserCurationJob::class, function ($job) {
             $reflection = new ReflectionClass($job);
             $userProperty = $reflection->getProperty('user');
             $userProperty->setAccessible(true);
             $user = $userProperty->getValue($job);
-            return $user->email_verified_at !== null 
-                && $user->pending_approval === false 
+            return $user->email_verified_at !== null
+                && $user->pending_approval === false
                 && $user->approved_at !== null;
         });
     }
